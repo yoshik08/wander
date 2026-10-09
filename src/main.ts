@@ -371,12 +371,39 @@ const photoZoomIn = document.getElementById('photo-zoom-in');
 const photoZoomLabel = document.getElementById('photo-zoom-label');
 const photoSnapBtn = document.getElementById('photo-snap-btn');
 const photoCloseBtn = document.getElementById('photo-close-btn');
+const photoCalmBtn = document.getElementById('photo-calm-btn');
+
+// Calm Mode state & variables
+let isCalmMode = false;
+let calmIdleTimer = 0;
+let calmWanderAngle = 0;
+
+function toggleCalmMode(): void {
+  isCalmMode = !isCalmMode;
+  const settingsBtn = document.getElementById('settings-btn');
+  const hudButtons = [settingsBtn, photoBtn, mapBtn, journalBtn];
+  for (const b of hudButtons) {
+    if (b) {
+      b.style.opacity = isCalmMode ? '0' : '1';
+      b.style.pointerEvents = isCalmMode ? 'none' : 'auto';
+    }
+  }
+  if (interactPrompt && isCalmMode) interactPrompt.style.display = 'none';
+  if (isCalmMode) {
+    showKeepsakeToast('🍃 Calm Mode Active', 'HUD hidden. Stroll or press C to exit.', 0);
+  } else {
+    showKeepsakeToast('Wanderer Mode', 'HUD restored.', 0);
+  }
+}
 
 function togglePhotoMode(): void {
   const active = photoMode.toggle(player.pos, camera.zoom);
   if (photoHud) photoHud.style.display = active ? 'flex' : 'none';
   if (photoBtn) photoBtn.style.display = active ? 'none' : 'flex';
   if (mapBtn) mapBtn.style.display = active ? 'none' : 'flex';
+  const settingsBtn = document.getElementById('settings-btn');
+  if (settingsBtn) settingsBtn.style.display = active ? 'none' : 'flex';
+  if (journalBtn) journalBtn.style.display = active ? 'none' : 'flex';
   if (interactPrompt && active) interactPrompt.style.display = 'none';
   updatePhotoUI();
 }
@@ -396,6 +423,13 @@ if (photoCloseBtn) {
   photoCloseBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     togglePhotoMode();
+  });
+}
+if (photoCalmBtn) {
+  photoCalmBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (photoMode.isActive) togglePhotoMode();
+    toggleCalmMode();
   });
 }
 if (photoFilterBtn) {
@@ -649,6 +683,7 @@ const debugOverlay = document.getElementById('debug-overlay');
 // 2. Fixed Timestep Loop (120 Hz)
 const loop = new GameLoop({
   update: (dt: number) => {
+    const time = performance.now() / 1000;
     const inputState = input.poll();
 
     if (inputState.debugPressed) {
@@ -697,6 +732,26 @@ const loop = new GameLoop({
       photoMode.update(vec2(0, 0), dt);
     }
 
+    if (inputState.calmPressed) {
+      toggleCalmMode();
+    }
+    if (inputState.menuPressed && isCalmMode) {
+      toggleCalmMode();
+    }
+    if (isCalmMode) {
+      if (inputState.move.x === 0 && inputState.move.y === 0) {
+        calmIdleTimer += dt;
+        if (calmIdleTimer > 2.5) {
+          calmWanderAngle += (Math.sin(time * 0.4) * 0.8) * dt;
+          inputState.move.x = Math.cos(calmWanderAngle);
+          inputState.move.y = Math.sin(calmWanderAngle);
+          inputState.isRunning = false;
+        }
+      } else {
+        calmIdleTimer = 0;
+      }
+    }
+
     if (sanctuaryUI.isActive) {
       if (inputState.menuPressed) {
         sanctuaryUI.close();
@@ -718,7 +773,6 @@ const loop = new GameLoop({
     // Dynamic wind modulation and rainbow check driven by weather
     weather.update(dt, !timeSystem.getInfo().isNight);
     const weatherInfo = weather.getInfo();
-    const time = performance.now() / 1000;
     globalWind.x = (1.0 + Math.sin(time * 0.8) * 0.6) * weatherInfo.windMultiplier;
     globalWind.y = (0.3 + Math.cos(time * 0.6) * 0.3) * weatherInfo.windMultiplier;
 

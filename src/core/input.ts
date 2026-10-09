@@ -14,6 +14,7 @@ export interface InputState {
   actionPressed: boolean;   // Space
   menuPressed: boolean;     // Esc / Gamepad Start
   debugPressed: boolean;    // F3
+  calmPressed: boolean;     // C
 }
 
 export class InputManager {
@@ -27,25 +28,32 @@ export class InputManager {
   private touchRun: boolean = false;
   private touchInteractPressed: boolean = false;
 
-  constructor(targetElement: HTMLElement = document.body) {
+  constructor(targetElement?: HTMLElement) {
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
     this.handleTouchStart = this.handleTouchStart.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
 
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('keyup', this.handleKeyUp);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', this.handleKeyDown);
+      window.addEventListener('keyup', this.handleKeyUp);
+    }
 
-    targetElement.addEventListener('touchstart', this.handleTouchStart, { passive: false });
-    targetElement.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-    targetElement.addEventListener('touchend', this.handleTouchEnd, { passive: false });
-    targetElement.addEventListener('touchcancel', this.handleTouchEnd, { passive: false });
+    const el = targetElement || (typeof document !== 'undefined' ? document.body : null);
+    if (el) {
+      el.addEventListener('touchstart', this.handleTouchStart, { passive: false });
+      el.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+      el.addEventListener('touchend', this.handleTouchEnd, { passive: false });
+      el.addEventListener('touchcancel', this.handleTouchEnd, { passive: false });
+    }
   }
 
   destroy(): void {
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('keydown', this.handleKeyDown);
+      window.removeEventListener('keyup', this.handleKeyUp);
+    }
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -175,6 +183,7 @@ export class InputManager {
     const actionJust = Boolean(this.justPressed['Space']);
     const menuJust = Boolean(this.justPressed['Escape']);
     const debugJust = Boolean(this.justPressed['F3']);
+    const calmJust = Boolean(this.justPressed['KeyC']);
 
     // Clear single-frame presses
     this.justPressed = {};
@@ -191,7 +200,8 @@ export class InputManager {
       filterPressed: filterJust,
       actionPressed: actionJust,
       menuPressed: menuJust,
-      debugPressed: debugJust
+      debugPressed: debugJust,
+      calmPressed: calmJust
     };
   }
 
