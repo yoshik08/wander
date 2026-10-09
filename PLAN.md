@@ -141,10 +141,10 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 13: Quality Scaler, Accessibility & Test Suite
-- [ ] Automatic quality scaler (adjusting internal resolution, particles, grass density, post-processing on FPS drops)
-- [ ] Quality presets (Low, Medium, High, Ultra) in settings
-- [ ] Accessibility: reduced motion, high contrast mode, keyboard-only navigation, colourblind-friendly markers
-- [ ] Comprehensive Vitest test suite (seed hashing, worker determinism, hydrology downhill flow, 500-seed traversability, save/load)
+- [x] Automatic quality scaler (adjusting internal resolution, particles, grass density, post-processing on FPS drops)
+- [x] Quality presets (Low, Medium, High, Ultra) in settings
+- [x] Accessibility: reduced motion, high contrast mode, keyboard-only navigation, colourblind-friendly markers
+- [x] Comprehensive Vitest test suite (seed hashing, worker determinism, hydrology downhill flow, 500-seed traversability, save/load)
 
 ---
 

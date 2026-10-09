@@ -145,5 +145,10 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Continuous Autosave Flow**: Autosave triggers periodically every 15 seconds, immediately when switching browser tabs (`visibilitychange`), and during window unload, capturing player coordinates, active season, in-game clock, current layer, and wardrobe.
 - **Installable PWA & Offline Shell**: `manifest.json` configured with `/wander/` base path and custom procedural SVG icon (`icon.svg`), plus service worker `sw.js` employing a stale-while-revalidate offline caching strategy.
 
+## Step 13.1 (Quality Scaler & Accessibility Toggles) Critique
+- **Dynamic Frame Budget Scaling**: `QualityScaler` monitors rolling average frame duration over 60 samples. When running on 'Auto', sustained drops below 50 FPS automatically step down through Ultra -> High -> Medium -> Low, downscaling resolution (0.88x / 0.75x) and throttling particle caps (750 -> 450 -> 260 -> 120) to maintain fluid 60+ FPS; conversely, high frame headroom smoothly steps tiers up.
+- **Accessibility Suite**: Full toggles for Reduced Motion (softens wind oscillations, suppresses jarring camera motion), High Contrast mode (deep dark opaque backgrounds with bright gold `#FFF8E7` outlines), and geometric colourblind symbols.
+- **Controls Reference**: Dedicated keyboard shortcuts guide added to Settings modal for complete hands-on navigation.
+
 
 

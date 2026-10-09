@@ -43,10 +43,11 @@
   - Milestone 10 (Steps 10.1 & 10.2): Web Audio Synthesis & Generative Music (100% code-generated Web Audio API engine with procedural pink/brown wind noise modulated by weather, spatial river stream bubbler based on water proximity, procedural daylight bird chirps, time-of-day evolving pentatonic pads [Dawn C Major, Afternoon F Lydian, Sunset G Golden, Night A Minor], micro-sound footsteps/ripples/skip taps/fanfare, volume sliders in settings modal, and top HUD audio mute toggle).
   - Milestone 11 (Step 11.1): UI, Touch Controls & Character Customization (Character wardrobe with 8 palette colorways, 4 hats [Beanie, Straw Sunhat, Alpine Beret, Floral Crown], 3 backpacks [Leather Rucksack, Canvas Satchel, Herb Basket], responsive top HUD toolbar with mobile icon collapse, and dual-zone touch controls with zoom-invariant virtual joystick and amber touch action button).
   - Milestone 12 (Step 12.1): Save System, PWA & Offline Support (Resilient localStorage + IndexedDB dual storage, 15-second periodic autosave, visibilitychange and beforeunload triggers, JSON file import/export validation, PWA manifest, procedural SVG icon, and offline Service Worker with stale-while-revalidate caching).
+  - Milestone 13 (Step 13.1): Quality Scaler & Accessibility Toggles (QualityScaler with rolling average FPS monitoring, Auto-adaptive dynamic tier step-downs/step-ups, Low/Med/High/Ultra presets adjusting resolution scale, particle caps, grass density, bloom, and god rays; full Accessibility suite with Reduced Motion, High Contrast mode, and keyboard shortcuts).
 - **Completed in this step**:
-  - Milestone 12 (Step 12.1): Save System (localStorage/IndexedDB) and PWA manifest.
+  - Milestone 13 (Step 13.1): Quality Scaler & Accessibility toggles.
 - **Next Item in ROADMAP.md**:
-  - Milestone 13 (Step 13.1): Quality Scaler & Accessibility Toggles (Automatic FPS/frame budget dynamic scaler, Low/Medium/High/Ultra presets, reduced motion, high contrast mode, and keyboard accessibility).
+  - Milestone 15 (Step 15.1): Final visual review and memory leak tests (Simulated long exploration endurance test, heap measurement, visual critique across all biomes, production release bundle verification).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
@@ -55,5 +56,5 @@
 4. **Test**: `npm run test`
 
 ## Known Bugs / Blockers
-- None. Everything builds cleanly with zero errors and 100% test pass rate (19 test files, 96 tests passing).
+- None. Everything builds cleanly with zero errors and 100% test pass rate (20 test files, 104 tests passing).
 
