@@ -164,8 +164,8 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 
 ## Milestone C1: State and Procedural Creatures
 - [ ] Save state: Folio (seen/befriended), Party (6), Sanctuary list, items, badges
-- [ ] Procedural creatures: species 1-150 from hash(seed+id). Archetypes, appendages, type-locked hue ranges, noise patterns
-- [ ] Drawn with the art toolkit, idle bob/blink animation. Syllable grammar names
+- [x] Procedural creatures: species 1-150 from hash(seed+id). Archetypes, appendages, type-locked hue ranges, noise patterns
+- [x] Drawn with the art toolkit, idle bob/blink animation. Syllable grammar names
 - [ ] Evolution = same seed, complexity 1.0->2.0 (bigger, more appendages, richer colour)
 - [ ] Prismatic variant 1/4096 (hue shift + sparkle)
 - [ ] Roaming wild creatures visible in the overworld: 1-3 per chunk, by biome/time/weather. No random pop-ups
@@ -173,13 +173,13 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone C2: Sparring
-- [ ] In-world turn-based spar, no screen change; camera eases closer
-- [ ] "Resolve" system; at 0 the creature sits and yields (nothing dies). Fleeing always works
-- [ ] 5 types: Flora, Aqua, Ignis, Terra, Aero, with an effectiveness loop
-- [ ] Stats: Vigor, Strike, Guard, Haste from the species seed
-- [ ] 4 moves, learned by level from a seeded movepool; same-type/weather/biome boosts; statuses (Sleep, Daze, Rooted)
-- [ ] XP and levels; auto-win if 10+ levels higher
-- [ ] Befriending: a yielded creature can be offered a Resonance Lure to join you
+- [x] In-world turn-based spar, no screen change; camera eases closer
+- [x] "Resolve" system; at 0 the creature sits and yields (nothing dies). Fleeing always works
+- [x] 5 types: Flora, Aqua, Ignis, Terra, Aero, with an effectiveness loop
+- [x] Stats: Vigor, Strike, Guard, Haste from the species seed
+- [x] 4 moves, learned by level from a seeded movepool; same-type/weather/biome boosts; statuses (Sleep, Daze, Rooted)
+- [x] XP and levels; auto-win if 10+ levels higher
+- [x] Befriending: a yielded creature can be offered a Resonance Lure to join you
 
 ---
 
