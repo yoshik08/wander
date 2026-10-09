@@ -62,16 +62,20 @@ export class ChunkManager {
   constructor(seedInput?: string | number) {
     // 1. Parse or generate seed
     if (!seedInput) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlSeed = urlParams.get('seed');
-      if (urlSeed) {
-        this.seedRaw = urlSeed;
+      if (typeof window !== 'undefined' && window.location) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSeed = urlParams.get('seed');
+        if (urlSeed) {
+          this.seedRaw = urlSeed;
+        } else {
+          this.seedRaw = 'dawn-meadow';
+          // Persist seed in URL
+          const nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set('seed', this.seedRaw);
+          window.history.replaceState(null, '', nextUrl.toString());
+        }
       } else {
         this.seedRaw = 'dawn-meadow';
-        // Persist seed in URL
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.set('seed', this.seedRaw);
-        window.history.replaceState(null, '', nextUrl.toString());
       }
     } else {
       this.seedRaw = String(seedInput);
@@ -82,15 +86,18 @@ export class ChunkManager {
     this.generateSpawnChunksSynchronous(CHUNK_LOAD_RADIUS);
 
     // 3. Initialize Worker pool (2 workers)
-    const workerCount = Math.max(1, Math.min(navigator.hardwareConcurrency ? navigator.hardwareConcurrency - 1 : 2, 4));
-    for (let i = 0; i < workerCount; i++) {
-      try {
-        const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
-        worker.onmessage = this.handleWorkerMessage.bind(this);
-        this.workers.push(worker);
-      } catch (err) {
-        console.warn('[ChunkManager] Web Worker initialization failed, falling back to synchronous:', err);
-        break;
+    const concurrency = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4;
+    const workerCount = Math.max(1, Math.min(concurrency - 1, 4));
+    if (typeof Worker !== 'undefined') {
+      for (let i = 0; i < workerCount; i++) {
+        try {
+          const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+          worker.onmessage = this.handleWorkerMessage.bind(this);
+          this.workers.push(worker);
+        } catch (err) {
+          console.warn('[ChunkManager] Web Worker initialization failed, falling back to synchronous:', err);
+          break;
+        }
       }
     }
   }
