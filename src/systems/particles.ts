@@ -3,7 +3,7 @@ import { IRenderer } from '../render/types';
 import { BiomeType } from '../world/biomes';
 import { PRNG } from '../core/prng';
 
-export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly';
+export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly' | 'ripple';
 
 export interface Particle {
   active: boolean;
@@ -139,6 +139,36 @@ export class ParticleSystem {
     p.g = 0.78;
     p.b = 0.70;
     p.baseAlpha = 0.35;
+
+    p.oscOffset = 0;
+    p.oscSpeed = 0;
+    p.oscAmpX = 0;
+    p.oscAmpY = 0;
+  }
+
+  /**
+   * Spawns an expanding concentric water ripple ellipse.
+   */
+  spawnRipple(x: number, y: number, maxRadius: number = 14): void {
+    const p = this.allocateParticle();
+    if (!p) return;
+
+    p.active = true;
+    p.type = 'ripple';
+    p.x = x;
+    p.y = y;
+    p.vx = 0;
+    p.vy = 0;
+    p.size = 2.5; // starting radius
+    p.angle = maxRadius; // target max radius
+    p.angularVel = 0;
+    p.maxLife = 1.0;
+    p.life = p.maxLife;
+
+    p.r = 0.90;
+    p.g = 0.96;
+    p.b = 1.0;
+    p.baseAlpha = 0.55;
 
     p.oscOffset = 0;
     p.oscSpeed = 0;
@@ -379,6 +409,9 @@ export class ParticleSystem {
         p.vx *= Math.pow(0.88, dt * 60);
         p.vy *= Math.pow(0.88, dt * 60);
         p.size += dt * 2.0; // expand slightly
+      } else if (p.type === 'ripple') {
+        const expandSpeed = (p.angle - 2.5) / p.maxLife;
+        p.size += expandSpeed * dt;
       } else {
         // Atmospheric particles advected by wind + organic curl
         const windSpeedMult = p.type === 'pollen' ? 18 : p.type === 'firefly' ? 6 : 24;
@@ -469,6 +502,19 @@ export class ParticleSystem {
 
       if (p.type === 'pollen' || p.type === 'dust') {
         renderer.drawCircle(p.x, p.y, p.size, this.scratchColor);
+      } else if (p.type === 'ripple') {
+        // Concentric perspective ellipse ring for water ripple
+        const segments = 8;
+        const step = (Math.PI * 2) / segments;
+        for (let s = 0; s < segments; s++) {
+          const a0 = s * step;
+          const a1 = (s + 1) * step;
+          const x0 = p.x + Math.cos(a0) * p.size;
+          const y0 = p.y + Math.sin(a0) * (p.size * 0.55);
+          const x1 = p.x + Math.cos(a1) * p.size;
+          const y1 = p.y + Math.sin(a1) * (p.size * 0.55);
+          renderer.drawLine(x0, y0, x1, y1, 1.3, this.scratchColor);
+        }
       } else if (p.type === 'spore' || p.type === 'firefly') {
         // 2-layer luminous glow: soft outer halo + sharp bright core
         this.scratchHaloColor.r = p.r;

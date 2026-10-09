@@ -17,7 +17,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Reuse**: Pass `globalWind` to the particle system for advection. Use `renderer.drawCircle` and `renderer.drawQuad` for particles.
 - **Done When**: Yellow pollen drifts through the meadow and pink petals drift in cherry blossom valleys, respecting wind direction.
 
-### Step 4.3: Dynamic Grass Parting & Ripples
+### [x] Step 4.3: Dynamic Grass Parting & Ripples
 - **Action**: Calculate character position distance in the terrain shader or CPU grass loop to push grass blades away from the player's world position.
 - **Files**: `src/main.ts`, `src/render/art.ts`
 - **Risk**: *Medium*. Avoid passing a massive array to the shader; compute local parting in CPU or pass player pos as a uniform to a new grass shader.

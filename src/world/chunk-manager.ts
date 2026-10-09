@@ -1,4 +1,4 @@
-import { Chunk, ChunkBufferData, generateChunkData, CHUNK_PIXEL_SIZE, TILE_SIZE, CHUNK_TILES } from './chunk';
+import { Chunk, ChunkBufferData, generateChunkData, CHUNK_PIXEL_SIZE, TILE_SIZE, CHUNK_TILES, TILE_FLAG_WATER, TILE_FLAG_STEPPING_STONE } from './chunk';
 import { BiomeType } from './biomes';
 import { hashSeed } from '../core/prng';
 
@@ -165,6 +165,19 @@ export class ChunkManager {
     const tileY = Math.max(0, Math.min(CHUNK_TILES - 1, Math.floor(localPixelY / TILE_SIZE)));
 
     return chunk.data.biome[tileY * CHUNK_TILES + tileX] as BiomeType;
+  }
+
+  isWaterAt(worldX: number, worldY: number): boolean {
+    const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
+    const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
+    const chunk = this.getChunk(chunkX, chunkY);
+
+    const localPixelX = worldX - chunkX * CHUNK_PIXEL_SIZE;
+    const localPixelY = worldY - chunkY * CHUNK_PIXEL_SIZE;
+    const tileX = Math.max(0, Math.min(CHUNK_TILES - 1, Math.floor(localPixelX / TILE_SIZE)));
+    const tileY = Math.max(0, Math.min(CHUNK_TILES - 1, Math.floor(localPixelY / TILE_SIZE)));
+    const flag = chunk.data.tileFlags[tileY * CHUNK_TILES + tileX];
+    return flag === TILE_FLAG_WATER || flag === TILE_FLAG_STEPPING_STONE;
   }
 
   getActiveChunkCount(): number {

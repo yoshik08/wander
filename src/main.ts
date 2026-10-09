@@ -26,11 +26,15 @@ const input = new InputManager(canvas);
 const chunkManager = new ChunkManager();
 const particles = new ParticleSystem(chunkManager.seed);
 
-// Dust puffs from character footsteps
+// Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
-  particles.spawnFootstepDust(pos.x, pos.y, angle);
-  if (isRunning) {
+  if (chunkManager.isWaterAt(pos.x, pos.y)) {
+    particles.spawnRipple(pos.x, pos.y, isRunning ? 18 : 12);
+  } else {
     particles.spawnFootstepDust(pos.x, pos.y, angle);
+    if (isRunning) {
+      particles.spawnFootstepDust(pos.x, pos.y, angle);
+    }
   }
 };
 
@@ -128,6 +132,15 @@ const loop = new GameLoop({
       currentBiome,
       globalWind
     );
+
+    // Ambient gentle water ripples (fish / breeze surface disturbances)
+    if (Math.sin(time * 1.8) > 0.96) {
+      const rx = camera.pos.x + Math.sin(time * 3.1) * 200;
+      const ry = camera.pos.y + Math.cos(time * 2.7) * 150;
+      if (chunkManager.isWaterAt(rx, ry)) {
+        particles.spawnRipple(rx, ry, 9);
+      }
+    }
   },
 
   render: (alpha: number) => {
@@ -177,6 +190,7 @@ const loop = new GameLoop({
     // LAYER 5: Y-Sorted Props, Structures & Entities
     // ==========================================
     depthItems.length = 0;
+    const p = player.getInterpolatedPos(alpha);
 
     // Props from visible chunks
     for (const chunk of visibleChunks) {
@@ -201,7 +215,12 @@ const loop = new GameLoop({
         } else if (prop.type === 'flower') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => art.drawPaintedFlower(px, prop.baseY, time, globalWind, prop.variant)
+            draw: () => art.drawPaintedFlower(px, prop.baseY, time, globalWind, prop.variant, p)
+          });
+        } else if (prop.type === 'grass') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawGrassTuft(px, prop.baseY, time, globalWind, p, prop.variant)
           });
         } else if (prop.type === 'lily_pad') {
           depthItems.push({
@@ -228,7 +247,7 @@ const loop = new GameLoop({
         } else if (prop.type === 'shrub') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => art.drawShrub(px, prop.baseY, time, globalWind, prop.variant)
+            draw: () => art.drawShrub(px, prop.baseY, time, globalWind, prop.variant, p)
           });
         } else if (prop.type === 'mushroom') {
           depthItems.push({
@@ -243,7 +262,7 @@ const loop = new GameLoop({
         } else if (prop.type === 'fern') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => art.drawFern(px, prop.baseY, time, globalWind, prop.variant)
+            draw: () => art.drawFern(px, prop.baseY, time, globalWind, prop.variant, p)
           });
         } else if (prop.type === 'birch_tree') {
           depthItems.push({
@@ -263,7 +282,6 @@ const loop = new GameLoop({
     }
 
     // Player in Depth sorting
-    const p = player.getInterpolatedPos(alpha);
     depthItems.push({
       baseY: p.y,
       draw: () => player.render(renderer, alpha)

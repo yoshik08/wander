@@ -60,8 +60,20 @@ export class ArtToolkit {
     this.renderer.drawCircle(x - 1, baseY - 1, 3, hexToRgba('#D0D3D4')); // highlight
   }
 
-  drawPaintedFlower(x: number, baseY: number, time: number, wind: Vec2, variant: number) {
-    const sway = Math.sin(time * 3.0 + x * 0.1) * 2.0 + wind.x * 1.5;
+  drawPaintedFlower(x: number, baseY: number, time: number, wind: Vec2, variant: number, playerPos?: Vec2) {
+    let partX = 0;
+    if (playerPos) {
+      const dx = x - playerPos.x;
+      const dy = baseY - playerPos.y;
+      const dist = Math.hypot(dx, dy);
+      const radius = 24;
+      if (dist < radius && dist > 0.01) {
+        const push = Math.pow(1 - dist / radius, 1.3);
+        partX = (dx / dist) * push * 8;
+      }
+    }
+
+    const sway = Math.sin(time * 3.0 + x * 0.1) * 2.0 + wind.x * 1.5 + partX;
     
     this.renderer.drawLine(x, baseY, x + sway * 0.2, baseY - 6, 1.5, hexToRgba('#3A5F40'));
     
@@ -75,6 +87,74 @@ export class ArtToolkit {
   drawGrassBlade(x: number, baseY: number, time: number, wind: Vec2) {
     const sway = Math.sin(time * 3 + x * 0.04) * 2 + wind.x * 1.5;
     this.renderer.drawLine(x, baseY, x + sway, baseY - 7, 1.5, hexToRgba('#589C4B'));
+  }
+
+  drawGrassTuft(x: number, baseY: number, time: number, wind: Vec2, playerPos?: Vec2, variant: number = 0) {
+    // Dynamic player parting calculation
+    let partX = 0;
+    let partY = 0;
+    if (playerPos) {
+      const dx = x - playerPos.x;
+      const dy = baseY - playerPos.y;
+      const dist = Math.hypot(dx, dy);
+      const radius = 28;
+      if (dist < radius && dist > 0.01) {
+        const push = Math.pow(1 - dist / radius, 1.4);
+        partX = (dx / dist) * push * 9;
+        partY = (dy / dist) * push * 3;
+      }
+    }
+
+    const swayBase = Math.sin(time * 3.2 + x * 0.05) * 2.0 + wind.x * 2.0;
+
+    // Grass color variants (Ghibli greens)
+    const bladeColors = [
+      hexToRgba('#4E8A42'),
+      hexToRgba('#8DB255'),
+      hexToRgba('#A6C96C'),
+      hexToRgba('#589C4B')
+    ];
+
+    // Draw 4 distinct grass blades in a fan
+    // Left blade
+    this.renderer.drawLine(
+      x - 3,
+      baseY,
+      x - 5 + (swayBase * 0.8 + partX) * 0.8,
+      baseY - 7 + partY,
+      1.4,
+      bladeColors[0]
+    );
+
+    // Center-left blade (tallest)
+    this.renderer.drawLine(
+      x - 1,
+      baseY,
+      x - 1 + (swayBase + partX),
+      baseY - 9 + partY,
+      1.6,
+      bladeColors[1]
+    );
+
+    // Center-right blade
+    this.renderer.drawLine(
+      x + 1,
+      baseY,
+      x + 2 + (swayBase * 1.1 + partX),
+      baseY - 8 + partY,
+      1.5,
+      bladeColors[2]
+    );
+
+    // Right blade
+    this.renderer.drawLine(
+      x + 3,
+      baseY,
+      x + 5 + (swayBase * 0.9 + partX) * 0.8,
+      baseY - 6 + partY,
+      1.3,
+      bladeColors[3]
+    );
   }
 
   drawMushroom(x: number, baseY: number, variant: number, glowing: boolean = false) {
@@ -102,10 +182,22 @@ export class ArtToolkit {
     }
   }
 
-  drawFern(x: number, baseY: number, time: number, wind: Vec2, variant: number = 0) {
+  drawFern(x: number, baseY: number, time: number, wind: Vec2, variant: number = 0, playerPos?: Vec2) {
     this.drawDropShadow(x, baseY, 10, 5, 0.5);
 
-    const sway = Math.sin(time * 2.8 + x * 0.05) * 2.0 + wind.x * 1.5;
+    let partX = 0;
+    if (playerPos) {
+      const dx = x - playerPos.x;
+      const dy = baseY - playerPos.y;
+      const dist = Math.hypot(dx, dy);
+      const radius = 26;
+      if (dist < radius && dist > 0.01) {
+        const push = Math.pow(1 - dist / radius, 1.3);
+        partX = (dx / dist) * push * 7;
+      }
+    }
+
+    const sway = Math.sin(time * 2.8 + x * 0.05) * 2.0 + wind.x * 1.5 + partX;
     const fernGreen = hexToRgba('#2E572A');
     const fernLight = hexToRgba('#447A3E');
 
@@ -122,10 +214,22 @@ export class ArtToolkit {
     this.renderer.drawLine(x, baseY - 2, x + 8 + sway * 0.4, baseY - 5, 1.2, fernLight);
   }
 
-  drawShrub(x: number, baseY: number, time: number, wind: Vec2, variant: number) {
+  drawShrub(x: number, baseY: number, time: number, wind: Vec2, variant: number, playerPos?: Vec2) {
     this.drawDropShadow(x, baseY, 14, 8, 0.5);
 
-    const sway = Math.sin(time * 2.2 + x * 0.03) * 1.5 + wind.x * 1.2;
+    let partX = 0;
+    if (playerPos) {
+      const dx = x - playerPos.x;
+      const dy = baseY - playerPos.y;
+      const dist = Math.hypot(dx, dy);
+      const radius = 24;
+      if (dist < radius && dist > 0.01) {
+        const push = Math.pow(1 - dist / radius, 1.3);
+        partX = (dx / dist) * push * 5;
+      }
+    }
+
+    const sway = Math.sin(time * 2.2 + x * 0.03) * 1.5 + wind.x * 1.2 + partX;
 
     const shrubPalettes = [
       [hexToRgba('#3B7B34'), hexToRgba('#4E8A42')], // Lush green

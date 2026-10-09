@@ -59,7 +59,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 4: Procedural Art, Wind Field & Particles
-- [ ] 13 unique biomes with handcrafted procedural color palettes and ground textures
+- [x] 13 unique biomes with handcrafted procedural color palettes and ground textures
   - Meadow, wildflower fields, birch grove, deep pine forest, cherry blossom valley,
   - Rocky rises/cliffs, ponds & marsh, lakes, sandy coast, autumn maple woods,
   - Misty highlands, rare snowy peaks, rare glowing mushroom hollow
@@ -67,7 +67,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] Depth sorting (Y-sorting) for all environmental props, structures, and characters
 - [x] Global curl-noise wind field driving grass, trees, petals, and scarf coherently
 - [x] Particle system (CPU pool + GPU rendering): pollen, petals, leaves, dust, rain, snow, mist, fireflies
-- [ ] Dynamic grass parting and spring-back around the character; water ripples
+- [x] Dynamic grass parting and spring-back around the character; water ripples
 
 ---
 

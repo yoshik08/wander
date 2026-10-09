@@ -46,4 +46,10 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Particle Variety & Grounding**: Biome-specific distribution properly differentiates cheery pink cherry petals from amber maple leaves, while step dust puffs give tangible feedback to character locomotion.
 - **Performance**: Pre-allocated pool of 500 particle structs with zero allocations per frame keeps the 120Hz simulation solid and frame time under 0.8ms.
 
+## Step 4.3 (Dynamic Grass Parting & Ripples) Critique
+- **Tactile Meadow Interaction**: Tufts of grass blades, wild flowers, ferns, and shrubs now part smoothly away from the player's feet as they walk through vegetation, snapping back naturally with wind sway when moving past.
+- **Water Ripple Dynamics**: Walking into stream shallows or stepping stones now casts expanding perspective-ellipse ripple rings, accompanied by ambient water surface ripples across rivers.
+- **Zero-Allocation**: Grass parting is computed on-the-fly per visible instance against interpolated player coordinates without allocating arrays, maintaining zero garbage collection overhead.
+
+
 

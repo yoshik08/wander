@@ -314,7 +314,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: propRng.rangeInt(0, 2)
           });
           collision[idx] = 1;
-        } else if (chance < 0.28) {
+        } else if (chance < 0.20) {
           props.push({
             type: 'flower',
             x: tx * TILE_SIZE + propRng.range(4, 18),
@@ -322,7 +322,15 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 8,
             variant: propRng.rangeInt(0, 4)
           });
-        } else if (chance < 0.34) {
+        } else if (chance < 0.36) {
+          props.push({
+            type: 'grass',
+            x: tx * TILE_SIZE + propRng.range(3, 19),
+            y: ty * TILE_SIZE + propRng.range(3, 19),
+            baseY: worldY + 6,
+            variant: propRng.rangeInt(0, 3)
+          });
+        } else if (chance < 0.40) {
           props.push({
             type: 'shrub',
             x: tx * TILE_SIZE + 12,
@@ -330,7 +338,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 6,
             variant: 0
           });
-        } else if (chance < 0.38) {
+        } else if (chance < 0.44) {
           props.push({
             type: 'mushroom',
             x: tx * TILE_SIZE + 12,
@@ -338,7 +346,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 4,
             variant: propRng.rangeInt(0, 3)
           });
-        } else if (chance < 0.42) {
+        } else if (chance < 0.48) {
           props.push({
             type: 'rock',
             x: tx * TILE_SIZE + 12,
