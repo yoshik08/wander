@@ -29,6 +29,7 @@ import { PartyLeader } from './entities/party-leader';
 import { SanctuaryUI } from './ui/sanctuary-ui';
 import { WaystoneUI } from './ui/waystone-ui';
 import { SettingsModal } from './ui/settings-modal';
+import { JournalUI } from './ui/journal';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -94,6 +95,14 @@ settingsModal.onToast = (title, desc) => {
     }, 3500);
   }
 };
+const journalUI = new JournalUI(saveManager);
+const journalBtn = document.getElementById('journal-btn');
+if (journalBtn) {
+  journalBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    journalUI.toggle();
+  });
+}
 saveManager.state.clearedObstacles.forEach(o => chunkManager.clearedObstacles.add(o));
 const npcManager = new NPCManager(chunkManager.seedRaw);
 npcManager.syncDefeatedBadges(saveManager.state.badges);
@@ -579,6 +588,18 @@ const loop = new GameLoop({
       showDebug = !showDebug;
     }
 
+    if (inputState.journalPressed) {
+      journalUI.toggle();
+    }
+    if (inputState.menuPressed && journalUI.isOpen) {
+      journalUI.close();
+    }
+    if (journalUI.isOpen) {
+      inputState.move.x = 0;
+      inputState.move.y = 0;
+      inputState.isRunning = false;
+    }
+
     if (inputState.mapPressed) {
       diegeticMap.toggle();
     }
@@ -747,6 +768,13 @@ const loop = new GameLoop({
           if (dist < 24) {
             chunkManager.collectKeepsake(k.id);
             k.collected = true;
+            if (!saveManager.state.keepsakes.includes(k.type)) {
+              saveManager.state.keepsakes.push(k.type);
+            }
+            if (!saveManager.state.keepsakes.includes(k.id)) {
+              saveManager.state.keepsakes.push(k.id);
+            }
+            saveManager.saveToLocalStorage();
             console.log('[KEEPSAKE CHIME] Collected:', k.name);
             for (let s = 0; s < 6; s++) {
               particles.spawnFootstepDust(kWorldX, kWorldY, s * (Math.PI / 3));
