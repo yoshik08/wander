@@ -37,7 +37,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/ui/journal.ts` (new), `src/main.ts`
 - **Done When**: The journal shows all found keepsakes.
 
-### Step 8.4: Landmarks & Place Names
+### Step 8.4: Landmarks & Place Names [x]
 - **Action**: Generate poetic place names ("Apricot Hollow"). Detect when player enters a region with a hidden landmark and show a postcard notification.
 - **Files**: `src/world/chunk.ts`, `src/ui/journal.ts`, `src/main.ts`
 - **Done When**: Notifications appear with generated poetic names upon discovering a new region.
