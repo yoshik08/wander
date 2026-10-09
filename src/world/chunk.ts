@@ -305,7 +305,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
           });
         }
       } else if (bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) {
-        if (chance < 0.06 && distFromSpawn > 70) {
+        if (chance < 0.05 && distFromSpawn > 70) {
           props.push({
             type: 'oak_tree',
             x: tx * TILE_SIZE + 12,
@@ -314,7 +314,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: propRng.rangeInt(0, 2)
           });
           collision[idx] = 1;
-        } else if (chance < 0.32) {
+        } else if (chance < 0.28) {
           props.push({
             type: 'flower',
             x: tx * TILE_SIZE + propRng.range(4, 18),
@@ -322,15 +322,23 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 8,
             variant: propRng.rangeInt(0, 4)
           });
-        } else if (chance < 0.36) {
+        } else if (chance < 0.34) {
           props.push({
-            type: 'log',
+            type: 'shrub',
             x: tx * TILE_SIZE + 12,
             y: ty * TILE_SIZE + 12,
-            baseY: worldY + 10,
+            baseY: worldY + 6,
             variant: 0
           });
-        } else if (chance < 0.40) {
+        } else if (chance < 0.38) {
+          props.push({
+            type: 'mushroom',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 4,
+            variant: propRng.rangeInt(0, 3)
+          });
+        } else if (chance < 0.42) {
           props.push({
             type: 'rock',
             x: tx * TILE_SIZE + 12,
@@ -349,6 +357,33 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: propRng.rangeInt(0, 2)
           });
           collision[idx] = 1;
+        } else if (chance < 0.24) {
+          props.push({
+            type: 'fern',
+            x: tx * TILE_SIZE + 10,
+            y: ty * TILE_SIZE + 10,
+            baseY: worldY + 8,
+            variant: 0
+          });
+        } else if (chance < 0.32) {
+          props.push({
+            type: 'mushroom',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 4,
+            variant: 0 // Brown forest mushroom
+          });
+        }
+      } else if (bType === BiomeType.BirchGrove) {
+        if (chance < 0.09 && distFromSpawn > 70) {
+          props.push({
+            type: 'birch_tree',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 12,
+            variant: 0
+          });
+          collision[idx] = 1;
         } else if (chance < 0.22) {
           props.push({
             type: 'fern',
@@ -357,17 +392,44 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 8,
             variant: 0
           });
-        }
-      } else if (bType === BiomeType.BirchGrove) {
-        if (chance < 0.08 && distFromSpawn > 70) {
+        } else if (chance < 0.32) {
           props.push({
-            type: 'birch_tree',
+            type: 'flower',
             x: tx * TILE_SIZE + 12,
             y: ty * TILE_SIZE + 12,
-            baseY: worldY + 12,
-            variant: propRng.rangeInt(0, 1)
+            baseY: worldY + 6,
+            variant: 0
           });
-          collision[idx] = 1;
+        }
+      } else if (bType === BiomeType.GlowingHollow) {
+        if (chance < 0.25) {
+          props.push({
+            type: 'mushroom_glowing',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 4,
+            variant: propRng.rangeInt(0, 3)
+          });
+        }
+      } else if (bType === BiomeType.CherryBlossom) {
+        if (chance < 0.18) {
+          props.push({
+            type: 'shrub',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 6,
+            variant: 2 // Blossom pink shrub
+          });
+        }
+      } else if (bType === BiomeType.AutumnMaple) {
+        if (chance < 0.20) {
+          props.push({
+            type: 'shrub',
+            x: tx * TILE_SIZE + 12,
+            y: ty * TILE_SIZE + 12,
+            baseY: worldY + 6,
+            variant: 1 // Autumn amber shrub
+          });
         }
       }
     }

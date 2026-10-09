@@ -74,6 +74,84 @@ export class ArtToolkit {
 
   drawGrassBlade(x: number, baseY: number, time: number, wind: Vec2) {
     const sway = Math.sin(time * 3 + x * 0.04) * 2 + wind.x * 1.5;
-    this.renderer.drawLine(x, baseY, x + sway, baseY - 7, 1.5, hexToRgba('#A6C96C'));
+    this.renderer.drawLine(x, baseY, x + sway, baseY - 7, 1.5, hexToRgba('#589C4B'));
+  }
+
+  drawMushroom(x: number, baseY: number, variant: number, glowing: boolean = false) {
+    this.drawDropShadow(x, baseY, 8, 4, 0.5);
+
+    // Stipe (Stem)
+    const stemColor = glowing ? hexToRgba('#1B4965') : hexToRgba('#F4E3C5');
+    this.renderer.drawRect(x - 1.5, baseY - 7, 3, 7, stemColor);
+
+    // Cap colors
+    const capColors = glowing
+      ? [hexToRgba('#00B4D8'), hexToRgba('#48CAE4'), hexToRgba('#90E0EF')]
+      : [hexToRgba('#8D5B4C'), hexToRgba('#C0392B'), hexToRgba('#E67E22')];
+    const capColor = capColors[variant % capColors.length];
+
+    // Cap (dome)
+    this.renderer.drawCircle(x, baseY - 7, 5.5, capColor);
+
+    // Spots or glow highlight
+    if (glowing) {
+      this.renderer.drawCircle(x, baseY - 8, 2.5, hexToRgba('#CAF0F8', 0.8));
+    } else {
+      this.renderer.drawCircle(x - 2, baseY - 8, 1.2, hexToRgba('#FFFFFF', 0.85));
+      this.renderer.drawCircle(x + 2, baseY - 8, 1.2, hexToRgba('#FFFFFF', 0.85));
+    }
+  }
+
+  drawFern(x: number, baseY: number, time: number, wind: Vec2, variant: number = 0) {
+    this.drawDropShadow(x, baseY, 10, 5, 0.5);
+
+    const sway = Math.sin(time * 2.8 + x * 0.05) * 2.0 + wind.x * 1.5;
+    const fernGreen = hexToRgba('#2E572A');
+    const fernLight = hexToRgba('#447A3E');
+
+    // Central frond
+    this.renderer.drawLine(x, baseY, x + sway * 0.4, baseY - 12, 1.8, fernGreen);
+    this.renderer.drawLine(x - 2, baseY - 6, x + sway * 0.5, baseY - 10, 1.5, fernLight);
+
+    // Left fronds
+    this.renderer.drawLine(x, baseY, x - 6 + sway * 0.2, baseY - 8, 1.5, fernGreen);
+    this.renderer.drawLine(x, baseY - 2, x - 8 + sway * 0.3, baseY - 5, 1.2, fernLight);
+
+    // Right fronds
+    this.renderer.drawLine(x, baseY, x + 6 + sway * 0.3, baseY - 8, 1.5, fernGreen);
+    this.renderer.drawLine(x, baseY - 2, x + 8 + sway * 0.4, baseY - 5, 1.2, fernLight);
+  }
+
+  drawShrub(x: number, baseY: number, time: number, wind: Vec2, variant: number) {
+    this.drawDropShadow(x, baseY, 14, 8, 0.5);
+
+    const sway = Math.sin(time * 2.2 + x * 0.03) * 1.5 + wind.x * 1.2;
+
+    const shrubPalettes = [
+      [hexToRgba('#3B7B34'), hexToRgba('#4E8A42')], // Lush green
+      [hexToRgba('#C0392B'), hexToRgba('#E67E22')], // Autumn red/amber
+      [hexToRgba('#F1948A'), hexToRgba('#FADBD8')], // Blossom pink
+    ];
+    const pal = shrubPalettes[variant % shrubPalettes.length];
+
+    this.renderer.drawCircle(x - 4 + sway * 0.2, baseY - 5, 7, pal[0]);
+    this.renderer.drawCircle(x + 4 + sway * 0.3, baseY - 5, 7, pal[0]);
+    this.renderer.drawCircle(x + sway * 0.4, baseY - 9, 8, pal[1]);
+  }
+
+  drawBirchTree(x: number, baseY: number, time: number, wind: Vec2) {
+    this.drawDropShadow(x, baseY, 12, 28, 0.5);
+
+    // White birch trunk
+    this.renderer.drawRect(x - 3, baseY - 20, 6, 22, hexToRgba('#EAECEE'));
+    // Dark birch bark marks
+    this.renderer.drawRect(x - 2, baseY - 14, 3, 2, hexToRgba('#2C3E50'));
+    this.renderer.drawRect(x + 1, baseY - 8, 2, 2, hexToRgba('#2C3E50'));
+
+    const sway = Math.sin(time * 2.6 + x * 0.03) * 3.5 + wind.x * 3.0;
+    // Pale golden-green birch leaves
+    this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 12, hexToRgba('#78B833'));
+    this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 12, hexToRgba('#8DC73F'));
+    this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 13, hexToRgba('#A0D048'));
   }
 }

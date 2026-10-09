@@ -36,8 +36,9 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
   - Hard tile transitions between sand and grass need organic shoreline transitions.
   - Milestone 3 will introduce continuous river curves, shoreline foam, waterfalls, bridges, and winding dirt paths!
 
-## Look and Smoothness Fix Critique
-- **Visuals & Palettes**: Restored the clean, cohesive M3 meadow and lake color palettes (#4E8A42 / #437B38 / #589C4B and #3D8FD1 / #175276). Removed harsh fragment discard artifacts and dark shoreline borders by rendering a continuous riverbed layer and gentle alpha-blended undulating foam rims. Bridges now generate strictly where paths cross waterways.
-- **Performance & Smoothness**: Static chunk caching via pre-baked WebGL2 VAO/VBOs completely eliminated per-frame tile quad rebuilds and allocations, dropping frame times to under 0.5ms. Both camera and player are smoothly interpolated with simulation alpha and snapped to physical device pixels, eliminating judder across high refresh displays (60/90/120/144Hz).
-- **F3 Overlay**: High-resolution diagnostic overlay cleanly reports real-time FPS, frame time ms, simulation rate, draw call count, coordinates, and active chunk metrics without consuming sprite batch quota.
+## Step 4.1 (Extended Biome Palettes & Toolkit Props) Critique
+- **Props**: Extended ArtToolkit with painterly, no-outline `drawMushroom` (with spore dots and glowing hollow variants), wind-reactive `drawFern`, multi-tone `drawShrub` (meadow green, autumn amber, cherry blossom pink), and `drawBirchTree`.
+- **Biome Visuals**: Chunk procedural prop generation now scatters mushrooms, ferns, shrubs, and birch trees across all 13 biomes according to their climate definition, enriching visual variety beyond basic oak/pine trees.
+- **Performance**: All new props participate in the existing batched primitives pipeline with minimal overhead and zero per-frame garbage.
+
 

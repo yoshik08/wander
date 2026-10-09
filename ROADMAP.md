@@ -5,7 +5,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 4: Procedural Art, Wind Field & Particles
 **Focus**: Expanding the biome visuals using the ArtToolkit and adding atmospheric particles.
 
-### Step 4.1: Extended Biome Palettes & Toolkit Props
+### [x] Step 4.1: Extended Biome Palettes & Toolkit Props
 - **Action**: Update `src/world/biomes.ts` to include full Ghibli-inspired palettes for the remaining 12 biomes (Pine Forest, Cherry Blossom, etc.) following the new color spec. Add `drawMushroom`, `drawFern`, and `drawShrub` to `ArtToolkit`.
 - **Files**: `src/world/biomes.ts`, `src/render/art.ts`, `src/main.ts`
 - **Reuse**: `drawDropShadow`, `renderer.drawPolygon`

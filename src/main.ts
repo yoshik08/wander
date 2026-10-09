@@ -197,6 +197,31 @@ const loop = new GameLoop({
               renderer.drawCircle(px + 8, py, 2.5, hexToRgba('#D7CCC8'));
             }
           });
+        } else if (prop.type === 'shrub') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawShrub(px, prop.baseY, time, globalWind, prop.variant)
+          });
+        } else if (prop.type === 'mushroom') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawMushroom(px, prop.baseY, prop.variant, false)
+          });
+        } else if (prop.type === 'mushroom_glowing') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawMushroom(px, prop.baseY, prop.variant, true)
+          });
+        } else if (prop.type === 'fern') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawFern(px, prop.baseY, time, globalWind, prop.variant)
+          });
+        } else if (prop.type === 'birch_tree') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => art.drawBirchTree(px, prop.baseY, time, globalWind)
+          });
         }
       }
 
