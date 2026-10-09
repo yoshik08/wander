@@ -16,6 +16,11 @@ export class ArtToolkit {
     { x: 0, y: 0 },
     { x: 0, y: 0 }
   ];
+  private scratchPuddleColor: ColorRGBA = { r: 0.12, g: 0.18, b: 0.12, a: 0.2 };
+  private scratchWaterColor: ColorRGBA = { r: 0.32, g: 0.52, b: 0.68, a: 0.35 };
+  private scratchHighlightColor: ColorRGBA = { r: 0.95, g: 0.98, b: 1.0, a: 0.4 };
+  private scratchPuddleOuter: Vec2[] = Array.from({ length: 8 }, () => ({ x: 0, y: 0 }));
+  private scratchPuddleInner: Vec2[] = Array.from({ length: 8 }, () => ({ x: 0, y: 0 }));
 
   constructor(renderer: IRenderer) {
     this.renderer = renderer;
@@ -295,5 +300,77 @@ export class ArtToolkit {
     this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 12, hexToRgba('#78B833'));
     this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 12, hexToRgba('#8DC73F'));
     this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 13, hexToRgba('#A0D048'));
+  }
+
+  /**
+   * Draws a reflective, organic ground puddle with outer damp soil darkening and inner sky water reflection.
+   */
+  drawPuddle(x: number, y: number, radiusX: number, radiusY: number, wetness: number): void {
+    if (wetness <= 0.04) return;
+
+    // 1. Dark damp soil ring beneath puddle
+    const outerRx = radiusX * (0.8 + 0.2 * wetness);
+    const outerRy = radiusY * (0.8 + 0.2 * wetness);
+    const step = (Math.PI * 2) / 8;
+    for (let i = 0; i < 8; i++) {
+      const a = i * step;
+      this.scratchPuddleOuter[i].x = x + Math.cos(a) * outerRx;
+      this.scratchPuddleOuter[i].y = y + Math.sin(a) * outerRy;
+    }
+    this.scratchPuddleColor.r = 0.12;
+    this.scratchPuddleColor.g = 0.18;
+    this.scratchPuddleColor.b = 0.12;
+    this.scratchPuddleColor.a = 0.32 * wetness;
+    this.renderer.drawPolygon(this.scratchPuddleOuter, this.scratchPuddleColor);
+
+    // 2. Reflective puddle water body
+    const innerRx = outerRx * 0.75;
+    const innerRy = outerRy * 0.70;
+    for (let i = 0; i < 8; i++) {
+      const a = i * step;
+      this.scratchPuddleInner[i].x = x + Math.cos(a) * innerRx;
+      this.scratchPuddleInner[i].y = y + Math.sin(a) * innerRy;
+    }
+    this.scratchWaterColor.r = 0.32;
+    this.scratchWaterColor.g = 0.52;
+    this.scratchWaterColor.b = 0.68;
+    this.scratchWaterColor.a = 0.45 * wetness;
+    this.renderer.drawPolygon(this.scratchPuddleInner, this.scratchWaterColor);
+
+    // 3. Subtle glint / sky reflection sheen along top rim
+    if (wetness > 0.35) {
+      this.scratchHighlightColor.a = 0.28 * wetness;
+      this.renderer.drawLine(
+        x - innerRx * 0.5,
+        y - innerRy * 0.4,
+        x + innerRx * 0.4,
+        y - innerRy * 0.4,
+        1.1,
+        this.scratchHighlightColor
+      );
+    }
+  }
+
+  /**
+   * Draws an expanding concentric perspective ripple ring.
+   */
+  drawRipple(x: number, y: number, radius: number, alpha: number): void {
+    if (alpha <= 0.01) return;
+    this.scratchHighlightColor.r = 0.90;
+    this.scratchHighlightColor.g = 0.96;
+    this.scratchHighlightColor.b = 1.0;
+    this.scratchHighlightColor.a = alpha;
+
+    const segments = 8;
+    const step = (Math.PI * 2) / segments;
+    for (let s = 0; s < segments; s++) {
+      const a0 = s * step;
+      const a1 = (s + 1) * step;
+      const x0 = x + Math.cos(a0) * radius;
+      const y0 = y + Math.sin(a0) * (radius * 0.55);
+      const x1 = x + Math.cos(a1) * radius;
+      const y1 = y + Math.sin(a1) * (radius * 0.55);
+      this.renderer.drawLine(x0, y0, x1, y1, 1.2, this.scratchHighlightColor);
+    }
   }
 }

@@ -83,7 +83,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ## Milestone 6: Seasons & Smooth Weather
 - [ ] 4 advancing seasons: spring blossoms, summer haze, autumn foliage & leaf-fall, winter frost & snow
 - [ ] Seasonal variation in biome palettes, tree leaves, and collectible items
-- [ ] Weather state machine: clear, breezy, overcast, drizzle with forming puddles, morning fog, thunderstorms, snow
+- [x] Weather state machine: clear, breezy, overcast, drizzle with forming puddles, morning fog, thunderstorms, snow
 - [ ] Post-rain daylight rainbow effect
 
 ---

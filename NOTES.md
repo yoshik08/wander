@@ -70,3 +70,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **State System & Flow**: Dynamic weather transitions cleanly between clear skies, breezy gusts, overcast gloom, gentle drizzle, thunderstorms with lightning flashes, and morning mist.
 - **Wind & Environment Coupling**: The global wind field now naturally scales up to 2.8x during storms and calms to 0.7x in foggy weather, dynamically driving prop sway and floating petals.
 - **Visual Integration**: Overcast and storm ambient overlays dim and tint the world atmospherically without harsh contrast, while instantaneous lightning illumination briefly washes the terrain with cool bright light.
+
+## Step 6.2 (Rain & Puddles) Critique
+- **Rain Streak Dynamics**: Rain streaks fall rapidly at an angle matched to the active wind vector, creating a tactile sense of precipitation during drizzle and thunderstorms.
+- **Ground Impact Ripples & Puddles**: When rain drops reach the ground, they trigger delicate expanding elliptical ripple splashes. Organic, translucent wet puddles form along paths and depressions as ground wetness builds up.
+- **Interactive Splash**: Walking through wet terrain now produces responsive water ripple rings and damp footsteps, enriching player interaction without adding per-frame garbage.

@@ -54,7 +54,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/systems/weather.ts` (new), `src/main.ts`
 - **Done When**: Weather can transition randomly every few minutes.
 
-### Step 6.2: Rain & Puddles
+### [x] Step 6.2: Rain & Puddles
 - **Action**: Expand `ParticleSystem` to handle high-velocity rain streaks. Use `ArtToolkit` to draw expanding ripple rings on the ground/water.
 - **Files**: `src/systems/particles.ts`, `src/render/art.ts`
 - **Done When**: Rain particles fall rapidly at an angle matching the wind, with ripples appearing on the ground.

@@ -4,7 +4,7 @@ import { InputManager } from './core/input';
 import { Camera } from './core/camera';
 import { Character } from './entities/character';
 import { ChunkManager } from './world/chunk-manager';
-import { CHUNK_PIXEL_SIZE } from './world/chunk';
+import { CHUNK_PIXEL_SIZE, CHUNK_TILES, TILE_SIZE, TILE_FLAG_PATH, TILE_FLAG_WATER } from './world/chunk';
 import { renderStructure } from './world/structures';
 import { hexToRgba, vec2, Vec2 } from './core/math';
 import { ArtToolkit } from './render/art';
@@ -37,6 +37,10 @@ player.onStep = (pos, angle, isRunning) => {
   if (chunkManager.isWaterAt(pos.x, pos.y)) {
     particles.spawnRipple(pos.x, pos.y, isRunning ? 18 : 12);
   } else {
+    const wet = weather.getInfo().wetness;
+    if (wet > 0.30) {
+      particles.spawnRipple(pos.x, pos.y, isRunning ? 10 : 6);
+    }
     particles.spawnFootstepDust(pos.x, pos.y, angle);
     if (isRunning) {
       particles.spawnFootstepDust(pos.x, pos.y, angle);
@@ -127,7 +131,7 @@ const loop = new GameLoop({
     // Stream and prune chunks around camera
     chunkManager.update(camera.pos.x, camera.pos.y);
 
-    // Update ambient and footstep particles
+    // Update ambient, rain, and footstep particles
     const currentBiome = chunkManager.getBiomeAt(player.pos.x, player.pos.y);
     particles.update(
       dt,
@@ -138,7 +142,9 @@ const loop = new GameLoop({
       renderer.height,
       camera.zoom,
       currentBiome,
-      globalWind
+      globalWind,
+      weatherInfo.isRaining,
+      weatherInfo.isStormy
     );
 
     // Ambient gentle water ripples (fish / breeze surface disturbances)
@@ -176,6 +182,36 @@ const loop = new GameLoop({
     // ==========================================
     for (const chunk of visibleChunks) {
       renderer.drawChunkTerrain(chunk);
+    }
+
+    // ==========================================
+    // LAYER 1.5: Dynamic Wet Weather Puddles
+    // ==========================================
+    const curWeather = weather.getInfo();
+    if (curWeather.wetness > 0.04) {
+      for (const chunk of visibleChunks) {
+        const { chunkX, chunkY, data } = chunk;
+        const baseWorldX = chunkX * CHUNK_PIXEL_SIZE;
+        const baseWorldY = chunkY * CHUNK_PIXEL_SIZE;
+
+        const puddleCount = 6;
+        for (let pIdx = 0; pIdx < puddleCount; pIdx++) {
+          const h = (Math.imul(chunkX * 73856093 ^ chunkY * 19349663 ^ pIdx * 83492791, 1000003)) >>> 0;
+          const tx = (h & 0x1F);
+          const ty = ((h >> 5) & 0x1F);
+          const tileIdx = ty * CHUNK_TILES + tx;
+
+          const flag = data.tileFlags[tileIdx];
+          if ((flag & TILE_FLAG_WATER) === 0 && (data.collision[tileIdx] === 0)) {
+            const isPath = (flag & TILE_FLAG_PATH) !== 0;
+            const px = baseWorldX + tx * TILE_SIZE + 12;
+            const py = baseWorldY + ty * TILE_SIZE + 12;
+            const rx = isPath ? 14 : 10;
+            const ry = isPath ? 7 : 5;
+            art.drawPuddle(px, py, rx, ry, curWeather.wetness);
+          }
+        }
+      }
     }
 
     // ==========================================
@@ -381,7 +417,7 @@ const loop = new GameLoop({
           <div style="font-weight: 700; color: #38BDF8; margin-bottom: 4px;">MEADOW [F3 DEBUG]</div>
           <div>FPS: <span style="color: #4ADE80; font-weight: 600;">${loop.fps}</span> (${loop.frameTimeMs.toFixed(1)} ms)</div>
           <div>Time: <span style="color: #FBBF24; font-weight: 600;">${timeInfo.timeString}</span> (${timeInfo.name})</div>
-          <div>Weather: <span style="color: #67E8F9; font-weight: 600;">${weatherInfo.name}</span> (wind: ${weatherInfo.windMultiplier.toFixed(1)}x)</div>
+          <div>Weather: <span style="color: #67E8F9; font-weight: 600;">${weatherInfo.name}</span> (wind: ${weatherInfo.windMultiplier.toFixed(1)}x, wetness: ${(weatherInfo.wetness * 100).toFixed(0)}%)</div>
           <div>Sim: 120Hz fixed (interp: ${alpha.toFixed(2)})</div>
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>

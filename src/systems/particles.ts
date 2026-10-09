@@ -3,7 +3,7 @@ import { IRenderer } from '../render/types';
 import { BiomeType } from '../world/biomes';
 import { PRNG } from '../core/prng';
 
-export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly' | 'ripple';
+export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly' | 'ripple' | 'rain';
 
 export interface Particle {
   active: boolean;
@@ -28,7 +28,7 @@ export interface Particle {
 }
 
 export class ParticleSystem {
-  private readonly maxParticles = 500;
+  private readonly maxParticles = 750;
   private readonly pool: Particle[] = [];
   private prng: PRNG;
 
@@ -44,6 +44,7 @@ export class ParticleSystem {
 
   // Spawn timing accumulator
   private spawnAccumulator = 0;
+  private rainSpawnAccumulator = 0;
 
   constructor(seed: number = 4242) {
     this.prng = new PRNG(seed);
@@ -373,7 +374,9 @@ export class ParticleSystem {
     viewHeight: number,
     zoom: number,
     biome: BiomeType,
-    globalWind: Vec2
+    globalWind: Vec2,
+    isRaining: boolean = false,
+    isStormy: boolean = false
   ): void {
     const halfW = (viewWidth / 2) / zoom;
     const halfH = (viewHeight / 2) / zoom;
@@ -392,6 +395,9 @@ export class ParticleSystem {
 
       p.life -= dt;
       if (p.life <= 0) {
+        if (p.type === 'rain' && this.prng.next() < 0.35) {
+          this.spawnRipple(p.x, p.y, isStormy ? 6 : 4);
+        }
         p.active = false;
         continue;
       }
@@ -409,6 +415,9 @@ export class ParticleSystem {
         p.vx *= Math.pow(0.88, dt * 60);
         p.vy *= Math.pow(0.88, dt * 60);
         p.size += dt * 2.0; // expand slightly
+      } else if (p.type === 'rain') {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
       } else if (p.type === 'ripple') {
         const expandSpeed = (p.angle - 2.5) / p.maxLife;
         p.size += expandSpeed * dt;
@@ -473,6 +482,43 @@ export class ParticleSystem {
         activeCount++;
       }
     }
+
+    // Rain drop continuous spawning when isRaining
+    if (isRaining) {
+      const rainBudget = isStormy ? 220 : 90;
+      this.rainSpawnAccumulator += dt * rainBudget;
+      const toSpawnRain = Math.floor(this.rainSpawnAccumulator);
+      this.rainSpawnAccumulator -= toSpawnRain;
+
+      for (let r = 0; r < toSpawnRain; r++) {
+        const rp = this.allocateParticle();
+        if (!rp) break;
+
+        rp.active = true;
+        rp.type = 'rain';
+        const spawnW = halfW * 2 + 180;
+        rp.x = camX - halfW - 90 + this.prng.next() * spawnW;
+        rp.y = camY - halfH - (10 + this.prng.next() * 30);
+
+        const windSkew = globalWind.x * (isStormy ? 75 : 45);
+        rp.vx = windSkew + (this.prng.next() - 0.5) * 15;
+        rp.vy = isStormy ? (440 + this.prng.next() * 100) : (290 + this.prng.next() * 60);
+        rp.size = isStormy ? (14 + this.prng.next() * 8) : (8 + this.prng.next() * 6);
+        rp.maxLife = 0.35 + this.prng.next() * 0.35;
+        rp.life = rp.maxLife;
+
+        rp.r = 0.82;
+        rp.g = 0.90;
+        rp.b = 0.98;
+        rp.baseAlpha = isStormy ? 0.65 : 0.45;
+        rp.oscOffset = 0;
+        rp.oscSpeed = 0;
+        rp.oscAmpX = 0;
+        rp.oscAmpY = 0;
+        rp.angle = 0;
+        rp.angularVel = 0;
+      }
+    }
   }
 
   /**
@@ -521,8 +567,15 @@ export class ParticleSystem {
         this.scratchHaloColor.g = p.g;
         this.scratchHaloColor.b = p.b;
         this.scratchHaloColor.a = alpha * 0.30;
-        renderer.drawCircle(p.x, p.y, p.size * 2.2, this.scratchHaloColor);
-        renderer.drawCircle(p.x, p.y, p.size * 0.9, this.scratchColor);
+      } else if (p.type === 'rain') {
+        // High-velocity streak line pointing against velocity direction
+        const speed = Math.hypot(p.vx, p.vy);
+        if (speed > 0.01) {
+          const inv = p.size / speed;
+          const tailX = p.x - p.vx * inv;
+          const tailY = p.y - p.vy * inv;
+          renderer.drawLine(p.x, p.y, tailX, tailY, 1.2, this.scratchColor);
+        }
       } else if (p.type === 'petal' || p.type === 'leaf') {
         // Stylized tumbling leaf / petal with rotation
         const tumble = 0.4 + 0.6 * Math.abs(Math.sin(p.angle * 1.5));

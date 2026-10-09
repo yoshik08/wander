@@ -13,6 +13,7 @@ export interface WeatherInfo {
   isRaining: boolean;
   isStormy: boolean;
   lightningFlash: number; // 0 to 1 intensity
+  wetness: number; // 0 to 1 terrain wetness (forming puddles)
 }
 
 export class WeatherSystem {
@@ -20,6 +21,7 @@ export class WeatherSystem {
   targetState: WeatherState = 'clear';
   transitionProgress: number = 1.0; // 0 (current) to 1 (target reached)
   transitionDuration: number = 15.0; // 15 seconds smooth crossfade
+  wetness: number = 0.0;
 
   stateTimer: number = 180.0; // Time remaining in current state (e.g. 3 minutes)
   private prng: PRNG;
@@ -68,6 +70,15 @@ export class WeatherSystem {
     if (this.lightningIntensity > 0) {
       this.lightningIntensity -= dt * 4.5; // Rapid decay
       if (this.lightningIntensity < 0) this.lightningIntensity = 0;
+    }
+
+    // 4. Ground wetness accumulation (forming puddles) & evaporation
+    const activeIsRain = (this.currentState === 'drizzle' || this.currentState === 'thunderstorm') ||
+                         (this.targetState === 'drizzle' || this.targetState === 'thunderstorm');
+    if (activeIsRain) {
+      this.wetness = Math.min(1.0, this.wetness + dt * 0.08);
+    } else {
+      this.wetness = Math.max(0.0, this.wetness - dt * 0.02);
     }
   }
 
@@ -180,7 +191,8 @@ export class WeatherSystem {
       ambientTint: this.scratchTint,
       isRaining,
       isStormy,
-      lightningFlash: this.lightningIntensity
+      lightningFlash: this.lightningIntensity,
+      wetness: this.wetness
     };
   }
 
