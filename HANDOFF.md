@@ -41,10 +41,11 @@
   - Milestone 9 (Step 9.2): Photo Mode & Calm Mode (wired PhotoMode with letterbox frame, 5 postcard filters [Normal, Vintage Film, Watercolor Wash, Polaroid Instant, Golden Dusk], zoom [0.6x to 2.2x], shutter flash + PNG export, dedicated HUD controls, and Calm Mode toggling [C key / button] that hides all UI and engages gentle auto-wandering on idle).
   - Milestone 9 (Step 9.3): Activities: Stone Skipping & Relaxing Fishing (ActivityManager with water proximity detection, parabolic stone skipping physics with concentric impacts & sinking plop, timing-free relaxing fishing state machine with rod/float/line rendering, 8-species catch catalogue, and Journal folio tracking).
   - Milestone 10 (Steps 10.1 & 10.2): Web Audio Synthesis & Generative Music (100% code-generated Web Audio API engine with procedural pink/brown wind noise modulated by weather, spatial river stream bubbler based on water proximity, procedural daylight bird chirps, time-of-day evolving pentatonic pads [Dawn C Major, Afternoon F Lydian, Sunset G Golden, Night A Minor], micro-sound footsteps/ripples/skip taps/fanfare, volume sliders in settings modal, and top HUD audio mute toggle).
+  - Milestone 11 (Step 11.1): UI, Touch Controls & Character Customization (Character wardrobe with 8 palette colorways, 4 hats [Beanie, Straw Sunhat, Alpine Beret, Floral Crown], 3 backpacks [Leather Rucksack, Canvas Satchel, Herb Basket], responsive top HUD toolbar with mobile icon collapse, and dual-zone touch controls with zoom-invariant virtual joystick and amber touch action button).
 - **Completed in this step**:
-  - Milestone 10 (Steps 10.1 & 10.2): Web Audio Synthesis & Generative Music.
+  - Milestone 11 (Step 11.1): UI, Controls & Character Customization.
 - **Next Item in ROADMAP.md**:
-  - Milestone 11 (Step 11.1): UI, Touch Controls & Character Customization (Virtual joysticks, responsive typography, 8 colorways, 4 hats, 3 backpacks persisted customization UI).
+  - Milestone 12 (Step 12.1): Save System (localStorage/IndexedDB) and PWA manifest (Autosave every 15s, visibilitychange save, import/export JSON, PWA manifest and service worker with `/wander/` scope).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
@@ -53,5 +54,5 @@
 4. **Test**: `npm run test`
 
 ## Known Bugs / Blockers
-- None. Everything builds cleanly with zero errors and 100% test pass rate.
+- None. Everything builds cleanly with zero errors and 100% test pass rate (18 test files, 90 tests passing).
 

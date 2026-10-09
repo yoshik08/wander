@@ -125,10 +125,10 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 11: UI, Controls & Character Customization
-- [ ] Responsive modern typography,HUD, and menu overlays
-- [ ] Character customization: 8 colourways, 4 hats, 3 backpacks (persisted)
-- [ ] Full control schemes: Keyboard & Mouse, Gamepad with haptics, Touch (virtual joystick + buttons)
-- [ ] Viewport testing at 1280x800, 412x915, and 393x852 (portrait and landscape)
+- [x] Responsive modern typography,HUD, and menu overlays
+- [x] Character customization: 8 colourways, 4 hats, 3 backpacks (persisted)
+- [x] Full control schemes: Keyboard & Mouse, Gamepad with haptics, Touch (virtual joystick + buttons)
+- [x] Viewport testing at 1280x800, 412x915, and 393x852 (portrait and landscape)
 
 ---
 

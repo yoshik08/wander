@@ -134,5 +134,11 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Undulating Nordic Auroras**: Dual emerald and violet waving aurora curtains shimmer softly in the upper atmosphere when exploring Snowy Peaks and mountain heights at night, dusk, or dawn.
 - **Weather and Time Locked Creature Spawns**: Species now possess environmental affinity requirements: marsh amphibian and aqua species only emerge in rain/drizzle, alpine frost species emerge in snowy peaks, and glowing hollow spirits wander exclusively under starlit night skies.
 
+## Step 11.1 (UI, Controls & Character Customization) Critique
+- **Character Wardrobe**: 8 hand-tailored colorways (Rust Coral, Forest Moss, Deep Indigo, Ochre Gold, Heather Violet, Pine Teal, Dusty Plum, Cloud White), 4 headwear variants (Knit Beanie, Straw Sunhat, Alpine Beret with feather, Floral Crown), and 3 exploration backpacks (Leather Rucksack with brass buckles, Canvas Satchel with clasps, Herb Basket with tucked herb sprig). All customized pieces render in the painterly, no-outline aesthetic and persist across game reloads.
+- **Responsive HUD Toolbar**: Top bar dynamically converts from labeled buttons on desktop to compact, touch-accessible circular/pill icons on mobile (<640px) without overflowing.
+- **Mobile Touch Controls**: Dual-zone touch navigation features a zoom-invariant virtual joystick with gold thumb knob and directional ring indicator on the left screen half, alongside an amber floating action button (FAB) on the bottom right for instant interaction and fishing.
+- **Viewport Testing**: Verified seamless responsiveness across desktop (1280x800) and phone viewport sizes (412x915, 393x852).
+
 
 

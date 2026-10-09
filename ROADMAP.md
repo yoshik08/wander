@@ -80,7 +80,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ---
 
 ## Milestone 11-15: Polish & Release
-- **Step 11.1**: UI and Touch Controls (Virtual joysticks, responsive typography).
+- [x] **Step 11.1**: UI and Touch Controls (Virtual joysticks, responsive typography).
 - **Step 12.1**: Save System (localStorage/IndexedDB) and PWA manifest.
 - **Step 13.1**: Quality Scaler & Accessibility toggles.
 - **Step 15.1**: Final visual review and memory leak tests.
@@ -95,7 +95,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/systems/save.ts` (new)
 - **Done When**: Game state can be exported as JSON and re-imported successfully.
 
-### Step C1.2: Procedural Creature Generation
+### Step C1.2: Procedural Creature Generation [x]
 - [x] **Action**: Create a `CreatureSystem`. Generate 150 species using `hash(seed+id)`. Determine archetype (quadruped, biped, serpent, avian, blob), appendages, type-locked hue ranges, and noise patterns (fur/scales/bark). Generate names via a syllable grammar.
 - **Files**: `src/entities/creature.ts` (new), `src/render/art.ts`
 - **Risk**: *High*. Procedural drawing of diverse archetypes requires careful skeletal assembly in `art.ts` to avoid looking messy.
