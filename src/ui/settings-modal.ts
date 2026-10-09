@@ -1,4 +1,4 @@
-import { SaveManager, GameSettings } from '../systems/save';
+import { SaveManager, GameSettings, QualityPreset } from '../systems/save';
 import { TYPE_BADGE_INFO, CreatureType } from '../entities/creature';
 import { COLORWAYS } from '../entities/character';
 
@@ -19,6 +19,9 @@ export class SettingsModal {
   onVolumeChange?: (type: 'master' | 'music' | 'ambience' | 'sfx', val: number) => void;
   onMuteToggle?: () => boolean;
   onCustomizationChange?: (customization: { colorwayIndex: number; hatIndex: number; backpackIndex: number }) => void;
+  onQualityPresetChange?: (preset: QualityPreset) => void;
+  onReducedMotionChange?: (reducedMotion: boolean) => void;
+  onHighContrastChange?: (highContrast: boolean) => void;
   onToast?: (title: string, desc: string) => void;
 
   constructor(private saveManager: SaveManager, private currentSeed: string) {
@@ -366,6 +369,117 @@ export class SettingsModal {
     s6.appendChild(packRow);
 
     this.container.appendChild(s6);
+
+    // Section 7: Graphics & Performance Quality
+    const s7 = this.createSection(
+      '🖥️ Graphics & Quality Presets',
+      'Optimize performance or maximize visual fidelity.'
+    );
+
+    const presets: QualityPreset[] = ['auto', 'low', 'medium', 'high', 'ultra'];
+    const presetLabels: Record<QualityPreset, string> = {
+      auto: '⚡ Auto (Adaptive)',
+      low: '🌱 Low (75% Res)',
+      medium: '🌿 Med (88% Res)',
+      high: '🌸 High (100% Res)',
+      ultra: '✨ Ultra (Max Details)'
+    };
+
+    const presetRow = document.createElement('div');
+    presetRow.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;';
+
+    presets.forEach((p) => {
+      const pBtn = document.createElement('button');
+      const isActive = (this.saveManager.state.settings?.qualityPreset || 'auto') === p;
+      pBtn.textContent = presetLabels[p];
+      pBtn.style.cssText = `
+        flex: 1 1 auto;
+        min-width: 90px;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        background: ${isActive ? '#27AE60' : 'rgba(255,255,255,0.08)'};
+        border: ${isActive ? '2px solid #FFF8E7' : '1px solid rgba(255,255,255,0.2)'};
+        color: #FFF8E7;
+        transition: all 0.15s ease;
+      `;
+      pBtn.onclick = () => {
+        if (!this.saveManager.state.settings) {
+          this.saveManager.state.settings = { speed2x: false, colourblindMode: false, peacefulMode: false };
+        }
+        this.saveManager.state.settings.qualityPreset = p;
+        this.saveManager.saveToLocalStorage();
+        Array.from(presetRow.children).forEach((ch: any, cIdx) => {
+          const match = presets[cIdx] === p;
+          ch.style.background = match ? '#27AE60' : 'rgba(255,255,255,0.08)';
+          ch.style.border = match ? '2px solid #FFF8E7' : '1px solid rgba(255,255,255,0.2)';
+        });
+        this.onQualityPresetChange?.(p);
+      };
+      presetRow.appendChild(pBtn);
+    });
+    s7.appendChild(presetRow);
+    this.container.appendChild(s7);
+
+    // Section 8: Accessibility & Motion
+    const s8 = this.createSection(
+      '♿ Accessibility & Motion',
+      'Comfort options for vision, motion sensitivity, and controls.'
+    );
+
+    // Reduced Motion Toggle
+    const rmBtn = document.createElement('button');
+    const updateRmText = () => {
+      const active = !!this.saveManager.state.settings?.reducedMotion;
+      rmBtn.textContent = active ? '🍃 Reduced Motion (Active)' : '🍃 Standard Motion';
+      rmBtn.style.cssText = this.btnStyle(active ? '#2980B9' : '#5D6D7E') + ' width: 100%; margin-bottom: 8px;';
+    };
+    updateRmText();
+    rmBtn.onclick = () => {
+      if (!this.saveManager.state.settings) {
+        this.saveManager.state.settings = { speed2x: false, colourblindMode: false, peacefulMode: false };
+      }
+      const cur = !this.saveManager.state.settings.reducedMotion;
+      this.saveManager.state.settings.reducedMotion = cur;
+      this.saveManager.saveToLocalStorage();
+      updateRmText();
+      this.onReducedMotionChange?.(cur);
+    };
+    s8.appendChild(rmBtn);
+
+    // High Contrast Toggle
+    const hcBtn = document.createElement('button');
+    const updateHcText = () => {
+      const active = !!this.saveManager.state.settings?.highContrast;
+      hcBtn.textContent = active ? '👁️ High Contrast Mode (Active)' : '👁️ High Contrast Mode';
+      hcBtn.style.cssText = this.btnStyle(active ? '#8E44AD' : '#5D6D7E') + ' width: 100%; margin-bottom: 12px;';
+    };
+    updateHcText();
+    hcBtn.onclick = () => {
+      if (!this.saveManager.state.settings) {
+        this.saveManager.state.settings = { speed2x: false, colourblindMode: false, peacefulMode: false };
+      }
+      const cur = !this.saveManager.state.settings.highContrast;
+      this.saveManager.state.settings.highContrast = cur;
+      this.saveManager.saveToLocalStorage();
+      updateHcText();
+      this.onHighContrastChange?.(cur);
+    };
+    s8.appendChild(hcBtn);
+
+    // Keyboard Shortcuts Reference
+    const kbInfo = document.createElement('div');
+    kbInfo.style.cssText = 'font-size: 11px; color: #E8F8F5; line-height: 1.5; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
+    kbInfo.innerHTML = `<strong>⌨️ Keyboard Shortcuts:</strong><br>
+    • <strong>WASD / Arrows</strong>: Walk &bull; <strong>Shift</strong>: Run<br>
+    • <strong>E / Space</strong>: Interact / Rest / Fish / Plant<br>
+    • <strong>J</strong>: Journal &bull; <strong>M</strong>: Map &bull; <strong>P</strong>: Photo &bull; <strong>C</strong>: Calm &bull; <strong>T</strong>: 2x Speed<br>
+    • <strong>Esc / O</strong>: Toggle Menu`;
+    s8.appendChild(kbInfo);
+
+    this.container.appendChild(s8);
   }
 
   private createSection(titleText: string, descText: string): HTMLDivElement {

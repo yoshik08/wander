@@ -19,6 +19,9 @@ export class LightingSystem {
   private readonly rayOffsets = [-0.4, -0.15, 0.1, 0.35, 0.6];
   private readonly rayWidths = [45, 60, 50, 70, 55];
 
+  enableGodRays: boolean = true;
+  enablePointBloom: boolean = true;
+
   /**
    * Renders cinematic god rays (sunbeams) penetrating through tree canopies.
    */
@@ -33,6 +36,7 @@ export class LightingSystem {
     biome: BiomeType,
     time: number
   ): void {
+    if (!this.enableGodRays) return;
     // Only visible during dawn, morning, golden hour, dusk when sun is at an angle
     const phase = timeInfo.phase;
     if (phase === 'night' || phase === 'noon') return;
@@ -141,6 +145,8 @@ export class LightingSystem {
       this.scratchGlowColor.a = (isIgnis ? 0.15 : 0.05) * pulse;
       renderer.drawCircle(playerPos.x, playerPos.y - 8, isIgnis ? 200 : 100, this.scratchGlowColor);
     }
+
+    if (!this.enablePointBloom) return;
 
     for (const chunk of chunks) {
       for (const struct of chunk.data.structures) {

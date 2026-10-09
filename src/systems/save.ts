@@ -12,10 +12,15 @@ export interface FolioEntry {
   befriended: boolean;
 }
 
+export type QualityPreset = 'auto' | 'low' | 'medium' | 'high' | 'ultra';
+
 export interface GameSettings {
   speed2x: boolean;
   colourblindMode: boolean;
   peacefulMode: boolean;
+  qualityPreset?: QualityPreset;
+  reducedMotion?: boolean;
+  highContrast?: boolean;
   masterVolume?: number;
   musicVolume?: number;
   ambienceVolume?: number;

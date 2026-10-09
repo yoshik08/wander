@@ -34,6 +34,7 @@ import { LandmarkManager } from './world/landmarks';
 import { GardenSystem } from './world/garden';
 import { ActivityManager } from './entities/activities';
 import { AudioSystem } from './audio/engine';
+import { QualityScaler } from './systems/quality';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -160,6 +161,38 @@ settingsModal.onColourblindChange = (cb) => {
 };
 settingsModal.onCustomizationChange = (cust) => {
   player.customization = { ...cust };
+};
+
+const qualityScaler = new QualityScaler(
+  saveManager.state.settings?.qualityPreset || 'auto',
+  !!saveManager.state.settings?.reducedMotion,
+  !!saveManager.state.settings?.highContrast
+);
+
+function applyQualityConfig(scaler: QualityScaler): void {
+  const cfg = scaler.config;
+  particles.activeParticleLimit = cfg.particleLimit;
+  lighting.enableGodRays = cfg.enableGodRays;
+  lighting.enablePointBloom = cfg.enableBloom;
+  handleResize();
+}
+
+qualityScaler.onQualityChange = () => {
+  applyQualityConfig(qualityScaler);
+};
+if (qualityScaler.highContrast) {
+  qualityScaler.setHighContrast(true);
+}
+
+settingsModal.onQualityPresetChange = (preset) => {
+  qualityScaler.setPreset(preset);
+  applyQualityConfig(qualityScaler);
+};
+settingsModal.onReducedMotionChange = (rm) => {
+  qualityScaler.setReducedMotion(rm);
+};
+settingsModal.onHighContrastChange = (hc) => {
+  qualityScaler.setHighContrast(hc);
 };
 settingsModal.onVolumeChange = (type, val) => {
   audioSystem.unlock();
@@ -781,9 +814,10 @@ player.onStep = (pos, angle, isRunning) => {
 const initialBiome = chunkManager.getBiomeAt(currentLayer, player.pos.x, player.pos.y);
 particles.seedViewport(camera.pos.x, camera.pos.y, renderer.width, renderer.height, camera.zoom, initialBiome, 90);
 
-// Resize handling with devicePixelRatio
+// Resize handling with devicePixelRatio & qualityScaler scale
 function handleResize(): void {
-  const dpr = window.devicePixelRatio || 1;
+  const scale = typeof qualityScaler !== 'undefined' ? qualityScaler.config.resolutionScale : 1.0;
+  const dpr = (window.devicePixelRatio || 1) * scale;
   const width = window.innerWidth;
   const height = window.innerHeight;
   renderer.resize(width, height, dpr);
@@ -937,8 +971,9 @@ const loop = new GameLoop({
     // Dynamic wind modulation and rainbow check driven by weather
     weather.update(dt, !timeSystem.getInfo().isNight);
     const weatherInfo = weather.getInfo();
-    globalWind.x = (1.0 + Math.sin(time * 0.8) * 0.6) * weatherInfo.windMultiplier;
-    globalWind.y = (0.3 + Math.cos(time * 0.6) * 0.3) * weatherInfo.windMultiplier;
+    const motionFactor = qualityScaler.reducedMotion ? 0.35 : 1.0;
+    globalWind.x = (1.0 + Math.sin(time * 0.8) * 0.6 * motionFactor) * weatherInfo.windMultiplier;
+    globalWind.y = (0.3 + Math.cos(time * 0.6) * 0.3 * motionFactor) * weatherInfo.windMultiplier;
 
     // Proposed movement with collision detection
     const oldX = player.pos.x;
@@ -1875,6 +1910,9 @@ const loop = new GameLoop({
   },
 
   render: (alpha: number) => {
+    const frameDt = loop.frameTimeMs / 1000;
+    qualityScaler.recordFrame(frameDt);
+
     // Clear with calm natural deep green
     renderer.beginFrame(hexToRgba('#2A4A28'));
 
@@ -2299,6 +2337,7 @@ const loop = new GameLoop({
           <div>Keepsakes: ${chunkManager.collectedKeepsakes.size} collected</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
           <div>Particles: ${particles.getActiveCount()} active</div>
+          <div>Quality: <span style="color: #FBBF24; font-weight: 600;">${qualityScaler.currentTier.toUpperCase()}</span> (${qualityScaler.preset === 'auto' ? 'Auto-Adaptive' : 'Preset'} | Scale: ${(qualityScaler.config.resolutionScale * 100).toFixed(0)}%)</div>
           <div>Speed: <span style="color: #FBBF24;">${player.speedMultiplier.toFixed(1)}x</span> | Mode: <span style="color: #4ADE80;">${saveManager.state.settings?.peacefulMode ? 'Peaceful' : 'Sparring'}</span></div>
           <div>Seed: "${chunkManager.seedRaw}"</div>
         `;

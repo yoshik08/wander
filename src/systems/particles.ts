@@ -102,7 +102,15 @@ export class ParticleSystem {
     }
   }
 
+  activeParticleLimit: number = 750;
+
   private allocateParticle(): Particle | null {
+    let activeCount = 0;
+    for (let i = 0; i < this.maxParticles; i++) {
+      if (this.pool[i].active) activeCount++;
+    }
+    if (activeCount >= this.activeParticleLimit) return null;
+
     for (let i = 0; i < this.maxParticles; i++) {
       if (!this.pool[i].active) {
         return this.pool[i];
