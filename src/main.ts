@@ -1679,6 +1679,15 @@ const loop = new GameLoop({
       });
     }
 
+    // Ground wildlife (deer, rabbits, foxes, frogs) in Depth sorting
+    for (const gCritter of wildlife.getGroundCreatures()) {
+      const gpy = gCritter.prevPos.y + (gCritter.pos.y - gCritter.prevPos.y) * alpha;
+      depthItems.push({
+        baseY: gpy,
+        draw: () => wildlife.drawGroundCreature(renderer, art, gCritter, alpha, time)
+      });
+    }
+
     // Sort and Draw
     depthItems.sort((a, b) => a.baseY - b.baseY);
     for (const item of depthItems) {
@@ -1694,6 +1703,11 @@ const loop = new GameLoop({
     // LAYER 6: Atmospheric Particles (Pollen, Petals, Leaves, Dust, Spores)
     // ==========================================
     particles.render(renderer, time);
+
+    // ==========================================
+    // LAYER 6.2: Nocturnal Fireflies
+    // ==========================================
+    wildlife.renderFireflies(renderer, art, alpha, time, timeInfo.isNight);
 
     // ==========================================
     // LAYER 6.5: Sky Flocking Birds

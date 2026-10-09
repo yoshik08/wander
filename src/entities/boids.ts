@@ -3,7 +3,7 @@ import { PRNG } from '../core/prng';
 import { IRenderer } from '../render/types';
 import { ArtToolkit } from '../render/art';
 
-export type WildlifeType = 'bird' | 'butterfly';
+export type WildlifeType = 'bird' | 'butterfly' | 'deer' | 'rabbit' | 'fox' | 'frog' | 'firefly';
 
 export interface BoidAgent {
   active: boolean;
@@ -28,10 +28,15 @@ export interface BoidAgent {
   // Perching / idling for butterflies
   isPerched: boolean;
   perchTimer: number;
+  // Ground wildlife specific states
+  isFleeing: boolean;
+  isHopping: boolean;
+  hopTimer: number;
+  fleeTimer: number;
 }
 
 export class WildlifeSystem {
-  private readonly maxCreatures = 48;
+  private readonly maxCreatures = 80;
   private readonly pool: BoidAgent[] = [];
   private prng: PRNG;
 
@@ -74,18 +79,22 @@ export class WildlifeSystem {
         homePos: vec2(0, 0),
         wanderAngle: 0,
         isPerched: false,
-        perchTimer: 0
+        perchTimer: 0,
+        isFleeing: false,
+        isHopping: false,
+        hopTimer: 0,
+        fleeTimer: 0
       });
     }
   }
 
   /**
-   * Initializes ambient birds and butterflies around the player's spawn region.
+   * Initializes ambient birds, butterflies, ground wildlife, and fireflies around the player's spawn region.
    */
   spawnCreaturesAround(originX: number, originY: number): void {
     let index = 0;
 
-    // 1. Spawn 3 Flocks of Birds (4-6 birds per flock)
+    // 1. Spawn 3 Flocks of Birds (5 birds per flock = 15 birds)
     const flockCount = 3;
     for (let f = 0; f < flockCount; f++) {
       const flockHomeX = originX + (this.prng.next() - 0.5) * 600;
@@ -127,7 +136,7 @@ export class WildlifeSystem {
       }
     }
 
-    // 2. Spawn Butterflies near flowers & clearings
+    // 2. Spawn Butterflies near flowers & clearings (18 butterflies)
     const butterflyCount = 18;
     for (let i = 0; i < butterflyCount; i++) {
       if (index >= this.maxCreatures) break;
@@ -156,14 +165,153 @@ export class WildlifeSystem {
 
       agent.wingPhase = this.prng.next() * Math.PI * 2;
       agent.wingSpeed = 18 + this.prng.next() * 8;
-      agent.variant = this.prng.rangeInt(0, 4); // 4 colorful butterfly species
+      agent.variant = this.prng.rangeInt(0, 4);
       agent.isPerched = this.prng.next() < 0.3;
       agent.perchTimer = 2.0 + this.prng.next() * 3.0;
+    }
+
+    // 3. Spawn Deer (4 graceful deer in small clearings)
+    const deerCount = 4;
+    for (let i = 0; i < deerCount; i++) {
+      if (index >= this.maxCreatures) break;
+      const agent = this.pool[index++];
+      agent.active = true;
+      agent.type = 'deer';
+      agent.flockId = -1;
+
+      const angle = this.prng.next() * Math.PI * 2;
+      const dist = 120 + this.prng.next() * 350;
+      agent.pos.x = originX + Math.cos(angle) * dist;
+      agent.pos.y = originY + Math.sin(angle) * dist;
+      agent.prevPos.x = agent.pos.x;
+      agent.prevPos.y = agent.pos.y;
+      agent.homePos.x = agent.pos.x;
+      agent.homePos.y = agent.pos.y;
+
+      agent.altitude = 0;
+      agent.prevAltitude = 0;
+      agent.angle = this.prng.next() * Math.PI * 2;
+      agent.wanderAngle = agent.angle;
+      agent.speed = 15 + this.prng.next() * 10;
+      agent.vel.x = Math.cos(agent.angle) * agent.speed;
+      agent.vel.y = Math.sin(agent.angle) * agent.speed;
+      agent.isFleeing = false;
+      agent.fleeTimer = 0;
+    }
+
+    // 4. Spawn Rabbits (8 hopping rabbits in meadow grass)
+    const rabbitCount = 8;
+    for (let i = 0; i < rabbitCount; i++) {
+      if (index >= this.maxCreatures) break;
+      const agent = this.pool[index++];
+      agent.active = true;
+      agent.type = 'rabbit';
+      agent.flockId = -1;
+
+      const angle = this.prng.next() * Math.PI * 2;
+      const dist = 60 + this.prng.next() * 280;
+      agent.pos.x = originX + Math.cos(angle) * dist;
+      agent.pos.y = originY + Math.sin(angle) * dist;
+      agent.prevPos.x = agent.pos.x;
+      agent.prevPos.y = agent.pos.y;
+      agent.homePos.x = agent.pos.x;
+      agent.homePos.y = agent.pos.y;
+
+      agent.altitude = 0;
+      agent.prevAltitude = 0;
+      agent.angle = this.prng.next() * Math.PI * 2;
+      agent.wanderAngle = agent.angle;
+      agent.speed = 0;
+      agent.isHopping = false;
+      agent.hopTimer = 0.5 + this.prng.next() * 1.5;
+      agent.isFleeing = false;
+      agent.fleeTimer = 0;
+    }
+
+    // 5. Spawn Foxes (4 sleek woodland foxes)
+    const foxCount = 4;
+    for (let i = 0; i < foxCount; i++) {
+      if (index >= this.maxCreatures) break;
+      const agent = this.pool[index++];
+      agent.active = true;
+      agent.type = 'fox';
+      agent.flockId = -1;
+
+      const angle = this.prng.next() * Math.PI * 2;
+      const dist = 140 + this.prng.next() * 320;
+      agent.pos.x = originX + Math.cos(angle) * dist;
+      agent.pos.y = originY + Math.sin(angle) * dist;
+      agent.prevPos.x = agent.pos.x;
+      agent.prevPos.y = agent.pos.y;
+      agent.homePos.x = agent.pos.x;
+      agent.homePos.y = agent.pos.y;
+
+      agent.altitude = 0;
+      agent.prevAltitude = 0;
+      agent.angle = this.prng.next() * Math.PI * 2;
+      agent.wanderAngle = agent.angle;
+      agent.speed = 22 + this.prng.next() * 12;
+      agent.vel.x = Math.cos(agent.angle) * agent.speed;
+      agent.vel.y = Math.sin(agent.angle) * agent.speed;
+      agent.isFleeing = false;
+      agent.fleeTimer = 0;
+    }
+
+    // 6. Spawn Frogs (6 marsh frogs near damp lowlands)
+    const frogCount = 6;
+    for (let i = 0; i < frogCount; i++) {
+      if (index >= this.maxCreatures) break;
+      const agent = this.pool[index++];
+      agent.active = true;
+      agent.type = 'frog';
+      agent.flockId = -1;
+
+      const angle = this.prng.next() * Math.PI * 2;
+      const dist = 80 + this.prng.next() * 260;
+      agent.pos.x = originX + Math.cos(angle) * dist;
+      agent.pos.y = originY + Math.sin(angle) * dist;
+      agent.prevPos.x = agent.pos.x;
+      agent.prevPos.y = agent.pos.y;
+      agent.homePos.x = agent.pos.x;
+      agent.homePos.y = agent.pos.y;
+
+      agent.altitude = 0;
+      agent.prevAltitude = 0;
+      agent.angle = this.prng.next() * Math.PI * 2;
+      agent.wanderAngle = agent.angle;
+      agent.speed = 0;
+      agent.isHopping = false;
+      agent.hopTimer = 1.0 + this.prng.next() * 2.5;
+      agent.isFleeing = false;
+    }
+
+    // 7. Spawn Fireflies (16 glowing nocturnal orbs)
+    const fireflyCount = 16;
+    for (let i = 0; i < fireflyCount; i++) {
+      if (index >= this.maxCreatures) break;
+      const agent = this.pool[index++];
+      agent.active = true;
+      agent.type = 'firefly';
+      agent.flockId = -1;
+
+      const angle = this.prng.next() * Math.PI * 2;
+      const dist = 40 + this.prng.next() * 320;
+      agent.pos.x = originX + Math.cos(angle) * dist;
+      agent.pos.y = originY + Math.sin(angle) * dist;
+      agent.prevPos.x = agent.pos.x;
+      agent.prevPos.y = agent.pos.y;
+      agent.homePos.x = agent.pos.x;
+      agent.homePos.y = agent.pos.y;
+
+      agent.altitude = 8 + this.prng.next() * 12;
+      agent.prevAltitude = agent.altitude;
+      agent.speed = 10;
+      agent.angle = this.prng.next() * Math.PI * 2;
     }
   }
 
   /**
-   * Updates boid steering behaviors, flight physics, and wing animation loops.
+   * Updates boid steering behaviors, flight physics, ground wildlife AI, and wing animation loops.
    */
   update(
     dt: number,
@@ -178,12 +326,11 @@ export class WildlifeSystem {
   ): void {
     const halfW = (viewW / 2) / zoom;
     const halfH = (viewH / 2) / zoom;
-    const wrapMargin = 350;
+    const wrapMargin = 380;
 
     // 1. Advance Flock Center Circling
     for (let f = 0; f < this.flockCenters.length; f++) {
       const fc = this.flockCenters[f];
-      // Slowly orbit flock territory
       const orbitSpeed = 0.12;
       const orbitRadius = 140;
       fc.x += Math.cos(time * orbitSpeed + f * 2.1) * orbitRadius * dt * 0.4 + wind.x * 6 * dt;
@@ -200,10 +347,28 @@ export class WildlifeSystem {
       a.prevPos.y = a.pos.y;
       a.prevAltitude = a.altitude;
 
-      if (a.type === 'bird') {
-        this.updateBird(a, dt, time, wind);
-      } else if (a.type === 'butterfly') {
-        this.updateButterfly(a, dt, time, playerPos, wind);
+      switch (a.type) {
+        case 'bird':
+          this.updateBird(a, dt, time, wind);
+          break;
+        case 'butterfly':
+          this.updateButterfly(a, dt, time, playerPos, wind);
+          break;
+        case 'deer':
+          this.updateDeer(a, dt, playerPos);
+          break;
+        case 'rabbit':
+          this.updateRabbit(a, dt, playerPos);
+          break;
+        case 'fox':
+          this.updateFox(a, dt, playerPos);
+          break;
+        case 'frog':
+          this.updateFrog(a, dt, playerPos);
+          break;
+        case 'firefly':
+          this.updateFirefly(a, dt, time, wind);
+          break;
       }
 
       // Smooth wrap around camera bounds to keep world active and populated
@@ -225,7 +390,6 @@ export class WildlifeSystem {
   }
 
   private updateBird(a: BoidAgent, dt: number, time: number, wind: Vec2): void {
-    // A. Reynolds Flocking: Separation, Alignment, Cohesion
     let sepX = 0, sepY = 0, sepCount = 0;
     let aliX = 0, aliY = 0, aliCount = 0;
     let cohX = 0, cohY = 0, cohCount = 0;
@@ -258,7 +422,6 @@ export class WildlifeSystem {
       }
     }
 
-    // B. Steer toward flock territory center
     const fc = this.flockCenters[a.flockId];
     const toHomeX = fc.x - a.pos.x;
     const toHomeY = fc.y - a.pos.y;
@@ -282,21 +445,17 @@ export class WildlifeSystem {
       this.scratchSteer.y += (avgPosY - a.pos.y) * 0.05;
     }
 
-    // Gentle pull back toward flock territory
     if (distToHome > 160) {
       this.scratchSteer.x += (toHomeX / distToHome) * 35;
       this.scratchSteer.y += (toHomeY / distToHome) * 35;
     }
 
-    // Wind advection
     this.scratchSteer.x += wind.x * 12;
     this.scratchSteer.y += wind.y * 8;
 
-    // Apply steering to velocity
     a.vel.x += this.scratchSteer.x * dt * 2.5;
     a.vel.y += this.scratchSteer.y * dt * 2.5;
 
-    // Clamp speed
     const currentSpeed = Math.hypot(a.vel.x, a.vel.y);
     const targetSpeed = 75;
     if (currentSpeed > 0.01) {
@@ -305,15 +464,12 @@ export class WildlifeSystem {
       a.vel.y = lerp(a.vel.y, (a.vel.y / currentSpeed) * targetSpeed, factor);
     }
 
-    // Integrate position
     a.pos.x += a.vel.x * dt;
     a.pos.y += a.vel.y * dt;
     a.angle = Math.atan2(a.vel.y, a.vel.x);
 
-    // C. Altitude breathing
     a.altitude = 48 + Math.sin(time * 0.9 + a.flockId * 1.5) * 12;
 
-    // D. Flap vs Glide Cycle
     a.glideTimer -= dt;
     if (a.glideTimer <= 0) {
       a.isGliding = !a.isGliding;
@@ -323,19 +479,15 @@ export class WildlifeSystem {
     if (!a.isGliding) {
       a.wingPhase += a.wingSpeed * dt;
     } else {
-      // Wings held horizontally outstretched during glide
       a.wingPhase = lerp(a.wingPhase, 0.2, dt * 5.0);
     }
   }
 
   private updateButterfly(a: BoidAgent, dt: number, time: number, playerPos: Vec2, wind: Vec2): void {
-    // 1. Perching logic
     if (a.isPerched) {
       a.perchTimer -= dt;
-      // Gentle breathing wing motion while resting on a flower
       a.wingPhase += 3.5 * dt;
 
-      // Startle if player walks too close
       const dx = a.pos.x - playerPos.x;
       const dy = a.pos.y - playerPos.y;
       const dist = Math.hypot(dx, dy);
@@ -350,15 +502,11 @@ export class WildlifeSystem {
       return;
     }
 
-    // 2. Flying flutter logic
     a.wingPhase += a.wingSpeed * dt;
-
-    // Random wandering steering
     a.wanderAngle += (this.prng.next() - 0.5) * 6.0 * dt;
     const steerX = Math.cos(a.wanderAngle) * 30 + wind.x * 6;
     const steerY = Math.sin(a.wanderAngle) * 30 + wind.y * 4;
 
-    // Pull toward flower territory home
     const toHomeX = a.homePos.x - a.pos.x;
     const toHomeY = a.homePos.y - a.pos.y;
     const distHome = Math.hypot(toHomeX, toHomeY);
@@ -367,7 +515,6 @@ export class WildlifeSystem {
       a.vel.y += (toHomeY / distHome) * 25 * dt;
     }
 
-    // Player avoidance
     const toPlayerX = a.pos.x - playerPos.x;
     const toPlayerY = a.pos.y - playerPos.y;
     const distPlayer = Math.hypot(toPlayerX, toPlayerY);
@@ -379,7 +526,6 @@ export class WildlifeSystem {
     a.vel.x += steerX * dt * 2.0;
     a.vel.y += steerY * dt * 2.0;
 
-    // Limit butterfly speed
     const spd = Math.hypot(a.vel.x, a.vel.y);
     const maxSpd = distPlayer < 45 ? 42 : 24;
     if (spd > maxSpd) {
@@ -387,18 +533,201 @@ export class WildlifeSystem {
       a.vel.y = (a.vel.y / spd) * maxSpd;
     }
 
-    // Vertical flutter bob
     a.altitude = 8 + Math.sin(time * 7.5 + a.pos.x * 0.1) * 3.5;
-
     a.pos.x += a.vel.x * dt;
     a.pos.y += a.vel.y * dt;
     a.angle = Math.atan2(a.vel.y, a.vel.x);
 
-    // Random chance to perch on ground / flower
     if (this.prng.next() < 0.003 * dt * 60) {
       a.isPerched = true;
       a.perchTimer = 2.5 + this.prng.next() * 3.5;
       a.altitude = 2;
+    }
+  }
+
+  private updateDeer(a: BoidAgent, dt: number, playerPos: Vec2): void {
+    const dx = a.pos.x - playerPos.x;
+    const dy = a.pos.y - playerPos.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Flee if player is close
+    if (dist < 110) {
+      a.isFleeing = true;
+      a.fleeTimer = 2.5;
+    }
+
+    if (a.isFleeing) {
+      a.fleeTimer -= dt;
+      const fleeAngle = Math.atan2(dy, dx);
+      a.angle = lerpAngle(a.angle, fleeAngle, dt * 7.0);
+      a.speed = lerp(a.speed, 115, dt * 6.0);
+      if (dist > 250 && a.fleeTimer <= 0) {
+        a.isFleeing = false;
+      }
+    } else {
+      // Peaceful grazing and wandering
+      a.wanderAngle += (this.prng.next() - 0.5) * 1.5 * dt;
+      a.angle = lerpAngle(a.angle, a.wanderAngle, dt * 2.0);
+      // Mostly resting or slow walk
+      const targetSpeed = this.prng.next() < 0.3 ? 0 : 18;
+      a.speed = lerp(a.speed, targetSpeed, dt * 2.0);
+    }
+
+    a.pos.x += Math.cos(a.angle) * a.speed * dt;
+    a.pos.y += Math.sin(a.angle) * a.speed * dt;
+  }
+
+  private updateRabbit(a: BoidAgent, dt: number, playerPos: Vec2): void {
+    const dx = a.pos.x - playerPos.x;
+    const dy = a.pos.y - playerPos.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < 80) {
+      a.isFleeing = true;
+      a.fleeTimer = 2.0;
+    }
+
+    a.hopTimer -= dt;
+    if (a.hopTimer <= 0) {
+      if (!a.isHopping) {
+        // Begin hop
+        a.isHopping = true;
+        a.hopTimer = a.isFleeing ? 0.22 : 0.35;
+        if (a.isFleeing) {
+          a.angle = Math.atan2(dy, dx) + (this.prng.next() - 0.5) * 0.5;
+          a.speed = 95;
+        } else {
+          a.wanderAngle += (this.prng.next() - 0.5) * 2.5;
+          a.angle = a.wanderAngle;
+          a.speed = 36;
+        }
+      } else {
+        // End hop / landing pause
+        a.isHopping = false;
+        a.speed = 0;
+        a.hopTimer = a.isFleeing ? (0.12 + this.prng.next() * 0.15) : (0.7 + this.prng.next() * 1.5);
+        if (a.isFleeing) {
+          a.fleeTimer -= 0.3;
+          if (dist > 180 && a.fleeTimer <= 0) a.isFleeing = false;
+        }
+      }
+    }
+
+    if (a.isHopping) {
+      a.pos.x += Math.cos(a.angle) * a.speed * dt;
+      a.pos.y += Math.sin(a.angle) * a.speed * dt;
+    }
+  }
+
+  private updateFox(a: BoidAgent, dt: number, playerPos: Vec2): void {
+    const dx = a.pos.x - playerPos.x;
+    const dy = a.pos.y - playerPos.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < 90) {
+      a.isFleeing = true;
+      a.fleeTimer = 2.2;
+    }
+
+    if (a.isFleeing) {
+      a.fleeTimer -= dt;
+      const fleeAngle = Math.atan2(dy, dx);
+      a.angle = lerpAngle(a.angle, fleeAngle, dt * 6.0);
+      a.speed = lerp(a.speed, 85, dt * 5.0);
+      if (dist > 220 && a.fleeTimer <= 0) {
+        a.isFleeing = false;
+      }
+    } else {
+      a.wanderAngle += (this.prng.next() - 0.5) * 1.8 * dt;
+      a.angle = lerpAngle(a.angle, a.wanderAngle, dt * 2.5);
+      a.speed = lerp(a.speed, 26, dt * 2.0);
+    }
+
+    a.pos.x += Math.cos(a.angle) * a.speed * dt;
+    a.pos.y += Math.sin(a.angle) * a.speed * dt;
+  }
+
+  private updateFrog(a: BoidAgent, dt: number, playerPos: Vec2): void {
+    const dx = a.pos.x - playerPos.x;
+    const dy = a.pos.y - playerPos.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Startle if stepped on
+    if (dist < 45 && !a.isHopping) {
+      a.isHopping = true;
+      a.hopTimer = 0.28;
+      a.angle = Math.atan2(dy, dx);
+      a.speed = 60;
+    }
+
+    a.hopTimer -= dt;
+    if (a.hopTimer <= 0) {
+      if (!a.isHopping) {
+        a.isHopping = true;
+        a.hopTimer = 0.26;
+        a.wanderAngle += (this.prng.next() - 0.5) * 2.2;
+        a.angle = a.wanderAngle;
+        a.speed = 42;
+      } else {
+        a.isHopping = false;
+        a.speed = 0;
+        a.hopTimer = 1.5 + this.prng.next() * 3.0;
+      }
+    }
+
+    if (a.isHopping) {
+      a.pos.x += Math.cos(a.angle) * a.speed * dt;
+      a.pos.y += Math.sin(a.angle) * a.speed * dt;
+    }
+  }
+
+  private updateFirefly(a: BoidAgent, dt: number, time: number, wind: Vec2): void {
+    a.pos.x += (Math.cos(time * 0.9 + a.homePos.x * 0.1) * 14 + wind.x * 4) * dt;
+    a.pos.y += (Math.sin(time * 1.2 + a.homePos.y * 0.1) * 12 + wind.y * 3) * dt;
+    a.altitude = 7 + Math.sin(time * 2.2 + a.homePos.x * 0.05) * 4;
+
+    const dx = a.homePos.x - a.pos.x;
+    const dy = a.homePos.y - a.pos.y;
+    if (Math.hypot(dx, dy) > 120) {
+      a.pos.x += dx * 0.3 * dt;
+      a.pos.y += dy * 0.3 * dt;
+    }
+  }
+
+  /**
+   * Returns active ground wildlife (deer, rabbits, foxes, frogs) for Y-depth sorting in layer 5.
+   */
+  getGroundCreatures(): BoidAgent[] {
+    const list: BoidAgent[] = [];
+    for (let i = 0; i < this.maxCreatures; i++) {
+      const a = this.pool[i];
+      if (a.active && (a.type === 'deer' || a.type === 'rabbit' || a.type === 'fox' || a.type === 'frog')) {
+        list.push(a);
+      }
+    }
+    return list;
+  }
+
+  /**
+   * Renders a specific ground creature with painterly detail.
+   */
+  drawGroundCreature(renderer: IRenderer, art: ArtToolkit, a: BoidAgent, alpha: number, time: number): void {
+    const px = a.prevPos.x + (a.pos.x - a.prevPos.x) * alpha;
+    const py = a.prevPos.y + (a.pos.y - a.prevPos.y) * alpha;
+
+    switch (a.type) {
+      case 'deer':
+        art.drawDeer(px, py, a.angle, a.isFleeing, time);
+        break;
+      case 'rabbit':
+        art.drawRabbit(px, py, a.angle, a.isHopping, time);
+        break;
+      case 'fox':
+        art.drawFox(px, py, a.angle, a.isFleeing || a.speed > 40, time);
+        break;
+      case 'frog':
+        art.drawFrog(px, py, a.angle, a.isHopping, time);
+        break;
     }
   }
 
@@ -414,12 +743,10 @@ export class WildlifeSystem {
       const py = lerp(a.prevPos.y, a.pos.y, alpha);
       const alt = lerp(a.prevAltitude, a.altitude, alpha);
 
-      // Shadow on ground projected by sun angle
       const shadowLength = 0.4 + (1.0 - art.sunElevation) * 0.6;
       const sx = px + Math.sin(art.sunAngle) * alt * shadowLength;
       const sy = py + Math.cos(art.sunAngle) * alt * shadowLength * 0.5;
 
-      // Soft bird shadow silhouette
       art.drawBlobShadow(sx, sy, 4.5);
     }
   }
@@ -437,6 +764,23 @@ export class WildlifeSystem {
       const alt = lerp(a.prevAltitude, a.altitude, alpha);
 
       art.drawButterfly(px, py - alt, a.angle, a.wingPhase, a.variant, a.isPerched);
+    }
+  }
+
+  /**
+   * Renders fireflies glowing in twilight and night.
+   */
+  renderFireflies(renderer: IRenderer, art: ArtToolkit, alpha: number, time: number, isNight: boolean): void {
+    if (!isNight) return;
+    for (let i = 0; i < this.maxCreatures; i++) {
+      const a = this.pool[i];
+      if (!a.active || a.type !== 'firefly') continue;
+
+      const px = lerp(a.prevPos.x, a.pos.x, alpha);
+      const py = lerp(a.prevPos.y, a.pos.y, alpha);
+      const alt = lerp(a.prevAltitude, a.altitude, alpha);
+
+      art.drawFirefly(px, py - alt, time);
     }
   }
 

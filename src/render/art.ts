@@ -692,4 +692,99 @@ export class ArtToolkit {
       this.renderer.drawCircle(x - 4 * s, y - 8 * s, 1.5 * s, hexToRgba('#FFFFFF'));
     }
   }
+
+  drawDeer(x: number, y: number, angle: number, isFleeing: boolean, time: number): void {
+    this.drawDropShadow(x, y, 16, 7);
+    const dir = Math.cos(angle) >= 0 ? 1 : -1;
+    const gallop = isFleeing ? Math.sin(time * 14) * 4 : Math.sin(time * 3) * 1.5;
+
+    // Slender legs
+    const legOffset1 = Math.sin(time * (isFleeing ? 14 : 4)) * 4;
+    const legOffset2 = -legOffset1;
+    this.renderer.drawLine(x - 5, y - 6, x - 5 + legOffset1, y + 2, 1.6, hexToRgba('#5D3A2C'));
+    this.renderer.drawLine(x + 5, y - 6, x + 5 + legOffset2, y + 2, 1.6, hexToRgba('#5D3A2C'));
+
+    // Body
+    this.renderer.drawRect(x - 8, y - 14 + gallop * 0.3, 16, 9, hexToRgba('#8D5B4C'));
+    // Flank cream spots
+    this.renderer.drawCircle(x, y - 11 + gallop * 0.3, 1.3, hexToRgba('#FADBD8'));
+    this.renderer.drawCircle(x - 3, y - 9 + gallop * 0.3, 1.1, hexToRgba('#FADBD8'));
+
+    // Neck & Head
+    const headX = x + dir * 8;
+    const headY = y - 18 + gallop * 0.5;
+    this.renderer.drawRect(headX - 3, headY, 6, 8, hexToRgba('#7D4D3D'));
+    this.renderer.drawCircle(headX + dir * 2, headY - 1, 3.8, hexToRgba('#8D5B4C'));
+
+    // Branching Antlers
+    this.renderer.drawLine(headX, headY - 3, headX - dir * 2, headY - 10, 1.4, hexToRgba('#D7CCC8'));
+    this.renderer.drawLine(headX - dir * 1, headY - 6, headX + dir * 3, headY - 9, 1.2, hexToRgba('#D7CCC8'));
+
+    // Fluffy tail
+    this.renderer.drawCircle(x - dir * 8, y - 12 + gallop * 0.3, 2.2, hexToRgba('#FFF8E7'));
+  }
+
+  drawRabbit(x: number, y: number, angle: number, isHopping: boolean, time: number): void {
+    this.drawDropShadow(x, y, 9, 5);
+    const dir = Math.cos(angle) >= 0 ? 1 : -1;
+    const hopY = isHopping ? -Math.abs(Math.sin(time * 12)) * 5.5 : 0;
+
+    // Body
+    this.renderer.drawCircle(x, y - 5 + hopY, 5.2, hexToRgba('#A0826C'));
+    // Head
+    this.renderer.drawCircle(x + dir * 4, y - 8 + hopY, 3.6, hexToRgba('#B59982'));
+    // Long upright twitching ears
+    const earTwitch = Math.sin(time * 8) * 0.8;
+    this.renderer.drawLine(x + dir * 3, y - 10 + hopY, x + dir * 2 + earTwitch, y - 16 + hopY, 1.4, hexToRgba('#D7CCC8'));
+    this.renderer.drawLine(x + dir * 4.5, y - 10 + hopY, x + dir * 3.5 + earTwitch, y - 15.5 + hopY, 1.3, hexToRgba('#EAECEE'));
+    // Fluffy tail
+    this.renderer.drawCircle(x - dir * 4.5, y - 5 + hopY, 2.0, hexToRgba('#FFFFFF'));
+  }
+
+  drawFox(x: number, y: number, angle: number, isRunning: boolean, time: number): void {
+    this.drawDropShadow(x, y, 14, 6);
+    const dir = Math.cos(angle) >= 0 ? 1 : -1;
+    const trot = isRunning ? Math.sin(time * 12) * 2.5 : Math.sin(time * 4) * 1.0;
+
+    // Body
+    this.renderer.drawRect(x - 7, y - 8 + trot * 0.2, 14, 6.5, hexToRgba('#D35400'));
+    // White bib
+    this.renderer.drawCircle(x + dir * 5, y - 6 + trot * 0.2, 3.0, hexToRgba('#FFF8E7'));
+
+    // Head
+    const headX = x + dir * 7;
+    const headY = y - 9 + trot * 0.4;
+    this.renderer.drawCircle(headX, headY, 3.4, hexToRgba('#E67E22'));
+    // Pointy ears
+    this.renderer.drawLine(headX, headY - 2, headX - dir * 1, headY - 6, 1.4, hexToRgba('#1C2833'));
+
+    // Bushy white-tipped tail
+    const tailSway = Math.sin(time * 6) * 2;
+    this.renderer.drawCircle(x - dir * 8, y - 7 + tailSway, 3.8, hexToRgba('#D35400'));
+    this.renderer.drawCircle(x - dir * 11, y - 7 + tailSway, 2.4, hexToRgba('#FFFFFF'));
+  }
+
+  drawFrog(x: number, y: number, angle: number, isHopping: boolean, time: number): void {
+    this.drawDropShadow(x, y, 8, 4);
+    const hopY = isHopping ? -Math.abs(Math.sin(time * 10)) * 6.0 : 0;
+
+    // Mottled marsh green body
+    this.renderer.drawCircle(x, y - 3 + hopY, 4.2, hexToRgba('#27AE60'));
+    // Pale belly
+    this.renderer.drawCircle(x, y - 2 + hopY, 2.8, hexToRgba('#82E0AA'));
+    // Bulging dark eyes
+    this.renderer.drawCircle(x - 2, y - 6 + hopY, 1.5, hexToRgba('#1E8449'));
+    this.renderer.drawCircle(x + 2, y - 6 + hopY, 1.5, hexToRgba('#1E8449'));
+    this.renderer.drawCircle(x - 2, y - 6 + hopY, 0.7, hexToRgba('#1B2631'));
+    this.renderer.drawCircle(x + 2, y - 6 + hopY, 0.7, hexToRgba('#1B2631'));
+  }
+
+  drawFirefly(x: number, y: number, time: number): void {
+    const glow = 0.35 + 0.65 * Math.abs(Math.sin(time * 3.5 + x * 0.15));
+    // Soft luminous halo
+    this.renderer.drawCircle(x, y, 5.5, hexToRgba('#CCFF00', glow * 0.40));
+    // Core spark
+    this.renderer.drawCircle(x, y, 1.8, hexToRgba('#FFFF66', glow * 0.95));
+  }
 }
+
