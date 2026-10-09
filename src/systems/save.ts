@@ -24,6 +24,7 @@ export interface SaveState {
   sanctuary: SavedCreature[];
   inventory: Record<string, number>;
   badges: string[];
+  waystones: { id: string; name: string; x: number; y: number }[];
 }
 
 export class SaveManager {
@@ -48,7 +49,8 @@ export class SaveManager {
       party: [],
       sanctuary: [],
       inventory: {},
-      badges: []
+      badges: [],
+      waystones: []
     };
   }
 

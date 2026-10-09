@@ -23,6 +23,7 @@ import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
 import { SanctuaryUI } from './ui/sanctuary-ui';
+import { WaystoneUI } from './ui/waystone-ui';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -65,6 +66,17 @@ if (saveManager.state.party.length > 0) {
   partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
 }
 const sanctuaryUI = new SanctuaryUI(saveManager);
+const waystoneUI = new WaystoneUI(saveManager, (tx, ty) => {
+  player.pos.x = tx;
+  player.pos.y = ty;
+  player.vel.x = 0;
+  player.vel.y = 0;
+  camera.pos.x = tx;
+  camera.pos.y = ty;
+  for (let i = 0; i < 20; i++) {
+    particles.spawnFootstepDust(tx + (Math.random() - 0.5) * 20, ty + (Math.random() - 0.5) * 20, Math.random() * Math.PI * 2);
+  }
+});
 
 
 // Photo Mode Hooks
@@ -335,6 +347,15 @@ const loop = new GameLoop({
       inputState.move.y = 0;
       inputState.isRunning = false;
     }
+    
+    if (waystoneUI.isActive) {
+      if (inputState.menuPressed) {
+        waystoneUI.close();
+      }
+      inputState.move.x = 0;
+      inputState.move.y = 0;
+      inputState.isRunning = false;
+    }
 
     // Dynamic wind modulation driven by weather
     weather.update(dt);
@@ -472,6 +493,7 @@ const loop = new GameLoop({
     // 5. Rest Spots (Benches, Logs, Campfire sitting log)
     currentRestSpot = null;
     let canInteractSanctuary = false;
+    let canInteractWaystone: { id: string, name: string, x: number, y: number } | null = null;
     let closestRestDist = 32;
 
     for (const chunk of chunksNearPlayer) {
@@ -480,6 +502,14 @@ const loop = new GameLoop({
            const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
            if (d < 40) canInteractSanctuary = true;
            continue;
+        }
+
+        if (s.type === 'waystone') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 40) {
+            canInteractWaystone = { id: s.id, name: `Waystone of ${chunk.data.biome[0] === 0 ? 'Meadow' : 'Fields'}`, x: s.x, y: s.y + 16 };
+          }
+          continue;
         }
 
         let spotX = s.x;
@@ -543,6 +573,39 @@ const loop = new GameLoop({
       // If spar ended or yielded?
       if (!sparring.isActive) {
          camera.targetZoom = 1.0;
+      }
+    } else if (canInteractWaystone) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '✧';
+        interactLabel.textContent = 'Touch Waystone [E]';
+      }
+      if (inputState.interactPressed) {
+        if (!saveManager.state.waystones.some(w => w.id === canInteractWaystone!.id)) {
+          saveManager.state.waystones.push(canInteractWaystone!);
+          saveManager.saveToLocalStorage();
+          if (toastBanner && toastTitle && toastDesc && toastCount) {
+            toastTitle.textContent = `✧ Discovered: ${canInteractWaystone!.name}`;
+            toastDesc.textContent = `Fast travel point unlocked.`;
+            toastCount.textContent = `Waystones: ${saveManager.state.waystones.length}`;
+            toastBanner.style.display = 'block';
+            requestAnimationFrame(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '1';
+                toastBanner.style.transform = 'translate(-50%, 0)';
+              }
+            });
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '0';
+                toastBanner.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+              }
+            }, 4000);
+          }
+        }
+        waystoneUI.open();
       }
     } else if (canInteractSanctuary) {
       if (interactPrompt && interactLabel && interactIcon) {

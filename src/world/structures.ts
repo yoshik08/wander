@@ -18,7 +18,8 @@ export type StructureType =
   | 'stepping_stones'
   | 'sanctuary_crystal'
   | 'resting_crystal'
-  | 'nomad_camp';
+  | 'nomad_camp'
+  | 'waystone';
 
 export interface StructureInstance {
   id: string;
@@ -229,6 +230,26 @@ export function generateChunkStructures(
       return structures;
     }
   }
+
+  // Waystone in open biomes
+  if ((bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) && !isWater) {
+    if (chunkRng.next() < 0.20) {
+      structures.push({
+        id: `waystone-${chunkX}-${chunkY}`,
+        type: 'waystone',
+        x: structWorldX,
+        y: structWorldY,
+        baseY: structWorldY + 16,
+        width: 32,
+        height: 48,
+        variant: 0,
+        solidTiles: [{ dx: 0, dy: 0 }]
+      });
+      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+      return structures;
+    }
+  }
+
   // Resting Crystal or Nomad Camp in various non-water biomes
   if (!isWater) {
     if (chunkRng.next() < 0.20) {
@@ -388,6 +409,26 @@ export function renderStructure(
       if (Math.sin(time * 3) > 0.8) {
         renderer.drawCircle(x - 4, floatY - 8, 1.5, hexToRgba('#FFFFFF'));
       }
+      break;
+    }
+
+    case 'waystone': {
+      // Glow based on discovered state? We can just make it glow blue for now
+      const glow = Math.sin(time * 1.2);
+      renderer.drawCircle(x, baseY, 24, hexToRgba('#3498DB', 0.1 + glow * 0.05));
+      renderer.drawCircle(x, baseY, 14, hexToRgba('#1B2631', 0.4));
+      
+      // Tall obelisk
+      renderer.drawPolygon([
+        vec2(x - 8, baseY),
+        vec2(x + 8, baseY),
+        vec2(x + 4, baseY - 36),
+        vec2(x - 4, baseY - 36)
+      ], hexToRgba('#5D6D7E'));
+
+      // Inscribed runes that glow
+      renderer.drawRect(x - 1, baseY - 24, 2, 8, hexToRgba('#5DADE2', 0.9));
+      renderer.drawRect(x - 2, baseY - 12, 4, 4, hexToRgba('#5DADE2', 0.9));
       break;
     }
 
