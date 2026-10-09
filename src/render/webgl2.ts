@@ -10,8 +10,10 @@ uniform mat3 u_matrix;
 
 out vec2 v_uv;
 out vec4 v_color;
+out vec2 v_worldPos;
 
 void main() {
+  v_worldPos = a_pos;
   vec3 pos = u_matrix * vec3(a_pos, 1.0);
   gl_Position = vec4(pos.xy, 0.0, 1.0);
   v_uv = a_uv;
@@ -24,11 +26,39 @@ precision highp float;
 
 in vec2 v_uv;
 in vec4 v_color;
+in vec2 v_worldPos;
 
 out vec4 fragColor;
 
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
 void main() {
-  fragColor = v_color;
+  // Domain warping for edges
+  vec2 warped = v_worldPos + vec2(noise(v_worldPos * 0.05) * 15.0, noise(v_worldPos * 0.05 + 42.0) * 15.0);
+  
+  // Macro noise (low frequency)
+  float n = noise(warped * 0.003);
+  
+  vec3 col = v_color.rgb;
+  
+  // If it's a grassy/natural color, apply the macro noise for sunlit/shaded patches
+  if (col.g > col.r && col.g > col.b && col.g > 0.3) {
+      col += (n - 0.4) * 0.15; // Shift lightness
+  }
+  
+  fragColor = vec4(col, v_color.a);
 }
 `;
 
@@ -76,8 +106,8 @@ void main() {
   float isWaterfall = v_props.z;
 
   // 1. Base Depth Color Gradient (Deep river teal to shallow turquoise)
-  vec4 deepCol = vec4(0.09, 0.32, 0.46, 0.94);    // #175276
-  vec4 shallowCol = vec4(0.18, 0.58, 0.65, 0.88); // #2E94A6
+  vec4 deepCol = vec4(0.42, 0.61, 0.71, 0.94);    // #6B9CB5
+  vec4 shallowCol = vec4(0.57, 0.76, 0.85, 0.88); // #92C1D9
   vec4 baseCol = mix(shallowCol, deepCol, clamp(depth, 0.0, 1.0));
 
   // 2. Flow Mapping (Advected dual wave layers along flow vector)

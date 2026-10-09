@@ -36,12 +36,12 @@ export const BIOMES: Record<BiomeType, BiomeDefinition> = {
     type: BiomeType.Meadow,
     name: 'Sunny Meadow',
     palette: {
-      groundPrimary: hexToRgba('#4E8A42'),
-      groundSecondary: hexToRgba('#437B38'),
-      groundAccent: hexToRgba('#589C4B'),
-      foliagePrimary: hexToRgba('#3B7B34'),
-      foliageSecondary: hexToRgba('#569E4C'),
-      waterTint: hexToRgba('#3D8FD1')
+      groundPrimary: hexToRgba('#8DB255'),
+      groundSecondary: hexToRgba('#A6C96C'),
+      groundAccent: hexToRgba('#8DB255'),
+      foliagePrimary: hexToRgba('#3A5F40'),
+      foliageSecondary: hexToRgba('#8DB255'),
+      waterTint: hexToRgba('#6B9CB5')
     },
     props: ['grass', 'flower_daisy', 'flower_buttercup', 'oak_tree', 'log', 'pebble'],
     ambientBed: 'meadow_birds'
@@ -50,12 +50,12 @@ export const BIOMES: Record<BiomeType, BiomeDefinition> = {
     type: BiomeType.WildflowerFields,
     name: 'Wildflower Fields',
     palette: {
-      groundPrimary: hexToRgba('#549646'),
-      groundSecondary: hexToRgba('#4B873D'),
-      groundAccent: hexToRgba('#62AA52'),
-      foliagePrimary: hexToRgba('#408639'),
-      foliageSecondary: hexToRgba('#6AB85B'),
-      waterTint: hexToRgba('#388EC9')
+      groundPrimary: hexToRgba('#8DB255'),
+      groundSecondary: hexToRgba('#A6C96C'),
+      groundAccent: hexToRgba('#A6C96C'),
+      foliagePrimary: hexToRgba('#3A5F40'),
+      foliageSecondary: hexToRgba('#A6C96C'),
+      waterTint: hexToRgba('#6B9CB5')
     },
     props: ['flower_poppy', 'flower_lavender', 'flower_rose', 'flower_daisy', 'grass', 'butterfly_bush'],
     ambientBed: 'meadow_breeze'
