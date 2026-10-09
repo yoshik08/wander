@@ -140,5 +140,10 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Mobile Touch Controls**: Dual-zone touch navigation features a zoom-invariant virtual joystick with gold thumb knob and directional ring indicator on the left screen half, alongside an amber floating action button (FAB) on the bottom right for instant interaction and fishing.
 - **Viewport Testing**: Verified seamless responsiveness across desktop (1280x800) and phone viewport sizes (412x915, 393x852).
 
+## Step 12.1 (Storage, PWA & Offline Support) Critique
+- **Resilient Dual Storage**: State is automatically mirrored to `localStorage` and `IndexedDB` (`meadow_db`). If local storage is wiped or corrupt, IndexedDB provides asynchronous recovery.
+- **Continuous Autosave Flow**: Autosave triggers periodically every 15 seconds, immediately when switching browser tabs (`visibilitychange`), and during window unload, capturing player coordinates, active season, in-game clock, current layer, and wardrobe.
+- **Installable PWA & Offline Shell**: `manifest.json` configured with `/wander/` base path and custom procedural SVG icon (`icon.svg`), plus service worker `sw.js` employing a stale-while-revalidate offline caching strategy.
+
 
 

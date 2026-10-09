@@ -42,10 +42,11 @@
   - Milestone 9 (Step 9.3): Activities: Stone Skipping & Relaxing Fishing (ActivityManager with water proximity detection, parabolic stone skipping physics with concentric impacts & sinking plop, timing-free relaxing fishing state machine with rod/float/line rendering, 8-species catch catalogue, and Journal folio tracking).
   - Milestone 10 (Steps 10.1 & 10.2): Web Audio Synthesis & Generative Music (100% code-generated Web Audio API engine with procedural pink/brown wind noise modulated by weather, spatial river stream bubbler based on water proximity, procedural daylight bird chirps, time-of-day evolving pentatonic pads [Dawn C Major, Afternoon F Lydian, Sunset G Golden, Night A Minor], micro-sound footsteps/ripples/skip taps/fanfare, volume sliders in settings modal, and top HUD audio mute toggle).
   - Milestone 11 (Step 11.1): UI, Touch Controls & Character Customization (Character wardrobe with 8 palette colorways, 4 hats [Beanie, Straw Sunhat, Alpine Beret, Floral Crown], 3 backpacks [Leather Rucksack, Canvas Satchel, Herb Basket], responsive top HUD toolbar with mobile icon collapse, and dual-zone touch controls with zoom-invariant virtual joystick and amber touch action button).
+  - Milestone 12 (Step 12.1): Save System, PWA & Offline Support (Resilient localStorage + IndexedDB dual storage, 15-second periodic autosave, visibilitychange and beforeunload triggers, JSON file import/export validation, PWA manifest, procedural SVG icon, and offline Service Worker with stale-while-revalidate caching).
 - **Completed in this step**:
-  - Milestone 11 (Step 11.1): UI, Controls & Character Customization.
+  - Milestone 12 (Step 12.1): Save System (localStorage/IndexedDB) and PWA manifest.
 - **Next Item in ROADMAP.md**:
-  - Milestone 12 (Step 12.1): Save System (localStorage/IndexedDB) and PWA manifest (Autosave every 15s, visibilitychange save, import/export JSON, PWA manifest and service worker with `/wander/` scope).
+  - Milestone 13 (Step 13.1): Quality Scaler & Accessibility Toggles (Automatic FPS/frame budget dynamic scaler, Low/Medium/High/Ultra presets, reduced motion, high contrast mode, and keyboard accessibility).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
@@ -54,5 +55,5 @@
 4. **Test**: `npm run test`
 
 ## Known Bugs / Blockers
-- None. Everything builds cleanly with zero errors and 100% test pass rate (18 test files, 90 tests passing).
+- None. Everything builds cleanly with zero errors and 100% test pass rate (19 test files, 96 tests passing).
 

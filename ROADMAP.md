@@ -81,7 +81,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 
 ## Milestone 11-15: Polish & Release
 - [x] **Step 11.1**: UI and Touch Controls (Virtual joysticks, responsive typography).
-- **Step 12.1**: Save System (localStorage/IndexedDB) and PWA manifest.
+- [x] **Step 12.1**: Save System (localStorage/IndexedDB) and PWA manifest.
 - **Step 13.1**: Quality Scaler & Accessibility toggles.
 - **Step 15.1**: Final visual review and memory leak tests.
 

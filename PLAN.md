@@ -133,10 +133,10 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 12: Storage, PWA & Offline Support
-- [ ] Save system (localStorage / IndexedDB): player position, world time, season, journal, garden, map, settings
-- [ ] Autosave every 15s and on `visibilitychange`
-- [ ] Save import / export to JSON file
-- [ ] Service worker & manifest for installable PWA with full offline capabilities
+- [x] Save system (localStorage / IndexedDB): player position, world time, season, journal, garden, map, settings
+- [x] Autosave every 15s and on `visibilitychange`
+- [x] Save import / export to JSON file
+- [x] Service worker & manifest for installable PWA with full offline capabilities
 
 ---
 
