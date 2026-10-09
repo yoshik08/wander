@@ -21,6 +21,7 @@ import { SaveManager } from './systems/save';
 import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
+import { SanctuaryUI } from './ui/sanctuary-ui';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -62,6 +63,7 @@ let partyLeader: PartyLeader | null = null;
 if (saveManager.state.party.length > 0) {
   partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
 }
+const sanctuaryUI = new SanctuaryUI(saveManager);
 
 
 // Photo Mode Hooks
@@ -324,6 +326,15 @@ const loop = new GameLoop({
       photoMode.update(vec2(0, 0), dt);
     }
 
+    if (sanctuaryUI.isActive) {
+      if (inputState.menuPressed) {
+        sanctuaryUI.close();
+      }
+      inputState.move.x = 0;
+      inputState.move.y = 0;
+      inputState.isRunning = false;
+    }
+
     // Dynamic wind modulation driven by weather
     weather.update(dt);
     const weatherInfo = weather.getInfo();
@@ -407,11 +418,13 @@ const loop = new GameLoop({
     cat.update(dt, time, player.pos, player.vel, globalWind, player.action);
 
     // Update party leader companion
-    if (!partyLeader && saveManager.state.party.length > 0) {
-      partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
-    }
-    if (partyLeader) {
+    if (saveManager.state.party.length > 0) {
+      if (!partyLeader || partyLeader.genome.speciesId !== saveManager.state.party[0].speciesId) {
+        partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
+      }
       partyLeader.update(dt, time, player.pos, player.action === 'sit');
+    } else {
+      partyLeader = null;
     }
     // Ambient gentle water ripples (fish / breeze surface disturbances)
     if (Math.sin(time * 1.8) > 0.96) {
@@ -457,10 +470,17 @@ const loop = new GameLoop({
 
     // 5. Rest Spots (Benches, Logs, Campfire sitting log)
     currentRestSpot = null;
+    let canInteractSanctuary = false;
     let closestRestDist = 32;
 
     for (const chunk of chunksNearPlayer) {
       for (const s of chunk.data.structures) {
+        if (s.type === 'sanctuary_crystal') {
+           const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+           if (d < 40) canInteractSanctuary = true;
+           continue;
+        }
+
         let spotX = s.x;
         let spotY = s.y;
         let label = 'Rest on Bench';
@@ -514,6 +534,15 @@ const loop = new GameLoop({
       // If spar ended or yielded?
       if (!sparring.isActive) {
          camera.targetZoom = 1.0;
+      }
+    } else if (canInteractSanctuary) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '💎';
+        interactLabel.textContent = 'Manage Sanctuary [E]';
+      }
+      if (inputState.interactPressed) {
+        sanctuaryUI.open();
       }
     } else if (canPetLeader) {
       if (interactPrompt && interactLabel && interactIcon) {

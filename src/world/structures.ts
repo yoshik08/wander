@@ -15,7 +15,8 @@ export type StructureType =
   | 'bench'
   | 'sitting_log'
   | 'bridge'
-  | 'stepping_stones';
+  | 'stepping_stones'
+  | 'sanctuary_crystal';
 
 export interface StructureInstance {
   id: string;
@@ -77,6 +78,21 @@ export function generateChunkStructures(
       baseY: benchY + 8,
       width: 24,
       height: 14,
+      variant: 0,
+      solidTiles: []
+    });
+
+    // Sanctuary Crystal
+    const sanctuaryX = baseWorldX + CHUNK_PIXEL_SIZE / 2;
+    const sanctuaryY = baseWorldY + CHUNK_PIXEL_SIZE / 2 - 80;
+    structures.push({
+      id: `spawn-sanctuary-${seed}`,
+      type: 'sanctuary_crystal',
+      x: sanctuaryX,
+      y: sanctuaryY,
+      baseY: sanctuaryY + 16,
+      width: 32,
+      height: 48,
       variant: 0,
       solidTiles: []
     });
@@ -329,6 +345,29 @@ export function renderStructure(
       // Velvet moss patches on log top
       renderer.drawRect(x - 6, y - 2, 9, 2, hexToRgba('#4CAF50', 0.85));
       renderer.drawRect(x + 5, y - 1, 5, 2, hexToRgba('#66BB6A', 0.8));
+      break;
+    }
+
+    case 'sanctuary_crystal': {
+      // Glow and shadow
+      const pulse = Math.sin(time * 2.5);
+      renderer.drawCircle(x, baseY, 20 + pulse * 2, hexToRgba('#1ABC9C', 0.15 + pulse * 0.05));
+      renderer.drawCircle(x, baseY, 16, hexToRgba('#1B2631', 0.3));
+
+      // Crystal base (Stone)
+      renderer.drawRect(x - 10, baseY - 6, 20, 6, hexToRgba('#7F8C8D'));
+      renderer.drawRect(x - 8, baseY - 10, 16, 4, hexToRgba('#95A5A6'));
+
+      // Floating crystal
+      const floatY = y - 14 + Math.sin(time * 1.5) * 3;
+      renderer.drawLine(x, floatY - 14, x, floatY + 10, 12, hexToRgba('#16A085', 0.8));
+      renderer.drawLine(x, floatY - 12, x, floatY + 8, 8, hexToRgba('#48C9B0', 0.9));
+      renderer.drawLine(x, floatY - 8, x, floatY + 4, 4, hexToRgba('#A3E4D7', 0.95));
+      
+      // Star glints
+      if (Math.sin(time * 3) > 0.8) {
+        renderer.drawCircle(x - 4, floatY - 8, 1.5, hexToRgba('#FFFFFF'));
+      }
       break;
     }
 
