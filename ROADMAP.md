@@ -22,7 +22,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 7: Procedural Wildlife (Remaining)
 **Focus**: Expanded ambient life.
 
-### Step 7.3: Ground Wildlife Species
+### Step 7.3: Ground Wildlife Species [x]
 - **Action**: Expand `boids.ts` to include ground creatures like deer, rabbits, and foxes that flee when approached too quickly. Add night-specific fireflies and frogs.
 - **Files**: `src/entities/boids.ts`, `src/render/art.ts`
 - **Done When**: Deer can be seen grazing and running away; fireflies appear at night.
