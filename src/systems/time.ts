@@ -1,4 +1,4 @@
-import { ColorRGBA, lerp } from '../core/math';
+import { ColorRGBA, lerp, hexToRgba } from '../core/math';
 import { IRenderer } from '../render/types';
 
 export type TimePhase = 'night' | 'dawn' | 'morning' | 'noon' | 'golden_hour' | 'dusk';
@@ -156,6 +156,7 @@ export class TimeSystem {
    * Renders the atmospheric lighting overlay quad matching current time-of-day.
    */
   renderOverlay(
+    layer: number,
     renderer: IRenderer,
     camX: number,
     camY: number,
@@ -164,7 +165,14 @@ export class TimeSystem {
     zoom: number
   ): void {
     const info = this.getInfo();
-    if (info.ambientColor.a < 0.005) return;
+    let overlayColor = info.ambientColor;
+    
+    // In underworld caves, it is permanently pitch black
+    if (layer < 0) {
+      overlayColor = hexToRgba('#020204', 0.98);
+    } else if (info.ambientColor.a < 0.005) {
+      return;
+    }
 
     const halfW = (viewWidth / 2) / zoom;
     const halfH = (viewHeight / 2) / zoom;
@@ -175,7 +183,7 @@ export class TimeSystem {
       camY - halfH - margin,
       halfW * 2 + margin * 2,
       halfH * 2 + margin * 2,
-      info.ambientColor
+      overlayColor
     );
   }
 }

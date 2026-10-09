@@ -16,6 +16,7 @@ export interface SaveState {
   version: number;
   seed: string;
   timeOfDay: number;
+  layer: number;
   player: { x: number; y: number };
   keepsakes: string[];
   exploredChunks: string[];
@@ -43,6 +44,7 @@ export class SaveManager {
       version: SaveManager.CURRENT_VERSION,
       seed: 'dawn-meadow',
       timeOfDay: 8.0,
+      layer: 0,
       player: { x: 384, y: 384 },
       keepsakes: [],
       exploredChunks: [],

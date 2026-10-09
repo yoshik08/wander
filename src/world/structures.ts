@@ -43,6 +43,7 @@ export interface StructureInstance {
  * Placed sparsely across the world based on seed and landscape conditions.
  */
 export function generateChunkStructures(
+  layer: number,
   chunkX: number,
   chunkY: number,
   seed: number,
@@ -52,6 +53,11 @@ export function generateChunkStructures(
   collision: Uint8Array
 ): StructureInstance[] {
   const structures: StructureInstance[] = [];
+  
+  if (layer < 0) {
+    return structures;
+  }
+
   const chunkRng = new PRNG(seed ^ (chunkX * 1610612741) ^ (chunkY * 805306457));
 
   const baseWorldX = chunkX * CHUNK_PIXEL_SIZE;

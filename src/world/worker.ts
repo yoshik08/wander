@@ -1,9 +1,9 @@
 import { generateChunkData } from './chunk';
 
 // Web Worker for asynchronous background procedural chunk generation
-self.onmessage = (e: MessageEvent<{ chunkX: number; chunkY: number; seed: string | number }>) => {
-  const { chunkX, chunkY, seed } = e.data;
-  const chunkData = generateChunkData(chunkX, chunkY, seed);
+self.onmessage = (e: MessageEvent<{ layer: number; chunkX: number; chunkY: number; seed: string | number }>) => {
+  const { layer, chunkX, chunkY, seed } = e.data;
+  const chunkData = generateChunkData(layer, chunkX, chunkY, seed);
 
   // Transfer array buffers to main thread with 0-copy overhead
   const transferables = [

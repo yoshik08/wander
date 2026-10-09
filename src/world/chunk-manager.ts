@@ -96,13 +96,14 @@ export class ChunkManager {
   }
 
   private generateSpawnChunksSynchronous(radius: number): void {
+    const layer = 0;
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
-        const key = `${dx},${dy}`;
-        this.markExplored(dx, dy);
+        const key = `${layer},${dx},${dy}`;
+        this.markExplored(dx, dy); // maybe add layer to explored? Later.
         if (!this.chunks.has(key)) {
-          const data = generateChunkData(dx, dy, this.seed);
-          this.chunks.set(key, new Chunk(dx, dy, data));
+          const data = generateChunkData(layer, dx, dy, this.seed);
+          this.chunks.set(key, new Chunk(layer, dx, dy, data));
         }
       }
     }
@@ -132,41 +133,41 @@ export class ChunkManager {
 
   private handleWorkerMessage(e: MessageEvent<ChunkBufferData>): void {
     const data = e.data;
-    const key = `${data.chunkX},${data.chunkY}`;
+    const key = `${data.layer},${data.chunkX},${data.chunkY}`;
     this.pendingRequests.delete(key);
     this.processChunkData(data);
-    this.chunks.set(key, new Chunk(data.chunkX, data.chunkY, data));
+    this.chunks.set(key, new Chunk(data.layer, data.chunkX, data.chunkY, data));
   }
 
-  getChunk(chunkX: number, chunkY: number): Chunk {
-    const key = `${chunkX},${chunkY}`;
+  getChunk(layer: number, chunkX: number, chunkY: number): Chunk {
+    const key = `${layer},${chunkX},${chunkY}`;
     let chunk = this.chunks.get(key);
     if (!chunk) {
       // Synchronous fallback ensures zero missing terrain frames
-      const data = generateChunkData(chunkX, chunkY, this.seed);
+      const data = generateChunkData(layer, chunkX, chunkY, this.seed);
       this.processChunkData(data);
-      chunk = new Chunk(chunkX, chunkY, data);
+      chunk = new Chunk(layer, chunkX, chunkY, data);
       this.chunks.set(key, chunk);
       this.pendingRequests.delete(key);
     }
     return chunk;
   }
 
-  requestChunk(chunkX: number, chunkY: number): void {
-    const key = `${chunkX},${chunkY}`;
+  requestChunk(layer: number, chunkX: number, chunkY: number): void {
+    const key = `${layer},${chunkX},${chunkY}`;
     if (this.chunks.has(key) || this.pendingRequests.has(key)) return;
 
     if (this.workers.length > 0) {
       this.pendingRequests.add(key);
       const worker = this.workers[this.nextWorkerIdx];
       this.nextWorkerIdx = (this.nextWorkerIdx + 1) % this.workers.length;
-      worker.postMessage({ chunkX, chunkY, seed: this.seed });
+      worker.postMessage({ layer, chunkX, chunkY, seed: this.seed });
     } else {
-      this.getChunk(chunkX, chunkY);
+      this.getChunk(layer, chunkX, chunkY);
     }
   }
 
-  update(cameraWorldX: number, cameraWorldY: number): void {
+  update(layer: number, cameraWorldX: number, cameraWorldY: number): void {
     const centerChunkX = Math.floor(cameraWorldX / CHUNK_PIXEL_SIZE);
     const centerChunkY = Math.floor(cameraWorldY / CHUNK_PIXEL_SIZE);
     this.markExplored(centerChunkX, centerChunkY);
@@ -174,7 +175,7 @@ export class ChunkManager {
     // 1. Request new chunks in load radius
     for (let dy = -CHUNK_LOAD_RADIUS; dy <= CHUNK_LOAD_RADIUS; dy++) {
       for (let dx = -CHUNK_LOAD_RADIUS; dx <= CHUNK_LOAD_RADIUS; dx++) {
-        this.requestChunk(centerChunkX + dx, centerChunkY + dy);
+        this.requestChunk(layer, centerChunkX + dx, centerChunkY + dy);
       }
     }
 
@@ -190,7 +191,7 @@ export class ChunkManager {
     }
   }
 
-  getVisibleChunks(cameraWorldX: number, cameraWorldY: number, viewWidth: number, viewHeight: number, zoom: number): Chunk[] {
+  getVisibleChunks(layer: number, cameraWorldX: number, cameraWorldY: number, viewWidth: number, viewHeight: number, zoom: number): Chunk[] {
     const halfW = (viewWidth / 2) / zoom;
     const halfH = (viewHeight / 2) / zoom;
 
@@ -202,16 +203,16 @@ export class ChunkManager {
     const visible: Chunk[] = [];
     for (let cy = minChunkY; cy <= maxChunkY; cy++) {
       for (let cx = minChunkX; cx <= maxChunkX; cx++) {
-        visible.push(this.getChunk(cx, cy));
+        visible.push(this.getChunk(layer, cx, cy));
       }
     }
     return visible;
   }
 
-  isTraversable(worldX: number, worldY: number, canTraverseWater: boolean = false): boolean {
+  isTraversable(layer: number, worldX: number, worldY: number, canTraverseWater: boolean = false): boolean {
     const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
     const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
-    const chunk = this.getChunk(chunkX, chunkY);
+    const chunk = this.getChunk(layer, chunkX, chunkY);
 
     const localPixelX = worldX - chunkX * CHUNK_PIXEL_SIZE;
     const localPixelY = worldY - chunkY * CHUNK_PIXEL_SIZE;
@@ -231,10 +232,10 @@ export class ChunkManager {
     return !chunk.isSolid(tileX, tileY);
   }
 
-  getBiomeAt(worldX: number, worldY: number): BiomeType {
+  getBiomeAt(layer: number, worldX: number, worldY: number): BiomeType {
     const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
     const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
-    const chunk = this.getChunk(chunkX, chunkY);
+    const chunk = this.getChunk(layer, chunkX, chunkY);
 
     const localPixelX = worldX - chunkX * CHUNK_PIXEL_SIZE;
     const localPixelY = worldY - chunkY * CHUNK_PIXEL_SIZE;
@@ -244,10 +245,10 @@ export class ChunkManager {
     return chunk.data.biome[tileY * CHUNK_TILES + tileX] as BiomeType;
   }
 
-  isWaterAt(worldX: number, worldY: number): boolean {
+  isWaterAt(layer: number, worldX: number, worldY: number): boolean {
     const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
     const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
-    const chunk = this.getChunk(chunkX, chunkY);
+    const chunk = this.getChunk(layer, chunkX, chunkY);
 
     const localPixelX = worldX - chunkX * CHUNK_PIXEL_SIZE;
     const localPixelY = worldY - chunkY * CHUNK_PIXEL_SIZE;
@@ -259,6 +260,11 @@ export class ChunkManager {
 
   getActiveChunkCount(): number {
     return this.chunks.size;
+  }
+
+  clearAllChunks(): void {
+    this.chunks.clear();
+    this.pendingRequests.clear();
   }
 
   destroy(): void {

@@ -120,10 +120,28 @@ export class LightingSystem {
    */
   renderPointLights(
     renderer: IRenderer,
+    layer: number,
     chunks: any[],
     time: number,
-    timeInfo: TimePhaseInfo
+    timeInfo: TimePhaseInfo,
+    playerPos: import('../core/math').Vec2,
+    partyLeader: any
   ): void {
+    // 1. Player / Ignis Light (very important in caves or at night)
+    if (layer < 0 || timeInfo.isNight || timeInfo.phase === 'dusk') {
+      const pulse = 0.9 + 0.1 * Math.sin(time * 5);
+      const isIgnis = partyLeader?.genome?.type === 'Ignis';
+      
+      this.scratchGlowColor.r = isIgnis ? 1.0 : 0.8;
+      this.scratchGlowColor.g = isIgnis ? 0.6 : 0.9;
+      this.scratchGlowColor.b = isIgnis ? 0.2 : 0.7;
+      this.scratchGlowColor.a = (isIgnis ? 0.25 : 0.15) * pulse;
+      renderer.drawCircle(playerPos.x, playerPos.y - 8, isIgnis ? 120 : 60, this.scratchGlowColor);
+      
+      this.scratchGlowColor.a = (isIgnis ? 0.15 : 0.05) * pulse;
+      renderer.drawCircle(playerPos.x, playerPos.y - 8, isIgnis ? 200 : 100, this.scratchGlowColor);
+    }
+
     for (const chunk of chunks) {
       for (const struct of chunk.data.structures) {
         if (struct.type === 'campfire') {
@@ -150,6 +168,20 @@ export class LightingSystem {
           this.scratchGlowColor.b = 0.40;
           this.scratchGlowColor.a = 0.15;
           renderer.drawCircle(x, y + 4, 35, this.scratchGlowColor);
+        }
+      }
+      
+      for (const prop of chunk.data.props) {
+        if (prop.type === 'glowing_mushroom') {
+          const px = chunk.chunkX * 384 + prop.x;
+          const py = chunk.chunkY * 384 + prop.y;
+          const pulse = 0.85 + 0.15 * Math.sin(time * 2 + px);
+          
+          this.scratchGlowColor.r = 0.2;
+          this.scratchGlowColor.g = 0.7;
+          this.scratchGlowColor.b = 0.9;
+          this.scratchGlowColor.a = 0.2 * pulse;
+          renderer.drawCircle(px, prop.baseY - 8, 45, this.scratchGlowColor);
         }
       }
     }

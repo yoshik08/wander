@@ -134,14 +134,14 @@ export class DiegeticMap {
           // Explored Chunk: draw terrain biome color
           const sampleWorldX = cx * CHUNK_PIXEL_SIZE + CHUNK_PIXEL_SIZE / 2;
           const sampleWorldY = cy * CHUNK_PIXEL_SIZE + CHUNK_PIXEL_SIZE / 2;
-          const biome = chunkManager.getBiomeAt(sampleWorldX, sampleWorldY);
+          const biome = chunkManager.getBiomeAt(0, sampleWorldX, sampleWorldY);
 
           this.getBiomeMapColor(biome, this.scratchCellColor);
           this.scratchCellColor.a = 0.88 * p;
           renderer.drawRect(cellX + cellMargin, cellY + cellMargin, cellSize - cellMargin * 2, cellSize - cellMargin * 2, this.scratchCellColor);
 
           // River / water representation
-          if (chunkManager.isWaterAt(sampleWorldX, sampleWorldY)) {
+          if (chunkManager.isWaterAt(0, sampleWorldX, sampleWorldY)) {
             this.scratchMarkerColor.r = 0.28;
             this.scratchMarkerColor.g = 0.58;
             this.scratchMarkerColor.b = 0.82;
@@ -158,7 +158,7 @@ export class DiegeticMap {
           }
 
           // Keepsakes indicator: draw small golden glint if uncollected keepsake exists in chunk
-          const chunk = chunkManager.getChunk(cx, cy);
+          const chunk = chunkManager.getChunk(0, cx, cy);
           if (chunk && chunk.data.keepsakes) {
             for (const k of chunk.data.keepsakes) {
               if (!chunkManager.isKeepsakeCollected(k.id)) {

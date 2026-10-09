@@ -136,7 +136,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ---
 
 ## Milestone C5: Traversal Abilities
-- **Step C5.1**: Glide over water (Aqua), clear brambles (Flora), push boulders (Terra), hop gaps (Aero), light caves (Ignis).
+- [x] **Step C5.1**: Glide over water (Aqua), clear brambles (Flora), push boulders (Terra), hop gaps (Aero), light caves (Ignis).
 
 ---
 

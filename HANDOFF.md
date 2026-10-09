@@ -26,10 +26,11 @@
   - Milestone C3 (Step C3.2): Sanctuary at world 0,0 and UI to swap creatures.
   - Milestone C4 (Step C4.1): Resting Crystals and Nomad Camps generation.
   - Milestone C4 (Step C4.2): Waystones and Fast Travel system.
+  - Milestone C5 (Step C5.1): Traversal Abilities.
 - **In progress**:
-  - Milestone C5 (Step C5.1): Traversal Abilities.
+  - Milestone C6 (Step C6.1): Underground noise map for caves with light radius mechanics.
 - **Next Item in ROADMAP.md**:
-  - Milestone C5 (Step C5.1): Traversal Abilities.
+  - Milestone C6 (Step C6.1): Underground noise map for caves with light radius mechanics.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

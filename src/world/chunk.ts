@@ -41,6 +41,7 @@ export interface CreatureInstance {
 }
 
 export interface ChunkBufferData {
+  layer: number;
   chunkX: number;
   chunkY: number;
   elevation: Float32Array; // 1024 floats
@@ -59,12 +60,14 @@ export interface ChunkBufferData {
 }
 
 export class Chunk {
+  readonly layer: number;
   readonly chunkX: number;
   readonly chunkY: number;
   data: ChunkBufferData;
   renderCache: any = null;
 
-  constructor(chunkX: number, chunkY: number, data: ChunkBufferData) {
+  constructor(layer: number, chunkX: number, chunkY: number, data: ChunkBufferData) {
+    this.layer = layer;
     this.chunkX = chunkX;
     this.chunkY = chunkY;
     this.data = data;
@@ -120,8 +123,8 @@ export function pickSpeciesForBiome(biome: BiomeType, rng: PRNG): number {
  * Pure deterministic generator for a single chunk.
  * Can run either in Web Worker or synchronously on main thread for spawn chunks.
  */
-export function generateChunkData(chunkX: number, chunkY: number, rawSeed: number | string): ChunkBufferData {
-  const seedNum = hashSeed(rawSeed);
+export function generateChunkData(layer: number, chunkX: number, chunkY: number, rawSeed: number | string): ChunkBufferData {
+  const seedNum = hashSeed(rawSeed) ^ (layer * 0x73856093);
 
   // Independent noise generators per climate channel
   const elevNoise = new SimplexNoise(seedNum ^ 0x1a2b3c);
@@ -160,9 +163,32 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     return (rVal < 0.046 && baseElev > -0.32) || baseElev < -0.35;
   };
 
-  for (let ty = 0; ty < CHUNK_TILES; ty++) {
-    for (let tx = 0; tx < CHUNK_TILES; tx++) {
-      const idx = ty * CHUNK_TILES + tx;
+  if (layer < 0) {
+    for (let ty = 0; ty < CHUNK_TILES; ty++) {
+      for (let tx = 0; tx < CHUNK_TILES; tx++) {
+        const idx = ty * CHUNK_TILES + tx;
+        const worldTileX = chunkX * CHUNK_TILES + tx;
+        const worldTileY = chunkY * CHUNK_TILES + ty;
+        const worldX = worldTileX * TILE_SIZE;
+        const worldY = worldTileY * TILE_SIZE;
+        
+        const caveVal = elevNoise.fbm2D(worldX * 0.003, worldY * 0.003, 3);
+        const isSolid = Math.abs(caveVal) > 0.25 ? 1 : 0;
+        
+        elevation[idx] = isSolid ? 0.9 : -0.5;
+        moisture[idx] = 0.5;
+        temperature[idx] = 0.5;
+        flowDirX[idx] = 0;
+        flowDirY[idx] = 0;
+        tileFlags[idx] = TILE_FLAG_LAND;
+        collision[idx] = isSolid;
+        biome[idx] = BiomeType.GlowingHollow;
+      }
+    }
+  } else {
+    for (let ty = 0; ty < CHUNK_TILES; ty++) {
+      for (let tx = 0; tx < CHUNK_TILES; tx++) {
+        const idx = ty * CHUNK_TILES + tx;
       const worldTileX = chunkX * CHUNK_TILES + tx;
       const worldTileY = chunkY * CHUNK_TILES + ty;
       const worldX = worldTileX * TILE_SIZE;
@@ -284,12 +310,15 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
       collision[idx] = isSolid;
 
       // Classify Biome
-      let bType = isRiver ? BiomeType.LakesRivers : classifyBiome(elev, moist, temp, erosion);
-      if (distFromSpawn < 400 && chunkX === 0 && chunkY === 0 && !isRiver && !isWater) {
+      let bType: BiomeType = isRiver ? BiomeType.LakesRivers : classifyBiome(elev, moist, temp, erosion);
+      if (layer < 0) {
+        bType = BiomeType.GlowingHollow;
+      } else if (distFromSpawn < 400 && chunkX === 0 && chunkY === 0 && !isRiver && !isWater) {
         bType = BiomeType.Meadow;
       }
       biome[idx] = bType;
     }
+  }
   }
 
   // 5. Shoreline Foam Bitmask (Edge detection between water and land)
@@ -321,6 +350,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
 
   // 6. Generate Sparse Structures
   const structures = generateChunkStructures(
+    layer,
     chunkX,
     chunkY,
     seedNum,
@@ -467,7 +497,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: 0
           });
         }
-      } else if (bType === BiomeType.GlowingHollow) {
+      } else if ((bType as BiomeType) === BiomeType.GlowingHollow) {
         if (chance < 0.25) {
           props.push({
             type: 'mushroom_glowing',
@@ -605,6 +635,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
   }
 
   return {
+    layer,
     chunkX,
     chunkY,
     elevation,

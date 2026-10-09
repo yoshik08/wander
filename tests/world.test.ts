@@ -20,8 +20,8 @@ describe('Seed Hashing & PRNG Determinism', () => {
   });
 
   it('produces identical chunk data for the same chunk and seed', () => {
-    const data1 = generateChunkData(2, -3, 'test-seed-42');
-    const data2 = generateChunkData(2, -3, 'test-seed-42');
+    const data1 = generateChunkData(0, 2, -3, 'test-seed-42');
+    const data2 = generateChunkData(0, 2, -3, 'test-seed-42');
 
     expect(data1.elevation.length).toBe(data2.elevation.length);
     for (let i = 0; i < 64; i++) {
@@ -51,7 +51,7 @@ describe('Biome Classification & Climate', () => {
 
 describe('Hydrology Flow Vectors & Water Shading', () => {
   it('generates normalized flow vectors', () => {
-    const chunk = generateChunkData(0, 0, 12345);
+    const chunk = generateChunkData(0, 0, 0, 12345);
     for (let i = 0; i < chunk.flowDirX.length; i += 32) {
       const len = Math.hypot(chunk.flowDirX[i], chunk.flowDirY[i]);
       expect(len).toBeCloseTo(1.0, 2);
@@ -59,7 +59,7 @@ describe('Hydrology Flow Vectors & Water Shading', () => {
   });
 
   it('generates valid shoreline foam bitmasks', () => {
-    const chunk = generateChunkData(1, 2, 'shoreline-test');
+    const chunk = generateChunkData(0, 1, 2, 'shoreline-test');
     expect(chunk.foamMask.length).toBe(CHUNK_TILES * CHUNK_TILES);
     for (let i = 0; i < chunk.foamMask.length; i++) {
       expect(chunk.foamMask[i]).toBeGreaterThanOrEqual(0);
@@ -70,7 +70,7 @@ describe('Hydrology Flow Vectors & Water Shading', () => {
 
 describe('Procedural Paths, Bridges & Structures', () => {
   it('ensures bridges over water are always walkable', () => {
-    const chunk = generateChunkData(0, 0, 'bridge-test');
+    const chunk = generateChunkData(0, 0, 0, 'bridge-test');
     for (let i = 0; i < chunk.tileFlags.length; i++) {
       if (chunk.tileFlags[i] === 4) { // TILE_FLAG_BRIDGE
         expect(chunk.collision[i]).toBe(0);
@@ -79,8 +79,8 @@ describe('Procedural Paths, Bridges & Structures', () => {
   });
 
   it('places deterministic landmarks in spawn chunk', () => {
-    const chunk1 = generateChunkData(0, 0, 'seed-99');
-    const chunk2 = generateChunkData(0, 0, 'seed-99');
+    const chunk1 = generateChunkData(0, 0, 0, 'seed-99');
+    const chunk2 = generateChunkData(0, 0, 0, 'seed-99');
     expect(chunk1.structures.length).toBeGreaterThan(0);
     expect(chunk1.structures.length).toBe(chunk2.structures.length);
     expect(chunk1.structures[0].type).toBe(chunk2.structures[0].type);
@@ -89,8 +89,8 @@ describe('Procedural Paths, Bridges & Structures', () => {
   });
 
   it('scatters deterministic collectible keepsakes with valid metadata', () => {
-    const chunk1 = generateChunkData(1, 1, 'keepsake-seed-42');
-    const chunk2 = generateChunkData(1, 1, 'keepsake-seed-42');
+    const chunk1 = generateChunkData(0, 1, 1, 'keepsake-seed-42');
+    const chunk2 = generateChunkData(0, 1, 1, 'keepsake-seed-42');
     expect(chunk1.keepsakes.length).toBe(chunk2.keepsakes.length);
     if (chunk1.keepsakes.length > 0) {
       expect(chunk1.keepsakes[0].id).toBe(chunk2.keepsakes[0].id);
@@ -107,7 +107,7 @@ describe('Traversability Guarantee Across 500 Random Seeds', () => {
 
     for (let s = 0; s < 500; s++) {
       const seed = masterRng.rangeInt(1, 100000000);
-      const chunk = generateChunkData(0, 0, seed);
+      const chunk = generateChunkData(0, 0, 0, seed);
 
       // 1. Center spawn tile (tx=16, ty=16) must be walkable
       const centerIdx = 16 * CHUNK_TILES + 16;

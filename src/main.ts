@@ -79,6 +79,8 @@ const waystoneUI = new WaystoneUI(saveManager, (tx, ty) => {
   }
 });
 
+// Current world layer (0 = overworld, -1 = underground)
+let currentLayer = saveManager.state.layer || 0;
 
 // Photo Mode Hooks
 const photoBtn = document.getElementById('photo-btn');
@@ -221,7 +223,7 @@ if (interactPrompt) {
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
-  if (chunkManager.isWaterAt(pos.x, pos.y)) {
+  if (chunkManager.isWaterAt(currentLayer, pos.x, pos.y)) {
     particles.spawnRipple(pos.x, pos.y, isRunning ? 18 : 12);
   } else {
     const wet = weather.getInfo().wetness;
@@ -236,7 +238,7 @@ player.onStep = (pos, angle, isRunning) => {
 };
 
 // Seed initial ambient particles across the screen
-const initialBiome = chunkManager.getBiomeAt(player.pos.x, player.pos.y);
+const initialBiome = chunkManager.getBiomeAt(currentLayer, player.pos.x, player.pos.y);
 particles.seedViewport(camera.pos.x, camera.pos.y, renderer.width, renderer.height, camera.zoom, initialBiome, 90);
 
 // Resize handling with devicePixelRatio
@@ -374,20 +376,20 @@ const loop = new GameLoop({
     const canTraverseWater = partyLeader?.genome.type === 'Aqua';
     const padding = 5.0; // Collision radius around feet
     if (
-      !chunkManager.isTraversable(player.pos.x - padding, oldY, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x + padding, oldY, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x, oldY - padding, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x, oldY + padding, canTraverseWater)
+      !chunkManager.isTraversable(currentLayer, player.pos.x - padding, oldY, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x + padding, oldY, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x, oldY - padding, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x, oldY + padding, canTraverseWater)
     ) {
       player.pos.x = oldX;
       player.vel.x = 0;
     }
 
     if (
-      !chunkManager.isTraversable(player.pos.x - padding, player.pos.y, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x + padding, player.pos.y, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x, player.pos.y - padding, canTraverseWater) ||
-      !chunkManager.isTraversable(player.pos.x, player.pos.y + padding, canTraverseWater)
+      !chunkManager.isTraversable(currentLayer, player.pos.x - padding, player.pos.y, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x + padding, player.pos.y, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x, player.pos.y - padding, canTraverseWater) ||
+      !chunkManager.isTraversable(currentLayer, player.pos.x, player.pos.y + padding, canTraverseWater)
     ) {
       player.pos.y = oldY;
       player.vel.y = 0;
@@ -406,10 +408,10 @@ const loop = new GameLoop({
     }
 
     // Stream and prune chunks around camera
-    chunkManager.update(camera.pos.x, camera.pos.y);
+    chunkManager.update(currentLayer, camera.pos.x, camera.pos.y);
 
     // Update ambient, rain, and footstep particles
-    const currentBiome = chunkManager.getBiomeAt(player.pos.x, player.pos.y);
+    const currentBiome = chunkManager.getBiomeAt(currentLayer, player.pos.x, player.pos.y);
     particles.update(
       dt,
       time,
@@ -453,13 +455,14 @@ const loop = new GameLoop({
     if (Math.sin(time * 1.8) > 0.96) {
       const rx = camera.pos.x + Math.sin(time * 3.1) * 200;
       const ry = camera.pos.y + Math.cos(time * 2.7) * 150;
-      if (chunkManager.isWaterAt(rx, ry)) {
+      if (chunkManager.isWaterAt(currentLayer, rx, ry)) {
         particles.spawnRipple(rx, ry, 9);
       }
     }
 
     // Collect keepsakes on proximity
     const chunksNearPlayer = chunkManager.getVisibleChunks(
+      currentLayer,
       player.pos.x,
       player.pos.y,
       renderer.width,
@@ -489,7 +492,7 @@ const loop = new GameLoop({
 
     // Update wild creatures roaming in nearby chunks
     wildCreatures.syncWithChunks(chunksNearPlayer, chunkManager.seedRaw);
-    wildCreatures.update(dt, time, (wx, wy) => chunkManager.isTraversable(wx, wy), player.pos);
+    wildCreatures.update(dt, time, (wx, wy) => chunkManager.isTraversable(currentLayer, wx, wy), player.pos);
 
     // 5. Rest Spots (Benches, Logs, Campfire sitting log)
     currentRestSpot = null;
@@ -498,7 +501,7 @@ const loop = new GameLoop({
     let canClearBrambles: { id: string, x: number, y: number } | null = null;
     let canPushBoulder: { id: string, x: number, y: number } | null = null;
     let canHopGap: { id: string, x: number, y: number } | null = null;
-    let canEnterCave = false;
+    let canEnterCave = currentLayer < 0; // If underground, can always exit
     let closestRestDist = 32;
 
     for (const chunk of chunksNearPlayer) {
@@ -696,33 +699,29 @@ const loop = new GameLoop({
     } else if (canEnterCave) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
-        interactIcon.textContent = '🕳️';
-        if (partyLeader?.genome.type === 'Ignis') {
-          interactLabel.textContent = `Enter Cave [E] (C6 WIP)`;
+        interactIcon.textContent = currentLayer === 0 ? '🕳️' : '🧗';
+        if (partyLeader?.genome.type === 'Ignis' || currentLayer < 0) {
+          interactLabel.textContent = currentLayer === 0 ? `Enter Cave [E]` : `Exit Cave [E]`;
         } else {
           interactLabel.textContent = `Too dark to enter. (Requires Ignis)`;
         }
       }
-      if (inputState.interactPressed && partyLeader?.genome.type === 'Ignis') {
-        if (toastBanner && toastTitle && toastDesc && toastCount) {
-          toastTitle.textContent = `🕳️ Underground Cave`;
-          toastDesc.textContent = `This area is under construction (Milestone C6).`;
-          toastCount.textContent = `Coming soon!`;
-          toastBanner.style.display = 'block';
-          requestAnimationFrame(() => {
-            if (toastBanner) {
-              toastBanner.style.opacity = '1';
-              toastBanner.style.transform = 'translate(-50%, 0)';
-            }
-          });
-          setTimeout(() => {
-            if (toastBanner) {
-              toastBanner.style.opacity = '0';
-              toastBanner.style.transform = 'translate(-50%, 10px)';
-              setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
-            }
-          }, 4000);
-        }
+      if (inputState.interactPressed && (partyLeader?.genome.type === 'Ignis' || currentLayer < 0)) {
+        // Toggle Layer
+        currentLayer = currentLayer === 0 ? -1 : 0;
+        
+        saveManager.state.layer = currentLayer;
+        saveManager.saveToLocalStorage();
+
+        // Clear chunks to force regeneration at new layer
+        chunkManager.clearAllChunks();
+        
+        // Offset player slightly to avoid immediate re-trigger and ensure not in wall
+        player.pos.y += 48;
+        camera.pos.x = player.pos.x;
+        camera.pos.y = player.pos.y;
+        camera.target.x = player.pos.x;
+        camera.target.y = player.pos.y;
       }
     } else if (canInteractSanctuary) {
       if (interactPrompt && interactLabel && interactIcon) {
@@ -835,6 +834,7 @@ const loop = new GameLoop({
 
     const time = performance.now() / 1000;
     const visibleChunks = chunkManager.getVisibleChunks(
+      currentLayer,
       camPos.x,
       camPos.y,
       renderer.width,
@@ -955,6 +955,13 @@ const loop = new GameLoop({
             baseY: prop.baseY,
             draw: () => art.drawPaintedRock(px, prop.baseY, prop.variant)
           });
+        } else if (prop.type === 'glowing_mushroom') {
+          depthItems.push({
+            baseY: prop.baseY,
+            draw: () => {
+              art.drawMushroom(px, prop.baseY, prop.variant, true);
+            }
+          });
         } else if (prop.type === 'log') {
           depthItems.push({
             baseY: prop.baseY,
@@ -1054,11 +1061,6 @@ const loop = new GameLoop({
     wildlife.renderButterflies(renderer, art, alpha);
 
     // ==========================================
-    // LAYER 5b: Point Light Bloom Halos (Campfires, Lanterns)
-    // ==========================================
-    lighting.renderPointLights(renderer, visibleChunks, time, timeInfo);
-
-    // ==========================================
     // LAYER 6: Atmospheric Particles (Pollen, Petals, Leaves, Dust, Spores)
     // ==========================================
     particles.render(renderer, time);
@@ -1071,7 +1073,7 @@ const loop = new GameLoop({
     // ==========================================
     // LAYER 7: Canopy God Rays
     // ==========================================
-    const curBiome = chunkManager.getBiomeAt(p.x, p.y);
+    const curBiome = chunkManager.getBiomeAt(currentLayer, p.x, p.y);
     lighting.renderGodRays(
       renderer,
       camPos.x,
@@ -1100,6 +1102,7 @@ const loop = new GameLoop({
     // LAYER 9: Time of Day Lighting Overlay
     // ==========================================
     timeSystem.renderOverlay(
+      currentLayer,
       renderer,
       camPos.x,
       camPos.y,
@@ -1107,6 +1110,11 @@ const loop = new GameLoop({
       renderer.height,
       camera.zoom
     );
+
+    // ==========================================
+    // LAYER 9.5: Point Light Bloom Halos (Punches through darkness)
+    // ==========================================
+    lighting.renderPointLights(renderer, currentLayer, visibleChunks, time, timeInfo, p, partyLeader);
 
     // ==========================================
     // LAYER 10: Touch Virtual Joystick UI
