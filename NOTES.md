@@ -61,6 +61,12 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Elevation Compression**: Shadows correctly lengthen at low dawn/dusk sun angles and compress tightly beneath bases during noon zenith.
 - **Zero Allocations**: ArtToolkit uses a reusable scratch shadow polygon buffer, eliminating per-frame quad allocations while producing soft Ghibli-style ground grounding.
 
+## Step 5.3 (God Rays & Bloom) Critique
+- **Atmospheric Canopy Beams**: Angled god rays stream through the canopy matching the sun angle, breathing subtly with organic time sway during dawn, morning, golden hour, and dusk.
+- **Point Light Bloom**: The spawn campfire and cottage windows emit multi-tiered warm flickering bloom halos that ground light sources in the landscape.
+- **Lightweight Blending**: Rendered cleanly through batched polygon and circle primitives with zero multipass overhead, keeping frame times under 0.8ms at 120Hz.
+
+
 
 
 

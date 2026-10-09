@@ -10,6 +10,7 @@ import { hexToRgba, vec2, Vec2 } from './core/math';
 import { ArtToolkit } from './render/art';
 import { ParticleSystem } from './systems/particles';
 import { TimeSystem } from './systems/time';
+import { LightingSystem } from './systems/lighting';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -27,6 +28,7 @@ const input = new InputManager(canvas);
 const chunkManager = new ChunkManager();
 const particles = new ParticleSystem(chunkManager.seed);
 const timeSystem = new TimeSystem(8.0); // Spawn at 8:00 AM sunny morning
+const lighting = new LightingSystem();
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
@@ -301,12 +303,33 @@ const loop = new GameLoop({
     }
 
     // ==========================================
+    // LAYER 5b: Point Light Bloom Halos (Campfires, Lanterns)
+    // ==========================================
+    lighting.renderPointLights(renderer, visibleChunks, time, timeInfo);
+
+    // ==========================================
     // LAYER 6: Atmospheric Particles (Pollen, Petals, Leaves, Dust, Spores)
     // ==========================================
     particles.render(renderer, time);
 
     // ==========================================
-    // LAYER 7: Time of Day Lighting Overlay
+    // LAYER 7: Canopy God Rays
+    // ==========================================
+    const curBiome = chunkManager.getBiomeAt(p.x, p.y);
+    lighting.renderGodRays(
+      renderer,
+      camPos.x,
+      camPos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom,
+      timeInfo,
+      curBiome,
+      time
+    );
+
+    // ==========================================
+    // LAYER 8: Time of Day Lighting Overlay
     // ==========================================
     timeSystem.renderOverlay(
       renderer,
@@ -318,7 +341,7 @@ const loop = new GameLoop({
     );
 
     // ==========================================
-    // LAYER 8: Touch Virtual Joystick UI
+    // LAYER 9: Touch Virtual Joystick UI
     // ==========================================
     const joy = input.getTouchJoystickDisplay();
     if (joy && joy.active) {

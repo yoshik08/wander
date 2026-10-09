@@ -38,7 +38,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/main.ts`, `src/render/art.ts`
 - **Done When**: All upright objects cast shadows that stretch long at dawn/dusk and sit directly beneath objects at noon.
 
-### Step 5.3: God Rays & Bloom
+### [x] Step 5.3: God Rays & Bloom
 - **Action**: Add a lightweight post-processing pass or additive blended quads in `webgl2.ts` for god rays penetrating the canopy in forest biomes.
 - **Files**: `src/render/webgl2.ts`, `src/main.ts`
 - **Risk**: *High*. Multipass rendering might break the thin batched renderer. Use an additive blend quad over the screen instead of a true multipass bloom if performance drops.

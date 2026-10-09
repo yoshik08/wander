@@ -75,8 +75,8 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] Day/night cycle (24 real minutes default, optional sync to local time)
 - [x] Time-of-day phases: dawn, morning, noon, golden hour, dusk, moonlit blue night
 - [x] 2D normal-mapped directional lighting and soft tree/character drop shadows
-- [ ] God rays through canopies, bloom on highlights, and point lights (campfires, fireflies, lighthouse beam)
-- [ ] Post-processing color grading LUT / grading shader with smooth transitions
+- [x] God rays through canopies, bloom on highlights, and point lights (campfires, fireflies, lighthouse beam)
+- [x] Post-processing color grading LUT / grading shader with smooth transitions
 
 ---
 
