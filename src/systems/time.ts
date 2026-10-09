@@ -52,6 +52,15 @@ export class TimeSystem {
     this.currentHour = (this.currentHour + deltaHours) % 24.0;
   }
 
+  setSeason(season: Season): void {
+    const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter'];
+    const idx = seasons.indexOf(season);
+    if (idx >= 0) {
+      // Offset totalDays so getSeasonInfo calculates the selected season
+      this.totalDays = idx * 2.0;
+    }
+  }
+
   getSeasonInfo(): SeasonInfo {
     const totalElapsedDays = this.totalDays + (this.currentHour / 24.0);
     // 4 seasons, 2 in-game days each = 8 days per full seasonal year

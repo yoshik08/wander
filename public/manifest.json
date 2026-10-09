@@ -1,0 +1,20 @@
+{
+  "name": "MEADOW",
+  "short_name": "MEADOW",
+  "description": "An endless, cozy nature exploration world.",
+  "start_url": "/wander/",
+  "scope": "/wander/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2d4c28",
+  "theme_color": "#416b3c",
+  "categories": ["games", "nature", "exploration"],
+  "icons": [
+    {
+      "src": "/wander/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

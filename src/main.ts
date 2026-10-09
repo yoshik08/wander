@@ -73,6 +73,53 @@ player.speedMultiplier = saveManager.state.settings?.speed2x ? 2.0 : 1.0;
 if (saveManager.state.customization) {
   player.customization = { ...saveManager.state.customization };
 }
+if (saveManager.state.player && (saveManager.state.player.x !== 384 || saveManager.state.player.y !== 384)) {
+  player.pos.x = saveManager.state.player.x;
+  player.pos.y = saveManager.state.player.y;
+  camera.snapTo(player.pos.x, player.pos.y);
+}
+if (saveManager.state.timeOfDay !== undefined) {
+  timeSystem.currentHour = saveManager.state.timeOfDay;
+}
+if (saveManager.state.season) {
+  timeSystem.setSeason(saveManager.state.season);
+}
+
+// Autosave handler (every 15s, on visibilitychange, and on beforeunload)
+function performAutosave(): void {
+  saveManager.state.player.x = player.pos.x;
+  saveManager.state.player.y = player.pos.y;
+  const timeInfo = timeSystem.getInfo();
+  saveManager.state.timeOfDay = timeInfo.hour + timeInfo.minute / 60.0;
+  saveManager.state.season = timeSystem.getSeasonInfo().season;
+  saveManager.state.layer = currentLayer;
+  if (player.customization) {
+    saveManager.state.customization = { ...player.customization };
+  }
+  saveManager.saveToLocalStorage();
+}
+
+window.setInterval(performAutosave, 15000);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    performAutosave();
+  }
+});
+window.addEventListener('beforeunload', () => {
+  performAutosave();
+});
+
+// PWA Service Worker Registration
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/wander/sw.js', { scope: '/wander/' }).then((reg) => {
+      console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
+    }).catch((err) => {
+      console.warn('[PWA] ServiceWorker registration failed:', err);
+    });
+  });
+}
 
 const audioSystem = new AudioSystem();
 if (saveManager.state.settings) {
