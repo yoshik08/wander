@@ -54,7 +54,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] Smooth marching-squares shorelines, continuous rivers, water shader with foam/caustics
 - [x] Reusable art toolkit: painted tree/rock/flower/grass, shared wind uniform, soft drop shadows
 - [x] Character and tree redesign: 48px/64px scale, painterly no-outline style
-- [ ] Visual critique in NOTES.md
+- [x] Visual critique in NOTES.md
 
 ---
 

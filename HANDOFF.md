@@ -1,13 +1,15 @@
 # MEADOW — Project Handoff
 
 ## Current Status
-- **Current Milestone**: Completed Milestone 2. Ready for Milestone 3 (Hydrology, Water Shader, Paths, Bridges & Structures).
+- **Current Milestone**: Completed Milestone 3.5 (Art Direction Polish). Ready for Milestone 4 (Procedural Art, Wind Field & Particles).
 - **Completed**:
-  - Milestone 0: Clean slate Vite + TS + Vitest setup, directory structure, strict configs.
-  - Milestone 1: Custom WebGL2 batched renderer with Canvas 2D fallback, 120Hz loop, unified input, camera with lookahead, 2.5D traveler bone rig with Verlet scarf.
-  - Milestone 2: Seeded PRNG suite (MurmurHash3 + Mulberry32), URL seed param, multi-layer noise pipeline, Web Worker chunk streaming with transferable buffers, synchronous spawn chunks, 13 distinct biomes, sliding collision, flat memory footprint, and 500-seed traversability test suite.
-- **Next Item in PLAN.md**:
-  - Milestone 3: Hydrology, Water Shader, Paths & Structures (downhill river flow network, waterfalls, custom water shader with flow mapping & shoreline foam, procedural winding dirt paths, wooden bridges, stepping stones, and sparse deterministic landmarks/structures).
+  - Milestone 0: Clean slate Vite + TS setup.
+  - Milestone 1: Custom WebGL2 batched renderer with Canvas 2D fallback, 120Hz loop, character rig.
+  - Milestone 2: Seeded PRNG, multi-layer noise, worker pool chunk streaming, traversability tests.
+  - Milestone 3: Hydrology, structures, bridges, paths.
+  - Milestone 3.5 (Art Direction): Terrain shader core with macro noise, smooth marching-squares water shader with Voronoi caustics, reusable `ArtToolkit`, character/prop rescaling to 48px/64px, blob shadows, and fading dust particles.
+- **Next Item in ROADMAP.md**:
+  - Milestone 4 (Step 4.1): Extended Biome Palettes & Toolkit Props (expand palettes and add new props to ArtToolkit).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

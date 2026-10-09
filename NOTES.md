@@ -35,3 +35,9 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
   - The river carver is functional but raw blocky tile steps look unnatural against the landscape.
   - Hard tile transitions between sand and grass need organic shoreline transitions.
   - Milestone 3 will introduce continuous river curves, shoreline foam, waterfalls, bridges, and winding dirt paths!
+
+## Milestone 3.5 (Art Direction Polish) Critique
+- **Terrain & Water**: The new shader core applies domain warping and macro-noise color shifts, successfully breaking up the repetitive tile grid. The marching squares discard trick in the water shader creates organic curved shorelines instead of blocky tiles. Voronoi caustics add a beautiful dynamic shimmer.
+- **Character Scale & Presence**: Scaling the character to 48px/64px gives them much better visibility and weight against the expansive landscape. The new fading dust particles and soft blob shadows ground movement perfectly.
+- **Art Toolkit**: Moving to an `ArtToolkit` centralized the painterly color-block style (no black outlines!). CPU-side vertex swaying for trees, flowers, and grass works flawlessly with the existing `globalWind` without complicating the batched quads pipeline.
+- **Next Steps**: Now that the core visual foundation (Ghibli-style painterly greens, organic edges) is established, the procedural generation logic for the remaining biomes and weather effects can safely reuse this toolkit.
