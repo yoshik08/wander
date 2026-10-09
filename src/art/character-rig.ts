@@ -1,155 +1,261 @@
 export interface CharacterParams {
   position: { x: number; y: number };
-  direction: number; // angle in radians, 0 pointing right, increasing counter-clockwise? We'll use standard: 0 = right, PI/2 = up, etc.
+  direction: number; // angle in radians, 0 pointing right
   animation: 'idle' | 'walk' | 'run';
-  frame: number; // current frame index (0 to frames-1)
-  scale: number; // scale factor for the character
-  color: string; // main color of the character
-  scarfColor: string; // color of the scarf
-  wind?: { dx: number; dy: number }; // wind vector at character's position
+  frame: number; // current frame index
+  scale: number; // scale factor
+  color: string; // main jacket color
+  scarfColor: string; // scarf color
+  wind?: { dx: number; dy: number }; // wind vector
 }
 
 export function drawCharacter(ctx: CanvasRenderingContext2D, params: CharacterParams) {
   const { position, direction, animation, frame, scale, color, scarfColor, wind } = params;
 
-  // Save context
   ctx.save();
-
-  // Translate to position
   ctx.translate(position.x, position.y);
-
-  // Rotate by direction (so that the character faces the direction of movement)
-  ctx.rotate(direction);
-
-  // Scale
   ctx.scale(scale, scale);
 
-  // Draw body parts
-  // We'll draw a simple character: head, torso, arms, legs, and scarf
+  const time = performance.now();
+
+  // Animation cycle calculations
+  let walkCycle = 0;
+  let legSwing = 0;
+  let armSwing = 0;
+  let bodyBob = 0;
+
+  if (animation === 'walk') {
+    walkCycle = (frame % 24) / 24;
+    legSwing = Math.sin(walkCycle * Math.PI * 2);
+    armSwing = Math.sin(walkCycle * Math.PI * 2);
+    bodyBob = Math.abs(Math.sin(walkCycle * Math.PI * 2)) * -1.2;
+  } else if (animation === 'run') {
+    walkCycle = (frame % 16) / 16;
+    legSwing = Math.sin(walkCycle * Math.PI * 2) * 1.4;
+    armSwing = Math.sin(walkCycle * Math.PI * 2) * 1.4;
+    bodyBob = Math.abs(Math.sin(walkCycle * Math.PI * 2)) * -2.0;
+  } else {
+    // Idle breathing
+    bodyBob = Math.sin(time * 0.003) * 0.5;
+  }
+
+  // Facing direction (8-way or 4-way classification)
+  // Normalize direction to [-PI, PI]
+  let angle = direction;
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  while (angle < -Math.PI) angle += Math.PI * 2;
+
+  // Classify cardinal/diagonal orientation
+  const isFacingDown = angle > Math.PI * 0.25 && angle < Math.PI * 0.75;
+  const isFacingUp = angle < -Math.PI * 0.25 && angle > -Math.PI * 0.75;
+  const isFacingRight = Math.abs(angle) <= Math.PI * 0.25;
+  const isFacingLeft = Math.abs(angle) >= Math.PI * 0.75;
+
+  const facingX = Math.cos(angle);
+  const facingY = Math.sin(angle);
 
   // Colors
-  const skinColor = '#F5D0A9'; // placeholder
-  const shirtColor = color;
-  const pantsColor = '#4A4A4A';
-  const shoeColor = '#2A2A2A';
+  const skinColor = '#FBD3B0';
+  const hairColor = '#3E2A1E';
+  const pantsColor = '#374151';
+  const shoeColor = '#4A3728';
+  const backpackColor = '#7C4A28';
 
-  // Base sizes (in pixels, before scaling)
-  const headRadius = 4;
-  const torsoWidth = 6;
-  const torsoHeight = 8;
-  const armLength = 6;
-  const legLength = 8;
-
-  // Animation offsets
-  let armSwing = 0;
-  let legSwing = 0;
-  let headBob = 0;
-  let scarfOffset = 0;
-  let scarfWindSway = 0; // additional sway from wind
-
-  switch (animation) {
-    case 'idle':
-      // Breathing: slow up and down
-      headBob = Math.sin(performance.now() * 0.002) * 0.5;
-      // Scarf flutter
-      scarfOffset = Math.sin(performance.now() * 0.003) * 0.5;
-      break;
-    case 'walk':
-      // Arm and leg swing
-      const walkCycle = (frame % 24) / 24; // 24 frames per cycle
-      armSwing = Math.sin(walkCycle * Math.PI * 2) * 0.5;
-      legSwing = Math.sin((walkCycle + 0.5) * Math.PI * 2) * 0.5;
-      // Scarf follows movement with some delay
-      scarfOffset = Math.sin(walkCycle * Math.PI * 2 + Math.PI * 0.2) * 0.3;
-      break;
-    case 'run':
-      // Faster arm and leg swing
-      const runCycle = (frame % 16) / 16; // 16 frames per cycle
-      armSwing = Math.sin(runCycle * Math.PI * 2) * 0.8;
-      legSwing = Math.sin((runCycle + 0.5) * Math.PI * 2) * 0.8;
-      // Scarf flows behind
-      scarfOffset = Math.sin(runCycle * Math.PI * 2 + Math.PI * 0.1) * 0.5;
-      break;
-  }
-
-  // Add wind sway to scarf
-  if (wind) {
-    const windAngle = Math.atan2(wind.dy, wind.dx);
-    // Scarf sways in the wind direction
-    scarfWindSway = Math.sin(performance.now() * 0.005) * 0.3 * Math.abs(wind.dx + wind.dy); // simple
-  }
-
-  // Draw scarf (trailing from the neck)
+  // 1. Drop shadow on grass under feet
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
   ctx.beginPath();
-  ctx.moveTo(0, -headRadius - 2); // base of the scarf at the neck
-  // Control points for a curved scarf, with wind sway
-  const scarfLength = 10;
-  const scarfWave = scarfOffset + scarfWindSway;
-  ctx.bezierCurveTo(
-    -2, -headRadius - 2 - scarfLength * 0.3 + scarfWave,
-    2, -headRadius - 2 - scarfLength * 0.6 + scarfWave * 0.5,
-    0, -headRadius - 2 - scarfLength
-  );
-  ctx.strokeStyle = scarfColor;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Draw head
-  ctx.beginPath();
-  ctx.arc(0, -headRadius - 2, headRadius, 0, Math.PI * 2);
-  ctx.fillStyle = skinColor;
+  ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 0.5;
+
+  // 2. Legs & Shoes (drawn around feet origin y = 0)
+  const leftLegOffset = (isFacingUp || isFacingDown) ? legSwing * 2 : facingX * legSwing * 2;
+  const rightLegOffset = (isFacingUp || isFacingDown) ? -legSwing * 2 : -facingX * legSwing * 2;
+
+  if (isFacingRight || isFacingLeft) {
+    // Side profile legs
+    const flip = isFacingLeft ? -1 : 1;
+    // Back leg
+    ctx.fillStyle = '#28303C';
+    ctx.fillRect(-flip * 1 + -leftLegOffset * flip * 0.5, -5 + bodyBob, 2, 4);
+    ctx.fillStyle = shoeColor;
+    ctx.fillRect(-flip * 1 + -leftLegOffset * flip * 0.5, -2, 2.5, 2);
+
+    // Front leg
+    ctx.fillStyle = pantsColor;
+    ctx.fillRect(leftLegOffset * flip * 0.5, -5 + bodyBob, 2, 4);
+    ctx.fillStyle = shoeColor;
+    ctx.fillRect(leftLegOffset * flip * 0.5, -2, 2.5, 2);
+  } else {
+    // Front or Back legs
+    // Left leg
+    ctx.fillStyle = pantsColor;
+    ctx.fillRect(-3, -5 + bodyBob + leftLegOffset * 0.5, 2, 4);
+    ctx.fillStyle = shoeColor;
+    ctx.fillRect(-3.5, -1.5 + leftLegOffset * 0.5, 2.5, 2);
+
+    // Right leg
+    ctx.fillStyle = pantsColor;
+    ctx.fillRect(1, -5 + bodyBob + rightLegOffset * 0.5, 2, 4);
+    ctx.fillStyle = shoeColor;
+    ctx.fillRect(1, -1.5 + rightLegOffset * 0.5, 2.5, 2);
+  }
+
+  // 3. Torso / Jacket (y: -12 to -5)
+  const torsoY = -12 + bodyBob;
+
+  // Backpack (behind torso if facing down or side, on back if facing up)
+  if (isFacingUp) {
+    ctx.fillStyle = backpackColor;
+    ctx.fillRect(-3, torsoY + 1, 6, 5);
+    ctx.fillStyle = '#61381E';
+    ctx.fillRect(-2, torsoY + 2, 4, 3);
+  } else if (isFacingRight) {
+    ctx.fillStyle = backpackColor;
+    ctx.fillRect(-4.5, torsoY + 1, 2.5, 5);
+  } else if (isFacingLeft) {
+    ctx.fillStyle = backpackColor;
+    ctx.fillRect(2, torsoY + 1, 2.5, 5);
+  }
+
+  // Main coat/jacket
+  ctx.fillStyle = color;
+  ctx.fillRect(-3.5, torsoY, 7, 7);
+  // Coat highlight / trim
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.fillRect(-3.5, torsoY, 7, 1.5);
+
+  // Arms
+  if (isFacingRight || isFacingLeft) {
+    const flip = isFacingLeft ? -1 : 1;
+    ctx.fillStyle = color;
+    ctx.save();
+    ctx.translate(flip * 0.5, torsoY + 2);
+    ctx.rotate(armSwing * 0.5 * flip);
+    ctx.fillRect(-1, 0, 2, 4.5);
+    // Hand
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(-0.5, 4.5, 1.5, 1.5);
+    ctx.restore();
+  } else {
+    // Left arm
+    ctx.fillStyle = color;
+    ctx.save();
+    ctx.translate(-4, torsoY + 1.5);
+    ctx.rotate(-armSwing * 0.4);
+    ctx.fillRect(-1, 0, 2, 4);
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(-1, 4, 1.8, 1.5);
+    ctx.restore();
+
+    // Right arm
+    ctx.fillStyle = color;
+    ctx.save();
+    ctx.translate(4, torsoY + 1.5);
+    ctx.rotate(armSwing * 0.4);
+    ctx.fillRect(-1, 0, 2, 4);
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(-0.8, 4, 1.8, 1.5);
+    ctx.restore();
+  }
+
+  // 4. Head & Face (y: -19 to -12)
+  const headY = torsoY - 5.5;
+
+  if (isFacingUp) {
+    // Back of head
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.arc(0, headY, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+    // Cap back
+    ctx.fillStyle = '#2C3E50';
+    ctx.beginPath();
+    ctx.arc(0, headY - 1, 3.5, Math.PI, 0);
+    ctx.fill();
+  } else if (isFacingRight || isFacingLeft) {
+    // Side profile head
+    const flip = isFacingLeft ? -1 : 1;
+    // Hair back
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.arc(-flip * 0.5, headY, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Face
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(flip * 1.0, headY, 3.0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cap
+    ctx.fillStyle = '#2C3E50';
+    ctx.beginPath();
+    ctx.arc(-flip * 0.5, headY - 1, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Cap visor/bill
+    ctx.fillRect(flip > 0 ? 0 : -3.5, headY - 2, 3.5, 1.2);
+
+    // Eye
+    ctx.fillStyle = '#222222';
+    ctx.fillRect(flip * 2, headY - 0.5, 1, 1.2);
+    // Rosy cheek
+    ctx.fillStyle = 'rgba(255, 120, 120, 0.5)';
+    ctx.fillRect(flip * 1.5, headY + 1, 1.2, 1);
+  } else {
+    // Front face
+    // Face base
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(0, headY, 3.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair / Cap
+    ctx.fillStyle = '#2C3E50';
+    ctx.beginPath();
+    ctx.arc(0, headY - 1, 3.8, Math.PI, 0);
+    ctx.fill();
+    // Hair tufts peeking out
+    ctx.fillStyle = hairColor;
+    ctx.fillRect(-3.6, headY - 1.5, 1.2, 2.5);
+    ctx.fillRect(2.4, headY - 1.5, 1.2, 2.5);
+
+    // Eyes
+    ctx.fillStyle = '#222222';
+    ctx.fillRect(-1.8, headY - 0.5, 1, 1.5);
+    ctx.fillRect(0.8, headY - 0.5, 1, 1.5);
+
+    // Rosy cheeks
+    ctx.fillStyle = 'rgba(255, 120, 120, 0.45)';
+    ctx.fillRect(-2.5, headY + 1.2, 1.5, 0.8);
+    ctx.fillRect(1.0, headY + 1.2, 1.5, 0.8);
+  }
+
+  // 5. Scarf (wraps neck and trails in wind)
+  // Scarf collar around neck
+  ctx.fillStyle = scarfColor;
+  ctx.beginPath();
+  ctx.ellipse(0, torsoY - 0.5, 3.5, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Scarf tail waving in wind and motion
+  const windDx = wind ? wind.dx : 0;
+  const windDy = wind ? wind.dy : 0;
+  // Tail opposes motion and follows wind
+  const trailDx = -facingX * 4 + windDx * 0.4 + Math.sin(time * 0.008) * 1.5;
+  const trailDy = -facingY * 2 + windDy * 0.4 + Math.cos(time * 0.008) * 1.2;
+
+  ctx.strokeStyle = scarfColor;
+  ctx.lineWidth = 2.0;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(facingX > 0 ? -1.5 : 1.5, torsoY - 0.5);
+  ctx.quadraticCurveTo(
+    (facingX > 0 ? -3 : 3) + trailDx * 0.5,
+    torsoY + trailDy * 0.5,
+    (facingX > 0 ? -4 : 4) + trailDx,
+    torsoY + 2 + trailDy
+  );
   ctx.stroke();
 
-  // Draw torso
-  ctx.fillStyle = shirtColor;
-  ctx.fillRect(-torsoWidth / 2, -headRadius - 2, torsoWidth, torsoHeight);
-
-  // Draw arms
-  ctx.save();
-  ctx.translate(-torsoWidth / 2, -headRadius - 2 + torsoHeight * 0.3); // shoulder left
-  ctx.rotate(armSwing * 0.5); // swing arm
-  ctx.fillStyle = shirtColor;
-  ctx.fillRect(0, -1, armLength, 2);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(torsoWidth / 2, -headRadius - 2 + torsoHeight * 0.3); // shoulder right
-  ctx.rotate(-armSwing * 0.5);
-  ctx.fillStyle = shirtColor;
-  ctx.fillRect(0, -1, armLength, 2);
-  ctx.restore();
-
-  // Draw legs
-  ctx.save();
-  ctx.translate(-torsoWidth / 4, -headRadius - 2 + torsoHeight); // hip left
-  ctx.rotate(legSwing * 0.5);
-  ctx.fillStyle = pantsColor;
-  ctx.fillRect(0, -1, legLength, 2);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(torsoWidth / 4, -headRadius - 2 + torsoHeight); // hip right
-  ctx.rotate(-legSwing * 0.5);
-  ctx.fillStyle = pantsColor;
-  ctx.fillRect(0, -1, legLength, 2);
-  ctx.restore();
-
-  // Draw shoes
-  ctx.save();
-  ctx.translate(-torsoWidth / 4 + legLength, -headRadius - 2 + torsoHeight); // left shoe
-  ctx.fillStyle = shoeColor;
-  ctx.fillRect(0, -1, 2, 2);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(torsoWidth / 4 + legLength, -headRadius - 2 + torsoHeight); // right shoe
-  ctx.fillStyle = shoeColor;
-  ctx.fillRect(0, -1, 2, 2);
-  ctx.restore();
-
-  // Restore context
   ctx.restore();
 }

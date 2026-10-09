@@ -24,12 +24,7 @@ export class Player {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // Ground collision (assuming ground at y = 0)
-    const GROUND_LEVEL = 0;
-    if (this.y > GROUND_LEVEL) {
-      this.y = GROUND_LEVEL;
-      this.vy = 0;
-    }
+    // In top-down 2D, the player moves freely on both X and Y axes
 
     // Update animation state based on velocity
     const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);

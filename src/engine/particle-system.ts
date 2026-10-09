@@ -1,3 +1,5 @@
+import { Wind } from './wind';
+
 export interface Particle {
   x: number;
   y: number;
@@ -12,7 +14,7 @@ export interface Particle {
 export class ParticleSystem {
   private particles: Particle[] = [];
   private maxParticles: number;
-  private wind: Wind; // we'll use wind to affect particles
+  private wind: Wind | null = null; // we'll use wind to affect particles
 
   constructor(maxParticles = 500) {
     this.maxParticles = maxParticles;

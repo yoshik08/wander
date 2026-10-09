@@ -1,5 +1,4 @@
 import { Chunk } from '../world/chunk';
-import { BiomeType } from '../world/biome';
 
 export const CHUNK_SIZE = 32;
 export const TILE_SIZE = 16;
@@ -8,39 +7,72 @@ export const CHUNK_LOAD_RADIUS = 3; // load chunks within this radius
 export class ChunkManager {
   private seed: number;
   private chunks: Map<string, Chunk>; // key: `${chunkX},${chunkY}`
-  private worker: Worker;
+  private worker: Worker | null = null;
   private pendingRequests: Set<string>;
 
   constructor(seed: number) {
     this.seed = seed;
     this.chunks = new Map();
-    // Create the web worker
-    // Note: Vite will handle the worker import as a URL
-    this.worker = new Worker(new URL('./web-worker.ts', import.meta.url));
     this.pendingRequests = new Set();
-    this.worker.onmessage = this.handleWorkerMessage.bind(this);
+
+    // 1. Synchronously pre-generate spawn chunks on load so first frame immediately has full terrain!
+    this.generateSpawnChunks(CHUNK_LOAD_RADIUS);
+
+    // 2. Try initializing Web Worker for background requests
+    try {
+      this.worker = new Worker(new URL('./web-worker.ts', import.meta.url), { type: 'module' });
+      this.worker.onmessage = this.handleWorkerMessage.bind(this);
+    } catch (e) {
+      console.warn('Worker initialization skipped or not supported:', e);
+    }
+  }
+
+  // Pre-generate spawn chunks synchronously around (0, 0)
+  public generateSpawnChunks(radius: number = 3): void {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const key = `${dx},${dy}`;
+        if (!this.chunks.has(key)) {
+          const chunk = new Chunk(dx, dy, this.seed);
+          this.chunks.set(key, chunk);
+        }
+      }
+    }
   }
 
   private handleWorkerMessage(e: MessageEvent) {
     const { chunkX, chunkY, data } = e.data;
     const key = `${chunkX},${chunkY}`;
-    // Create a chunk object and store the data
-    const chunk = new Chunk(chunkX, chunkY, this.seed);
+    // If chunk already exists, we can keep or update data
+    let chunk = this.chunks.get(key);
+    if (!chunk) {
+      chunk = new Chunk(chunkX, chunkY, this.seed);
+      this.chunks.set(key, chunk);
+    }
     chunk.data = data;
-    this.chunks.set(key, chunk);
     this.pendingRequests.delete(key);
   }
 
-  getChunk(chunkX: number, chunkY: number): Chunk | undefined {
+  getChunk(chunkX: number, chunkY: number): Chunk {
     const key = `${chunkX},${chunkY}`;
-    return this.chunks.get(key);
+    let chunk = this.chunks.get(key);
+    if (!chunk) {
+      // Synchronous fallback so terrain is always guaranteed!
+      chunk = new Chunk(chunkX, chunkY, this.seed);
+      this.chunks.set(key, chunk);
+    }
+    return chunk;
   }
 
   requestChunk(chunkX: number, chunkY: number) {
     const key = `${chunkX},${chunkY}`;
     if (!this.chunks.has(key) && !this.pendingRequests.has(key)) {
-      this.worker.postMessage({ chunkX, chunkY, seed: this.seed });
-      this.pendingRequests.add(key);
+      if (this.worker) {
+        this.worker.postMessage({ chunkX, chunkY, seed: this.seed });
+        this.pendingRequests.add(key);
+      } else {
+        this.getChunk(chunkX, chunkY);
+      }
     }
   }
 
@@ -52,9 +84,7 @@ export class ChunkManager {
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
         const chunk = this.getChunk(chunkX + dx, chunkY + dy);
-        if (chunk) {
-          result.push(chunk);
-        }
+        result.push(chunk);
       }
     }
     return result;
@@ -73,6 +103,8 @@ export class ChunkManager {
 
   // Clean up
   terminate() {
-    this.worker.terminate();
+    if (this.worker) {
+      this.worker.terminate();
+    }
   }
 }

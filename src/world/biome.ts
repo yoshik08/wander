@@ -1,14 +1,16 @@
-export enum BiomeType {
-  Ocean = 0,
-  Beach = 1,
-  Meadow = 2,
-  PineForest = 3,
-  StreamLake = 4,
-  CherryBlossom = 5,
-  HillsCliffs = 6,
-  SnowyPeaks = 7,
-  SecretGlade = 8
-}
+export type BiomeType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+export const BiomeType = {
+  Ocean: 0,
+  Beach: 1,
+  Meadow: 2,
+  PineForest: 3,
+  StreamLake: 4,
+  CherryBlossom: 5,
+  HillsCliffs: 6,
+  SnowyPeaks: 7,
+  SecretGlade: 8
+} as const;
 
 export interface Biome {
   type: BiomeType;
@@ -40,26 +42,26 @@ export const biomeData: Record<BiomeType, Biome> = {
   [BiomeType.Meadow]: {
     type: BiomeType.Meadow,
     name: 'Meadow',
-    groundColor: '#228B22',
-    props: ['grass', 'flower', 'tree'],
+    groundColor: '#4ea839',
+    props: ['grass', 'flower', 'tree', 'log', 'rock'],
     ambientSound: 'meadow',
-    colorMultiplier: [0.9, 1.0, 0.9]
+    colorMultiplier: [1.0, 1.0, 1.0]
   },
   [BiomeType.PineForest]: {
     type: BiomeType.PineForest,
     name: 'Pine Forest',
-    groundColor: '#014421',
+    groundColor: '#2b5e28',
     props: ['pine', 'fern', 'log', 'mushroom'],
     ambientSound: 'forest',
-    colorMultiplier: [0.8, 0.9, 0.8]
+    colorMultiplier: [0.9, 1.0, 0.9]
   },
   [BiomeType.StreamLake]: {
     type: BiomeType.StreamLake,
     name: 'Stream and Lake',
-    groundColor: '#4682B4',
+    groundColor: '#3a8fd4',
     props: ['reed', 'lily', 'rock'],
     ambientSound: 'water',
-    colorMultiplier: [0.8, 0.9, 1.0]
+    colorMultiplier: [1.0, 1.0, 1.0]
   },
   [BiomeType.CherryBlossom]: {
     type: BiomeType.CherryBlossom,
