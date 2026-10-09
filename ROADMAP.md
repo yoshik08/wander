@@ -42,7 +42,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/world/chunk.ts`, `src/ui/journal.ts`, `src/main.ts`
 - **Done When**: Notifications appear with generated poetic names upon discovering a new region.
 
-### Step 8.5: Garden Plot
+### Step 8.5: Garden Plot [x]
 - **Action**: Add a specialized dirt patch near spawn (0,0) where players can plant seeds found in the world.
 - **Files**: `src/world/chunk.ts`, `src/main.ts`
 - **Done When**: A garden patch exists and player can interact to plant seeds.

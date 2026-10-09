@@ -38,10 +38,11 @@
   - Milestone 7 (Step 7.3): Ground Wildlife Species (deer grazing/fleeing AI, rabbits hopping cycles, foxes trotting/running, marsh frogs hopping, and nocturnal glowing fireflies integrated into depth-sorted layer 5 and atmosphere).
   - Milestone 8 (Step 8.3): Interactive Journal ('J' toggle, HUD button, parchment album, watercolor keepsake stamps, completion tracker bar, and expedition folio stats logbook).
   - Milestone 8 (Step 8.4): Landmarks & Place Names (poetic region name generator "Apricot Hollow", region boundary title cards, 20 deterministic hidden landmarks, and postcard notifications).
+  - Milestone 8 (Step 8.5): Garden Plot (specialized 4-bed tilled soil plot near spawn at (448, 432), seed planting from inventory/keepsakes, rain and interactive watering, progressive growth stages: sprout -> growing -> blooming, and persistent save state).
 - **Completed in this step**:
-  - Milestone 8 (Step 8.4): Landmarks & Place Names.
+  - Milestone 8 (Step 8.5): Garden Plot.
 - **Next Item in ROADMAP.md**:
-  - Milestone 8 (Step 8.5): Garden Plot (specialized tilled soil plot near spawn at (0,0) where players can plant discovered seeds/flowers, with growth stages and watering/blooming).
+  - Milestone 9 (Step 9.2): Photo Mode & Calm Mode (wire PhotoMode with letterbox frame, filters, zoom, shutter capture, and Calm Mode UI hide toggle).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
