@@ -39,13 +39,13 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 3: Hydrology, Water Shader, Paths & Structures
-- [ ] Downhill river flow network from springs to lakes and sea with real flow vectors
-- [ ] Waterfalls where water bodies meet elevation drops
-- [ ] Water shader (shimmer, depth tint, flow mapping, shoreline foam, reflections)
-- [ ] Canvas 2D fallback water effect
-- [ ] Procedural path network connecting points of interest
-- [ ] Wooden bridges over streams and stone stepping stones
-- [ ] Sparse deterministic structures (windmill, lighthouse, ruins, tiny cottage, stone circles, campfire sites, benches)
+- [x] Downhill river flow network from springs to lakes and sea with real flow vectors
+- [x] Waterfalls where water bodies meet elevation drops
+- [x] Water shader (shimmer, depth tint, flow mapping, shoreline foam, reflections)
+- [x] Canvas 2D fallback water effect
+- [x] Procedural path network connecting points of interest
+- [x] Wooden bridges over streams and stone stepping stones
+- [x] Sparse deterministic structures (windmill, lighthouse, ruins, tiny cottage, stone circles, campfire sites, benches)
 
 ---
 
@@ -159,3 +159,74 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [ ] Visual review of all biomes across all seasons and times of day
 - [ ] Production build verification (`npm run build` and `npx tsc --noEmit`)
 - [ ] Complete documentation: `README.md`, `NOTES.md`, `CREDITS.md`, `HANDOFF.md`
+
+---
+
+## Milestone C1: State and Procedural Creatures
+- [ ] Save state: Folio (seen/befriended), Party (6), Sanctuary list, items, badges
+- [ ] Procedural creatures: species 1-150 from hash(seed+id). Archetypes, appendages, type-locked hue ranges, noise patterns
+- [ ] Drawn with the art toolkit, idle bob/blink animation. Syllable grammar names
+- [ ] Evolution = same seed, complexity 1.0->2.0 (bigger, more appendages, richer colour)
+- [ ] Prismatic variant 1/4096 (hue shift + sparkle)
+- [ ] Roaming wild creatures visible in the overworld: 1-3 per chunk, by biome/time/weather. No random pop-ups
+
+---
+
+## Milestone C2: Sparring
+- [ ] In-world turn-based spar, no screen change; camera eases closer
+- [ ] "Resolve" system; at 0 the creature sits and yields (nothing dies). Fleeing always works
+- [ ] 5 types: Flora, Aqua, Ignis, Terra, Aero, with an effectiveness loop
+- [ ] Stats: Vigor, Strike, Guard, Haste from the species seed
+- [ ] 4 moves, learned by level from a seeded movepool; same-type/weather/biome boosts; statuses (Sleep, Daze, Rooted)
+- [ ] XP and levels; auto-win if 10+ levels higher
+- [ ] Befriending: a yielded creature can be offered a Resonance Lure to join you
+
+---
+
+## Milestone C3: Party and Sanctuary
+- [ ] Party leader follows you on a trailing path with smooth steering. Pet/feed by click or tap
+- [ ] Sanctuary at world 0,0 (with the Ancient Tree landmark) where all extra creatures roam; UI to swap them in and out
+- [ ] Nicknames
+
+---
+
+## Milestone C4: World POIs
+- [ ] Resting Crystals that heal the party, placed deterministically and sparsely. Walking slowly also regenerates Resolve
+- [ ] Nomad Camps at biome edges: tents, a crystal, a trader, a move tutor, NPC dialogue
+- [ ] Waystones every ~500 tiles; discover them to fast travel from the map. Map custom pins
+
+---
+
+## Milestone C5: Traversal Abilities
+- [ ] Aqua: glide over water (oceans open up)
+- [ ] Flora: clear brambles
+- [ ] Terra: push boulders
+- [ ] Aero: hop 1-tile gaps
+- [ ] Ignis: light up dark caves
+
+---
+
+## Milestone C6: Caves and Wardens
+- [ ] Cave entrances lead to a separate darker underground noise map, with a light radius, rare spawns, and a strong "Alpha" creature at the end
+- [ ] 8 Wardens beside elemental monuments far from spawn; beating one grants a badge
+- [ ] A rival, The Wanderer, who appears now and then at your top level +1
+
+---
+
+## Milestone C7: Rare Things and Atmosphere
+- [ ] 4 Apex creatures at the far cardinal edges, each behind a small puzzle
+- [ ] One roaming myth whose position changes with real time
+- [ ] Creatures that only appear in rain, snow or night
+- [ ] Shooting stars at night; aurora in snow biomes
+
+---
+
+## Milestone C8: Easter Eggs and QoL
+- [ ] Naming a creature "Null" gives a glitch shader
+- [ ] Up Up Down Down Left Right triggers a meteor shower
+- [ ] Sign after walking 10,000 tiles in one direction
+- [ ] DevTools console ASCII map to a hidden treasure
+- [ ] Hidden tent at -999,-999 with a creator NPC called Yoshik
+- [ ] Idle 10 min and your party piles on you to sleep
+- [ ] Clicking the same water spot 50 times makes something wave and vanish
+- [ ] 2x speed toggle, colourblind type icons, a No-Combat mode, seed sharing in the menu
