@@ -23,10 +23,11 @@
   - Milestone C2 (Step C2.1): Sparring State Machine (Resolve, elements, effectiveness loop).
   - Milestone C2 (Step C2.2): Stats & Moves (Individual creature movesets, species stats).
   - Milestone C3 (Step C3.1): Party leader trailing path and petting interactions.
+  - Milestone C3 (Step C3.2): Sanctuary at world 0,0 and UI to swap creatures.
 - **In progress**:
-  - Milestone C3 (Step C3.2): Sanctuary at world 0,0 and UI to swap creatures.
+  - Milestone C4 (Step C4.1): Resting Crystals and Nomad Camps generation.
 - **Next Item in ROADMAP.md**:
-  - Milestone C3 (Step C3.2): Sanctuary at world 0,0 and UI to swap creatures.
+  - Milestone C4 (Step C4.1): Resting Crystals and Nomad Camps generation.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

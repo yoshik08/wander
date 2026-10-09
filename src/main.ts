@@ -3,6 +3,7 @@ import { GameLoop } from './core/loop';
 import { InputManager } from './core/input';
 import { Camera } from './core/camera';
 import { Character } from './entities/character';
+import { generateCreatureGenome } from './entities/creature';
 import { ChunkManager } from './world/chunk-manager';
 import { CHUNK_PIXEL_SIZE, CHUNK_TILES, TILE_SIZE, TILE_FLAG_PATH, TILE_FLAG_WATER } from './world/chunk';
 import { renderStructure } from './world/structures';
@@ -496,6 +497,14 @@ const loop = new GameLoop({
           spotX = s.x + 17;
           spotY = s.y + 2;
           label = 'Warm by Fire';
+        } else if (s.type === 'resting_crystal') {
+          spotX = s.x;
+          spotY = s.y + 16;
+          label = 'Rest at Crystal';
+        } else if (s.type === 'nomad_camp') {
+          spotX = s.x;
+          spotY = s.y + 16;
+          label = 'Rest at Camp';
         } else {
           continue;
         }
@@ -612,6 +621,16 @@ const loop = new GameLoop({
         for (let s = 0; s < 4; s++) {
           particles.spawnFootstepDust(player.pos.x, player.pos.y, s * (Math.PI / 2));
         }
+        
+        let healed = false;
+        saveManager.state.party.forEach(p => {
+          const maxR = p.maxResolve ?? generateCreatureGenome(chunkManager.seedRaw, p.speciesId).stats.vigor;
+          if (p.currentResolve < maxR) {
+            p.currentResolve = maxR;
+            healed = true;
+          }
+        });
+        if (healed) saveManager.saveToLocalStorage();
       }
     } else {
       if (interactPrompt) {

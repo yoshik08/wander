@@ -125,7 +125,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 
 ## Milestone C3: Party and Sanctuary
 - [x] **Step C3.1**: Party leader trailing path and petting interactions.
-- **Step C3.2**: Sanctuary at world 0,0 and UI to swap creatures.
+- [x] **Step C3.2**: Sanctuary at world 0,0 and UI to swap creatures.
 
 ---
 

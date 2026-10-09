@@ -16,7 +16,9 @@ export type StructureType =
   | 'sitting_log'
   | 'bridge'
   | 'stepping_stones'
-  | 'sanctuary_crystal';
+  | 'sanctuary_crystal'
+  | 'resting_crystal'
+  | 'nomad_camp';
 
 export interface StructureInstance {
   id: string;
@@ -227,7 +229,25 @@ export function generateChunkStructures(
       return structures;
     }
   }
-
+  // Resting Crystal or Nomad Camp in various non-water biomes
+  if (!isWater) {
+    if (chunkRng.next() < 0.20) {
+      const sType: StructureType = chunkRng.next() < 0.5 ? 'resting_crystal' : 'nomad_camp';
+      structures.push({
+        id: `${sType}-${chunkX}-${chunkY}`,
+        type: sType,
+        x: structWorldX,
+        y: structWorldY,
+        baseY: structWorldY + 16,
+        width: 48,
+        height: 48,
+        variant: 0,
+        solidTiles: [{ dx: 0, dy: 0 }]
+      });
+      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+      return structures;
+    }
+  }
   // Scenic Bench, Sitting Log, or Campfire at trailside
   if (!isWater) {
     const roll = chunkRng.next();
@@ -368,6 +388,48 @@ export function renderStructure(
       if (Math.sin(time * 3) > 0.8) {
         renderer.drawCircle(x - 4, floatY - 8, 1.5, hexToRgba('#FFFFFF'));
       }
+      break;
+    }
+
+    case 'resting_crystal': {
+      // Small pulsing crystal
+      const pulse = Math.sin(time * 2);
+      renderer.drawCircle(x, baseY, 14 + pulse, hexToRgba('#9B59B6', 0.15 + pulse * 0.05));
+      renderer.drawCircle(x, baseY, 10, hexToRgba('#1B2631', 0.3));
+
+      // Crystal Base
+      renderer.drawRect(x - 6, baseY - 4, 12, 4, hexToRgba('#7F8C8D'));
+      
+      // The Crystal
+      renderer.drawLine(x, baseY - 16, x, baseY, 8, hexToRgba('#8E44AD', 0.8));
+      renderer.drawLine(x, baseY - 12, x, baseY - 2, 4, hexToRgba('#BB8FCE', 0.9));
+      break;
+    }
+
+    case 'nomad_camp': {
+      // Shadow
+      renderer.drawCircle(x, baseY, 24, hexToRgba('#1B2631', 0.3));
+      
+      // Central fire
+      renderer.drawCircle(x, baseY + 2, 8, hexToRgba('#2C3E50'));
+      renderer.drawCircle(x, baseY - 2, 4, hexToRgba('#F39C12', 0.8));
+      
+      // A small tent
+      renderer.drawPolygon([
+        vec2(x - 16, baseY + 8),
+        vec2(x - 4, baseY + 8),
+        vec2(x - 10, baseY - 12)
+      ], hexToRgba('#F3E5AB'));
+      renderer.drawLine(x - 10, baseY - 14, x - 10, baseY - 12, 2, hexToRgba('#5C381E'));
+
+      // Another tent
+      renderer.drawPolygon([
+        vec2(x + 4, baseY + 6),
+        vec2(x + 14, baseY + 6),
+        vec2(x + 9, baseY - 10)
+      ], hexToRgba('#E6B0AA'));
+      renderer.drawLine(x + 9, baseY - 12, x + 9, baseY - 10, 2, hexToRgba('#5C381E'));
+
       break;
     }
 

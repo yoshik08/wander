@@ -4,6 +4,7 @@ export interface SavedCreature {
   level: number;
   nickname?: string;
   currentResolve: number;
+  maxResolve?: number;
 }
 
 export interface FolioEntry {
