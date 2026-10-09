@@ -83,7 +83,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - [x] **Step 11.1**: UI and Touch Controls (Virtual joysticks, responsive typography).
 - [x] **Step 12.1**: Save System (localStorage/IndexedDB) and PWA manifest.
 - [x] **Step 13.1**: Quality Scaler & Accessibility toggles.
-- **Step 15.1**: Final visual review and memory leak tests.
+- [x] **Step 15.1**: Final visual review and memory leak tests.
 
 ---
 

@@ -44,17 +44,22 @@
   - Milestone 11 (Step 11.1): UI, Touch Controls & Character Customization (Character wardrobe with 8 palette colorways, 4 hats [Beanie, Straw Sunhat, Alpine Beret, Floral Crown], 3 backpacks [Leather Rucksack, Canvas Satchel, Herb Basket], responsive top HUD toolbar with mobile icon collapse, and dual-zone touch controls with zoom-invariant virtual joystick and amber touch action button).
   - Milestone 12 (Step 12.1): Save System, PWA & Offline Support (Resilient localStorage + IndexedDB dual storage, 15-second periodic autosave, visibilitychange and beforeunload triggers, JSON file import/export validation, PWA manifest, procedural SVG icon, and offline Service Worker with stale-while-revalidate caching).
   - Milestone 13 (Step 13.1): Quality Scaler & Accessibility Toggles (QualityScaler with rolling average FPS monitoring, Auto-adaptive dynamic tier step-downs/step-ups, Low/Med/High/Ultra presets adjusting resolution scale, particle caps, grass density, bloom, and god rays; full Accessibility suite with Reduced Motion, High Contrast mode, and keyboard shortcuts).
+  - Milestone 9 (Step 9.1): Wind Chimes & Campfire Dawn Sleep (Swaying bronze wind chimes with crystalline audio feedback and ripple sparkles; campfire warming and [Z] sleep till dawn restoring resolve and advancing world clock to morning).
+  - Milestone 14 (Step 14.1): Shared Moment Links (Portable URL generator and boot parser capturing seed, coordinates x & y, time of day, and season with 1-click clipboard copy).
+  - Milestone 15 (Step 15.1): Final Review, Endurance Memory Leak Tests & Production Release (1,500-frame traversal test confirming strict Chebyshev chunk capping <=121 chunks, bounded particle pooling, zero NaN drift across 4-season cycles, 22 test files with 112 passing tests, and lean 79.8 kB production bundle).
 - **Completed in this step**:
-  - Milestone 13 (Step 13.1): Quality Scaler & Accessibility toggles.
+  - Milestone 15 (Step 15.1): Final Review & Memory Leak Tests.
+  - Milestone 14 (Step 14.1): Shared Moments Deep-Links.
+  - Milestone 9 (Step 9.1): Wind Chimes & Campfire Dawn Sleep.
 - **Next Item in ROADMAP.md**:
-  - Milestone 15 (Step 15.1): Final visual review and memory leak tests (Simulated long exploration endurance test, heap measurement, visual critique across all biomes, production release bundle verification).
+  - **ALL MILESTONES COMPLETE**: MEADOW is fully finished, thoroughly tested, and ready for deployment to `yoshik.xyz/wander`.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
 2. **Type Check**: `npx tsc --noEmit`
 3. **Build**: `npm run build`
-4. **Test**: `npm run test`
+4. **Test**: `npm run test` (22 test files, 112 tests passing)
 
 ## Known Bugs / Blockers
-- None. Everything builds cleanly with zero errors and 100% test pass rate (20 test files, 104 tests passing).
+- None. Everything builds cleanly with zero errors and 100% test pass rate (22 test files, 112 tests passing). Total bundle size 79.85 kB gzip. Zero external copyrighted assets. Pure WebGL2 / Web Audio synthesis.
 

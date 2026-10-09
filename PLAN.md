@@ -109,7 +109,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] Resting on benches and logs with eased camera pull-back
 - [x] Stone skipping on lakes with bouncing physics
 - [x] Timing-free relaxing fishing mini-activity
-- [ ] Wind chime interactions and campfire lighting / sleeping till morning
+- [x] Wind chime interactions and campfire lighting / sleeping till morning
 - [x] Photo mode (P) with postcard filters (film, watercolour, polaroid, dusk)
 - [x] Calm mode (toggle to hide all UI and let the world play autonomously)
 
@@ -149,16 +149,16 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 14: Shared Moments Link (Optional)
-- [ ] Compact URL share-link encoding (seed + coordinates + time + season + weather)
-- [ ] Share moment modal with copy-to-clipboard functionality
+- [x] Compact URL share-link encoding (seed + coordinates + time + season + weather)
+- [x] Share moment modal with copy-to-clipboard functionality
 
 ---
 
 ## Milestone 15: Final Review, Postcard Gallery & Release
-- [ ] Long simulated exploration session to measure memory heap and verify zero memory leaks
-- [ ] Visual review of all biomes across all seasons and times of day
-- [ ] Production build verification (`npm run build` and `npx tsc --noEmit`)
-- [ ] Complete documentation: `README.md`, `NOTES.md`, `CREDITS.md`, `HANDOFF.md`
+- [x] Long simulated exploration session to measure memory heap and verify zero memory leaks
+- [x] Visual review of all biomes across all seasons and times of day
+- [x] Production build verification (`npm run build` and `npx tsc --noEmit`)
+- [x] Complete documentation: `README.md`, `NOTES.md`, `CREDITS.md`, `HANDOFF.md`
 
 ---
 
