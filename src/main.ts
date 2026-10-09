@@ -11,6 +11,7 @@ import { ArtToolkit } from './render/art';
 import { ParticleSystem } from './systems/particles';
 import { TimeSystem } from './systems/time';
 import { LightingSystem } from './systems/lighting';
+import { WeatherSystem } from './systems/weather';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -29,6 +30,7 @@ const chunkManager = new ChunkManager();
 const particles = new ParticleSystem(chunkManager.seed);
 const timeSystem = new TimeSystem(8.0); // Spawn at 8:00 AM sunny morning
 const lighting = new LightingSystem();
+const weather = new WeatherSystem(chunkManager.seed);
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
@@ -84,10 +86,12 @@ const loop = new GameLoop({
       showDebug = !showDebug;
     }
 
-    // Dynamic wind modulation
+    // Dynamic wind modulation driven by weather
+    weather.update(dt);
+    const weatherInfo = weather.getInfo();
     const time = performance.now() / 1000;
-    globalWind.x = 1.0 + Math.sin(time * 0.8) * 0.6;
-    globalWind.y = 0.3 + Math.cos(time * 0.6) * 0.3;
+    globalWind.x = (1.0 + Math.sin(time * 0.8) * 0.6) * weatherInfo.windMultiplier;
+    globalWind.y = (0.3 + Math.cos(time * 0.6) * 0.3) * weatherInfo.windMultiplier;
 
     // Proposed movement with collision detection
     const oldX = player.pos.x;
@@ -329,7 +333,19 @@ const loop = new GameLoop({
     );
 
     // ==========================================
-    // LAYER 8: Time of Day Lighting Overlay
+    // LAYER 8: Weather Ambient Tint & Lightning Overlays
+    // ==========================================
+    weather.renderWeatherOverlay(
+      renderer,
+      camPos.x,
+      camPos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom
+    );
+
+    // ==========================================
+    // LAYER 9: Time of Day Lighting Overlay
     // ==========================================
     timeSystem.renderOverlay(
       renderer,
@@ -341,7 +357,7 @@ const loop = new GameLoop({
     );
 
     // ==========================================
-    // LAYER 9: Touch Virtual Joystick UI
+    // LAYER 10: Touch Virtual Joystick UI
     // ==========================================
     const joy = input.getTouchJoystickDisplay();
     if (joy && joy.active) {
@@ -359,11 +375,13 @@ const loop = new GameLoop({
       if (showDebug) {
         const stats = renderer.getStats();
         const timeInfo = timeSystem.getInfo();
+        const weatherInfo = weather.getInfo();
         debugOverlay.style.display = 'block';
         debugOverlay.innerHTML = `
           <div style="font-weight: 700; color: #38BDF8; margin-bottom: 4px;">MEADOW [F3 DEBUG]</div>
           <div>FPS: <span style="color: #4ADE80; font-weight: 600;">${loop.fps}</span> (${loop.frameTimeMs.toFixed(1)} ms)</div>
           <div>Time: <span style="color: #FBBF24; font-weight: 600;">${timeInfo.timeString}</span> (${timeInfo.name})</div>
+          <div>Weather: <span style="color: #67E8F9; font-weight: 600;">${weatherInfo.name}</span> (wind: ${weatherInfo.windMultiplier.toFixed(1)}x)</div>
           <div>Sim: 120Hz fixed (interp: ${alpha.toFixed(2)})</div>
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>

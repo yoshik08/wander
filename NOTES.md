@@ -66,8 +66,7 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Point Light Bloom**: The spawn campfire and cottage windows emit multi-tiered warm flickering bloom halos that ground light sources in the landscape.
 - **Lightweight Blending**: Rendered cleanly through batched polygon and circle primitives with zero multipass overhead, keeping frame times under 0.8ms at 120Hz.
 
-
-
-
-
-
+## Step 6.1 (Weather State Machine) Critique
+- **State System & Flow**: Dynamic weather transitions cleanly between clear skies, breezy gusts, overcast gloom, gentle drizzle, thunderstorms with lightning flashes, and morning mist.
+- **Wind & Environment Coupling**: The global wind field now naturally scales up to 2.8x during storms and calms to 0.7x in foggy weather, dynamically driving prop sway and floating petals.
+- **Visual Integration**: Overcast and storm ambient overlays dim and tint the world atmospherically without harsh contrast, while instantaneous lightning illumination briefly washes the terrain with cool bright light.

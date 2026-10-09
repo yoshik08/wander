@@ -10,8 +10,9 @@
   - Look and Smoothness Fix: Restored calm M3 palettes & water shader; static chunk GPU caching; camera & player simulation interpolation; final device-pixel snapping; F3 debug overlay; organic path bridges.
   - Milestone 4: Procedural Art, Wind Field & Particles (13 biomes, procedural props, wind field, CPU particle pool, dynamic grass parting, water ripples).
   - Milestone 5: Dynamic Lighting, Shadows & Post-Processing (24-min time cycle, lighting overlays, sun-angled drop shadows, god rays, point lights & bloom).
+  - Milestone 6 (Step 6.1): Weather State Machine (Clear, Breezy, Overcast, Drizzle, Thunderstorm, Fog states with organic crossfade, lightning, and wind modulation).
 - **In progress**:
-  - Milestone 6 (Step 6.1): Weather State Machine.
+  - Milestone 6 (Step 6.2): Rain & Puddles.
 - **Next Item in ROADMAP.md**:
   - Milestone 6 (Step 6.2): Rain & Puddles.
 

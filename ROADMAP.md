@@ -49,7 +49,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 6: Seasons & Smooth Weather
 **Focus**: Dynamic weather states.
 
-### Step 6.1: Weather State Machine
+### [x] Step 6.1: Weather State Machine
 - **Action**: Create `WeatherSystem` with states: clear, breezy, overcast, drizzle, thunderstorm. Drive `globalWind` intensity and screen ambient tint based on the weather.
 - **Files**: `src/systems/weather.ts` (new), `src/main.ts`
 - **Done When**: Weather can transition randomly every few minutes.
