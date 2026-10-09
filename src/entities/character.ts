@@ -169,8 +169,8 @@ export class Character {
       renderer.drawRect(step.pos.x - 2 * s, step.pos.y - 1 * s, 4 * s, 2 * s, hexToRgba('#2A4D24', stepAlpha));
     }
 
-    // 2. Drop Shadow under character (soft dark-green blob shadow)
-    art.drawBlobShadow(p.x, p.y, 6.5 * s);
+    // 2. Drop Shadow under character (soft dark-green blob shadow + dynamic sun drop shadow)
+    art.drawCharacterShadow(p.x, p.y, s);
 
     // 3. Animation Swings
     const swing = this.action === 'idle' ? 0 : Math.sin(this.walkCycle);

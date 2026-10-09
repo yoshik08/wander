@@ -33,7 +33,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/systems/time.ts` (new), `src/main.ts`
 - **Done When**: The screen tint smoothly interpolates between Dawn, Noon, Dusk, and Night.
 
-### Step 5.2: Dynamic Sun Angles & Shadows
+### [x] Step 5.2: Dynamic Sun Angles & Shadows
 - **Action**: Pass a `sunAngle` derived from `TimeSystem` to `ArtToolkit.drawDropShadow`.
 - **Files**: `src/main.ts`, `src/render/art.ts`
 - **Done When**: All upright objects cast shadows that stretch long at dawn/dusk and sit directly beneath objects at noon.

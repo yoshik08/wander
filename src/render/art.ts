@@ -3,22 +3,53 @@ import { ColorRGBA, hexToRgba, Vec2, vec2 } from '../core/math';
 
 export class ArtToolkit {
   private renderer: IRenderer;
-  
+
+  // Dynamic sun angle and elevation driven by TimeSystem
+  sunAngle: number = 0.5;
+  sunElevation: number = 0.6;
+
+  // Scratch memory for zero allocations per frame
+  private scratchShadowColor: ColorRGBA = { r: 0, g: 0, b: 0, a: 0.15 };
+  private scratchShadowQuad: [Vec2, Vec2, Vec2, Vec2] = [
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 0, y: 0 }
+  ];
+
   constructor(renderer: IRenderer) {
     this.renderer = renderer;
   }
 
-  // A shadow helper for diagonal drop shadows angled by the sun
-  drawDropShadow(x: number, y: number, w: number, h: number, sunAngle: number = 0.5) {
-    const shadowColor = hexToRgba('#000000', 0.15);
-    const skew = Math.sin(sunAngle) * h * 0.5;
-    // Draw a skewed polygon for the shadow
-    this.renderer.drawPolygon([
-      vec2(x - w/2, y),
-      vec2(x + w/2, y),
-      vec2(x + w/2 + skew, y - h),
-      vec2(x - w/2 + skew, y - h)
-    ], shadowColor);
+  setSun(sunAngle: number, sunElevation: number): void {
+    this.sunAngle = sunAngle;
+    this.sunElevation = sunElevation;
+  }
+
+  // A shadow helper for diagonal drop shadows angled dynamically by the sun
+  drawDropShadow(x: number, y: number, w: number, h: number, customAngle?: number, customElevation?: number) {
+    const angle = customAngle !== undefined ? customAngle : this.sunAngle;
+    const elevation = customElevation !== undefined ? customElevation : this.sunElevation;
+
+    // Shadow length scales inversely with sun elevation:
+    // Long stretch at dawn/dusk (~1.5x), compact underneath at noon (~0.35x)
+    const lengthFactor = 0.35 + (1.0 - Math.min(1.0, Math.max(0.0, elevation))) * 1.15;
+    const effH = h * lengthFactor;
+    const skew = Math.sin(angle) * effH * 0.8;
+
+    // Dynamic alpha: deeper in midday sunlight, softer at dawn/dusk/night
+    this.scratchShadowColor.a = 0.08 + Math.max(0.0, elevation) * 0.12;
+
+    this.scratchShadowQuad[0].x = x - w * 0.5;
+    this.scratchShadowQuad[0].y = y;
+    this.scratchShadowQuad[1].x = x + w * 0.5;
+    this.scratchShadowQuad[1].y = y;
+    this.scratchShadowQuad[2].x = x + w * 0.5 + skew;
+    this.scratchShadowQuad[2].y = y - effH * 0.45;
+    this.scratchShadowQuad[3].x = x - w * 0.5 + skew;
+    this.scratchShadowQuad[3].y = y - effH * 0.45;
+
+    this.renderer.drawPolygon(this.scratchShadowQuad, this.scratchShadowColor);
   }
 
   drawBlobShadow(x: number, y: number, radius: number) {
@@ -26,8 +57,15 @@ export class ArtToolkit {
     this.renderer.drawCircle(x, y, radius, hexToRgba('#1B3317', 0.28));
   }
 
+  drawCharacterShadow(x: number, y: number, scale: number) {
+    // 1. Soft contact blob shadow
+    this.drawBlobShadow(x, y, 6.5 * scale);
+    // 2. Dynamic sun drop shadow
+    this.drawDropShadow(x, y, 8 * scale, 14 * scale);
+  }
+
   drawPaintedTree(x: number, baseY: number, time: number, wind: Vec2, variant: number) {
-    this.drawDropShadow(x, baseY, 14, 28, 0.5);
+    this.drawDropShadow(x, baseY, 14, 28);
     
     // Trunk
     this.renderer.drawRect(x - 3.5, baseY - 16, 7, 18, hexToRgba('#4A2E16'));
@@ -55,7 +93,7 @@ export class ArtToolkit {
   }
 
   drawPaintedRock(x: number, baseY: number, variant: number) {
-    this.drawDropShadow(x, baseY, 12, 6, 0.5);
+    this.drawDropShadow(x, baseY, 12, 6);
     this.renderer.drawCircle(x, baseY, 5, hexToRgba('#8A8E91')); // base stone colour
     this.renderer.drawCircle(x - 1, baseY - 1, 3, hexToRgba('#D0D3D4')); // highlight
   }
@@ -158,7 +196,7 @@ export class ArtToolkit {
   }
 
   drawMushroom(x: number, baseY: number, variant: number, glowing: boolean = false) {
-    this.drawDropShadow(x, baseY, 8, 4, 0.5);
+    this.drawDropShadow(x, baseY, 8, 4);
 
     // Stipe (Stem)
     const stemColor = glowing ? hexToRgba('#1B4965') : hexToRgba('#F4E3C5');
@@ -183,7 +221,7 @@ export class ArtToolkit {
   }
 
   drawFern(x: number, baseY: number, time: number, wind: Vec2, variant: number = 0, playerPos?: Vec2) {
-    this.drawDropShadow(x, baseY, 10, 5, 0.5);
+    this.drawDropShadow(x, baseY, 10, 5);
 
     let partX = 0;
     if (playerPos) {
@@ -215,7 +253,7 @@ export class ArtToolkit {
   }
 
   drawShrub(x: number, baseY: number, time: number, wind: Vec2, variant: number, playerPos?: Vec2) {
-    this.drawDropShadow(x, baseY, 14, 8, 0.5);
+    this.drawDropShadow(x, baseY, 14, 8);
 
     let partX = 0;
     if (playerPos) {
@@ -244,7 +282,7 @@ export class ArtToolkit {
   }
 
   drawBirchTree(x: number, baseY: number, time: number, wind: Vec2) {
-    this.drawDropShadow(x, baseY, 12, 28, 0.5);
+    this.drawDropShadow(x, baseY, 12, 28);
 
     // White birch trunk
     this.renderer.drawRect(x - 3, baseY - 20, 6, 22, hexToRgba('#EAECEE'));

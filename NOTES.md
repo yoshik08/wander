@@ -56,6 +56,12 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Smooth Transition**: The color grading tints interpolate smoothly using trigonometric easing so morning light progresses gracefully without abrupt color stepping.
 - **HUD & Readout**: F3 debug overlay cleanly reports the in-game clock (HH:MM format) and active time phase alongside simulation metrics.
 
+## Step 5.2 (Dynamic Sun Angles & Shadows) Critique
+- **Coherent Sunlight Direction**: All environmental props (oak/pine/birch trees, rocks, shrubs, ferns, mushrooms), structures, and the character now cast unified drop shadows driven by the sun angle and elevation from TimeSystem.
+- **Elevation Compression**: Shadows correctly lengthen at low dawn/dusk sun angles and compress tightly beneath bases during noon zenith.
+- **Zero Allocations**: ArtToolkit uses a reusable scratch shadow polygon buffer, eliminating per-frame quad allocations while producing soft Ghibli-style ground grounding.
+
+
 
 
 

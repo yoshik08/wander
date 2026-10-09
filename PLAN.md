@@ -74,7 +74,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ## Milestone 5: Dynamic Lighting, Shadows & Post-Processing
 - [x] Day/night cycle (24 real minutes default, optional sync to local time)
 - [x] Time-of-day phases: dawn, morning, noon, golden hour, dusk, moonlit blue night
-- [ ] 2D normal-mapped directional lighting and soft tree/character drop shadows
+- [x] 2D normal-mapped directional lighting and soft tree/character drop shadows
 - [ ] God rays through canopies, bloom on highlights, and point lights (campfires, fireflies, lighthouse beam)
 - [ ] Post-processing color grading LUT / grading shader with smooth transitions
 

@@ -1,4 +1,5 @@
 import { IRenderer } from '../render/types';
+import { ArtToolkit } from '../render/art';
 import { ColorRGBA, hexToRgba, vec2, Vec2 } from '../core/math';
 import { PRNG } from '../core/prng';
 import { BiomeType } from './biomes';
@@ -252,9 +253,19 @@ export function renderStructure(
   renderer: IRenderer,
   structure: StructureInstance,
   time: number,
-  wind: Vec2
+  wind: Vec2,
+  art?: ArtToolkit
 ): void {
   const { type, x, y, baseY, variant } = structure;
+
+  if (art) {
+    if (type === 'windmill') art.drawDropShadow(x, baseY, 36, 48);
+    else if (type === 'cottage') art.drawDropShadow(x, baseY, 42, 36);
+    else if (type === 'lighthouse') art.drawDropShadow(x, baseY, 32, 60);
+    else if (type === 'ruins') art.drawDropShadow(x, baseY, 28, 20);
+    else if (type === 'bench') art.drawDropShadow(x, baseY, 24, 8);
+    else if (type === 'stone_circle') art.drawDropShadow(x, baseY, 32, 16);
+  }
 
   switch (type) {
     case 'campfire': {

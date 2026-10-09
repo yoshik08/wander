@@ -196,6 +196,8 @@ const loop = new GameLoop({
     // ==========================================
     depthItems.length = 0;
     const p = player.getInterpolatedPos(alpha);
+    const timeInfo = timeSystem.getInfo();
+    art.setSun(timeInfo.sunAngle, timeInfo.sunElevation);
 
     // Props from visible chunks
     for (const chunk of visibleChunks) {
@@ -281,7 +283,7 @@ const loop = new GameLoop({
       for (const struct of data.structures) {
         depthItems.push({
           baseY: struct.baseY,
-          draw: () => renderStructure(renderer, struct, time, globalWind)
+          draw: () => renderStructure(renderer, struct, time, globalWind, art)
         });
       }
     }
