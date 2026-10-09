@@ -70,6 +70,9 @@ const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
 player.speedMultiplier = saveManager.state.settings?.speed2x ? 2.0 : 1.0;
+if (saveManager.state.customization) {
+  player.customization = { ...saveManager.state.customization };
+}
 
 const audioSystem = new AudioSystem();
 if (saveManager.state.settings) {
@@ -107,6 +110,9 @@ settingsModal.onSpeedChange = (speed2x) => {
 };
 settingsModal.onColourblindChange = (cb) => {
   sparringHud.colourblindMode = cb;
+};
+settingsModal.onCustomizationChange = (cust) => {
+  player.customization = { ...cust };
 };
 settingsModal.onVolumeChange = (type, val) => {
   audioSystem.unlock();
@@ -428,6 +434,19 @@ const photoSnapBtn = document.getElementById('photo-snap-btn');
 const photoCloseBtn = document.getElementById('photo-close-btn');
 const photoCalmBtn = document.getElementById('photo-calm-btn');
 
+// Mobile Touch Action Button Hook
+const touchActionBtn = document.getElementById('touch-action-btn');
+if (touchActionBtn) {
+  const triggerTouch = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    input.triggerTouchAction();
+    audioSystem.unlock();
+  };
+  touchActionBtn.addEventListener('pointerdown', triggerTouch);
+  touchActionBtn.addEventListener('click', triggerTouch);
+}
+
 // Calm Mode state & variables
 let isCalmMode = false;
 let calmIdleTimer = 0;
@@ -436,7 +455,7 @@ let calmWanderAngle = 0;
 function toggleCalmMode(): void {
   isCalmMode = !isCalmMode;
   const settingsBtn = document.getElementById('settings-btn');
-  const hudButtons = [settingsBtn, photoBtn, mapBtn, journalBtn, audioBtn];
+  const hudButtons = [settingsBtn, photoBtn, mapBtn, journalBtn, audioBtn, touchActionBtn];
   for (const b of hudButtons) {
     if (b) {
       b.style.opacity = isCalmMode ? '0' : '1';
@@ -460,6 +479,7 @@ function togglePhotoMode(): void {
   if (settingsBtn) settingsBtn.style.display = active ? 'none' : 'flex';
   if (journalBtn) journalBtn.style.display = active ? 'none' : 'flex';
   if (audioBtn) audioBtn.style.display = active ? 'none' : 'flex';
+  if (touchActionBtn) touchActionBtn.style.display = active ? 'none' : 'flex';
   if (interactPrompt && active) interactPrompt.style.display = 'none';
   updatePhotoUI();
 }
@@ -2174,8 +2194,10 @@ const loop = new GameLoop({
       const screenOrigin = renderer.screenToWorld(joy.origin.x, joy.origin.y);
       const screenCurrent = renderer.screenToWorld(joy.current.x, joy.current.y);
 
-      renderer.drawCircle(screenOrigin.x, screenOrigin.y, 35, hexToRgba('#FFFFFF', 0.2));
-      renderer.drawCircle(screenCurrent.x, screenCurrent.y, 16, hexToRgba('#FFFFFF', 0.5));
+      renderer.drawCircle(screenOrigin.x, screenOrigin.y, 40 / camera.zoom, hexToRgba('#FFFFFF', 0.22));
+      renderer.drawCircle(screenOrigin.x, screenOrigin.y, 18 / camera.zoom, hexToRgba('#FFFFFF', 0.12));
+      renderer.drawCircle(screenCurrent.x, screenCurrent.y, 18 / camera.zoom, hexToRgba('#FAD02C', 0.65));
+      renderer.drawLine(screenOrigin.x, screenOrigin.y, screenCurrent.x, screenCurrent.y, 2 / camera.zoom, hexToRgba('#FFFFFF', 0.35));
     }
 
     // ==========================================

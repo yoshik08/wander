@@ -180,7 +180,7 @@ export class Character {
     const hairColor = hexToRgba('#3B2F2F');
     const art = new ArtToolkit(renderer);
 
-    const isMobile = window.innerWidth <= 600;
+    const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 600 : false;
     const s = isMobile ? 2.5 : 2.0;
 
     // 1. Draw footstep impressions
@@ -234,13 +234,27 @@ export class Character {
 
     // 5. Backpack
     const torsoY = p.y - 14*s + bob;
+    const bp = this.customization.backpackIndex;
+    const bpBaseColor = bp === 1 ? hexToRgba('#5D6D7E') : (bp === 2 ? hexToRgba('#A04000') : hexToRgba('#6E2C00'));
+    const bpAccColor = bp === 1 ? hexToRgba('#85929E') : (bp === 2 ? hexToRgba('#D35400') : hexToRgba('#873600'));
+
     if (isFacingUp) {
-      renderer.drawRect(p.x - 4*s, torsoY + 1*s, 8*s, 7*s, hexToRgba('#6E2C00'));
-      renderer.drawRect(p.x - 3*s, torsoY + 2*s, 6*s, 4*s, hexToRgba('#873600'));
+      renderer.drawRect(p.x - 4*s, torsoY + 1*s, 8*s, 7*s, bpBaseColor);
+      renderer.drawRect(p.x - 3*s, torsoY + 2*s, 6*s, 4*s, bpAccColor);
+      if (bp === 1) {
+        // Brass clasps
+        renderer.drawRect(p.x - 2*s, torsoY + 4*s, 1*s, 1.5*s, hexToRgba('#F1C40F'));
+        renderer.drawRect(p.x + 1*s, torsoY + 4*s, 1*s, 1.5*s, hexToRgba('#F1C40F'));
+      } else if (bp === 2) {
+        // Herb sprig tucked in top
+        renderer.drawRect(p.x - 1*s, torsoY - 0.5*s, 2*s, 2*s, hexToRgba('#27AE60'));
+      }
     } else if (isFacingRight) {
-      renderer.drawRect(p.x - 5.5*s, torsoY + 1.5*s, 3.5*s, 6*s, hexToRgba('#6E2C00'));
+      renderer.drawRect(p.x - 5.5*s, torsoY + 1.5*s, 3.5*s, 6*s, bpBaseColor);
+      if (bp === 2) renderer.drawRect(p.x - 5.5*s, torsoY, 2*s, 2*s, hexToRgba('#27AE60'));
     } else if (isFacingLeft) {
-      renderer.drawRect(p.x + 2*s, torsoY + 1.5*s, 3.5*s, 6*s, hexToRgba('#6E2C00'));
+      renderer.drawRect(p.x + 2*s, torsoY + 1.5*s, 3.5*s, 6*s, bpBaseColor);
+      if (bp === 2) renderer.drawRect(p.x + 3.5*s, torsoY, 2*s, 2*s, hexToRgba('#27AE60'));
     }
 
     // 6. Torso & Coat
@@ -284,6 +298,17 @@ export class Character {
       } else if (this.customization.hatIndex === 1) {
         renderer.drawRect(p.x - 7.5*s, headY - 1.5*s, 15*s, 2*s, hexToRgba('#F4D06F'));
         renderer.drawRect(p.x - 4*s, headY - 4.5*s, 8*s, 3.5*s, hexToRgba('#D4AC0D'));
+      } else if (this.customization.hatIndex === 2) {
+        // Alpine Beret with feather
+        renderer.drawRect(p.x - 5.5*s, headY - 3.5*s, 11*s, 3.0*s, hexToRgba('#1E8449'));
+        renderer.drawRect(p.x - 2.0*s, headY - 4.5*s, 5*s, 1.5*s, hexToRgba('#196F3D'));
+        renderer.drawLine(p.x + 3.0*s, headY - 2.5*s, p.x + 5.5*s, headY - 6.5*s, 1.6*s, hexToRgba('#E74C3C'));
+      } else if (this.customization.hatIndex === 3) {
+        // Wildflower floral crown
+        renderer.drawRect(p.x - 5.5*s, headY - 2.0*s, 11*s, 1.8*s, hexToRgba('#27AE60'));
+        renderer.drawCircle(p.x - 3.5*s, headY - 2.5*s, 1.6*s, hexToRgba('#FADBD8'));
+        renderer.drawCircle(p.x, headY - 3.0*s, 1.8*s, hexToRgba('#FCF3CF'));
+        renderer.drawCircle(p.x + 3.5*s, headY - 2.5*s, 1.6*s, hexToRgba('#D7BDE2'));
       }
       if (isSitting) {
         // Serene curved closed eyes while resting

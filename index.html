@@ -35,6 +35,143 @@
         height: 100%;
         outline: none;
       }
+      #hud-top-bar {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 900;
+        pointer-events: auto;
+      }
+      .hud-btn {
+        background: rgba(36, 52, 32, 0.88);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 235, 180, 0.4);
+        border-radius: 10px;
+        color: #FFF8E7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 7px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.1s ease, background 0.15s ease;
+      }
+      .hud-btn:hover {
+        background: rgba(48, 70, 43, 0.95);
+        transform: translateY(-1px);
+      }
+      .hud-btn:active {
+        transform: scale(0.96);
+      }
+      .hud-icon {
+        display: none;
+      }
+      .touch-action-fab {
+        position: absolute;
+        bottom: 28px;
+        right: 28px;
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #F39C12, #D35400);
+        border: 2px solid rgba(255, 235, 180, 0.85);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.45), 0 0 15px rgba(243, 156, 18, 0.4);
+        color: #FFF8E7;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 950;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.1s ease, filter 0.15s ease;
+      }
+      .touch-action-fab:active {
+        transform: scale(0.92);
+        filter: brightness(1.2);
+      }
+      .touch-action-fab .fab-icon {
+        font-size: 20px;
+        line-height: 1;
+      }
+      .touch-action-fab .fab-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      @media (max-width: 768px), (pointer: coarse) {
+        .touch-action-fab {
+          display: flex;
+        }
+      }
+      @media (max-width: 640px) {
+        #hud-top-bar {
+          top: 8px;
+          right: 8px;
+          gap: 6px;
+        }
+        .hud-btn {
+          padding: 7px 10px;
+          font-size: 12px;
+        }
+        .hud-label {
+          display: none;
+        }
+        .hud-icon {
+          display: inline;
+          font-size: 16px;
+        }
+        #interact-prompt {
+          bottom: 104px !important;
+          font-size: 12px !important;
+          padding: 6px 14px !important;
+          max-width: 88vw;
+        }
+        #region-card {
+          top: 56px !important;
+        }
+        #region-card #region-name {
+          font-size: 17px !important;
+        }
+        #region-card #region-subtitle {
+          font-size: 11px !important;
+        }
+        #toast-banner {
+          bottom: 20px !important;
+          max-width: 90vw !important;
+          padding: 10px 16px !important;
+        }
+        #toast-banner #toast-title {
+          font-size: 13px !important;
+        }
+        #toast-banner #toast-desc {
+          font-size: 11px !important;
+        }
+        #photo-hud {
+          bottom: 12px !important;
+          gap: 6px !important;
+          padding: 6px 12px !important;
+          max-width: 96vw;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        #photo-hud button {
+          padding: 4px 8px !important;
+          font-size: 11px !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -50,21 +187,34 @@
         <div id="region-name" style="font-size: 22px; font-weight: 800; color: #FFF8E7; letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 3px 12px rgba(0,0,0,0.85), 0 0 20px rgba(250, 208, 44, 0.4);"></div>
         <div id="region-subtitle" style="font-size: 13px; color: #FAD02C; font-style: italic; letter-spacing: 0.06em; text-shadow: 0 2px 6px rgba(0,0,0,0.75); margin-top: 3px;"></div>
       </div>
-      <button id="audio-btn" style="position: absolute; top: 12px; right: 396px; background: rgba(36, 52, 32, 0.85); backdrop-filter: blur(6px); border: 1px solid rgba(255, 235, 180, 0.4); border-radius: 8px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 900; user-select: none;">
-        <span id="audio-btn-icon">🔊 Sound</span>
+
+      <div id="hud-top-bar">
+        <button id="audio-btn" class="hud-btn" title="Toggle Sound">
+          <span id="audio-btn-icon">🔊 Sound</span>
+        </button>
+        <button id="journal-btn" class="hud-btn" title="Open Journal [J]">
+          <span class="hud-label">📖 Journal [J]</span>
+          <span class="hud-icon">📖</span>
+        </button>
+        <button id="settings-btn" class="hud-btn" title="Open Menu [O]">
+          <span class="hud-label">⚙️ Menu [O]</span>
+          <span class="hud-icon">⚙️</span>
+        </button>
+        <button id="photo-btn" class="hud-btn" title="Photo Mode [P]">
+          <span class="hud-label">📷 Photo [P]</span>
+          <span class="hud-icon">📷</span>
+        </button>
+        <button id="map-btn" class="hud-btn" title="World Map [M]">
+          <span class="hud-label">🗺️ Map [M]</span>
+          <span class="hud-icon">🗺️</span>
+        </button>
+      </div>
+
+      <button id="touch-action-btn" class="touch-action-fab" title="Interact / Action">
+        <span class="fab-icon">✦</span>
+        <span class="fab-label">Action</span>
       </button>
-      <button id="journal-btn" style="position: absolute; top: 12px; right: 292px; background: rgba(36, 52, 32, 0.85); backdrop-filter: blur(6px); border: 1px solid rgba(255, 235, 180, 0.4); border-radius: 8px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 900; user-select: none;">
-        <span>📖 Journal [J]</span>
-      </button>
-      <button id="settings-btn" style="position: absolute; top: 12px; right: 196px; background: rgba(36, 52, 32, 0.85); backdrop-filter: blur(6px); border: 1px solid rgba(255, 235, 180, 0.4); border-radius: 8px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 900; user-select: none;">
-        <span>⚙️ Menu [O]</span>
-      </button>
-      <button id="photo-btn" style="position: absolute; top: 12px; right: 104px; background: rgba(36, 52, 32, 0.85); backdrop-filter: blur(6px); border: 1px solid rgba(255, 235, 180, 0.4); border-radius: 8px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 900; user-select: none;">
-        <span>📷 Photo [P]</span>
-      </button>
-      <button id="map-btn" style="position: absolute; top: 12px; right: 12px; background: rgba(36, 52, 32, 0.85); backdrop-filter: blur(6px); border: 1px solid rgba(255, 235, 180, 0.4); border-radius: 8px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 900; user-select: none;">
-        <span>🗺️ Map [M]</span>
-      </button>
+
       <div id="interact-prompt" style="display: none; position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%); background: rgba(30, 42, 32, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(255, 235, 180, 0.45); border-radius: 20px; color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; padding: 7px 18px; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.4); pointer-events: auto; cursor: pointer; z-index: 900; user-select: none;">
         <span id="interact-icon">🪑</span>
         <span id="interact-label">Rest on Bench [E]</span>

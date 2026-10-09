@@ -213,4 +213,8 @@ export class InputManager {
       current: this.touchCurrent
     };
   }
+
+  triggerTouchAction(): void {
+    this.touchInteractPressed = true;
+  }
 }

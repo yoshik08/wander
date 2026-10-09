@@ -50,6 +50,11 @@ export interface SaveState {
   garden: SavedGardenPlot[];
   catches: string[];
   stonesSkipped: number;
+  customization?: {
+    colorwayIndex: number;
+    hatIndex: number;
+    backpackIndex: number;
+  };
 }
 
 export class SaveManager {
@@ -82,6 +87,11 @@ export class SaveManager {
       garden: [],
       catches: [],
       stonesSkipped: 0,
+      customization: {
+        colorwayIndex: 0,
+        hatIndex: 0,
+        backpackIndex: 0
+      },
       settings: {
         speed2x: false,
         colourblindMode: false,

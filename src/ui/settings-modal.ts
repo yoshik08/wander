@@ -1,5 +1,6 @@
 import { SaveManager, GameSettings } from '../systems/save';
 import { TYPE_BADGE_INFO, CreatureType } from '../entities/creature';
+import { COLORWAYS } from '../entities/character';
 
 export class SettingsModal {
   private container: HTMLDivElement;
@@ -17,6 +18,7 @@ export class SettingsModal {
   onPeacefulChange?: (peaceful: boolean) => void;
   onVolumeChange?: (type: 'master' | 'music' | 'ambience' | 'sfx', val: number) => void;
   onMuteToggle?: () => boolean;
+  onCustomizationChange?: (customization: { colorwayIndex: number; hatIndex: number; backpackIndex: number }) => void;
   onToast?: (title: string, desc: string) => void;
 
   constructor(private saveManager: SaveManager, private currentSeed: string) {
@@ -272,6 +274,98 @@ export class SettingsModal {
     }));
 
     this.container.appendChild(s5);
+
+    // Section 6: Character Customization
+    const s6 = this.createSection(
+      '🧥 Wanderer Customization',
+      'Choose your outfit palette, headwear, and exploration backpack.'
+    );
+
+    const cust = this.saveManager.state.customization || {
+      colorwayIndex: 0,
+      hatIndex: 0,
+      backpackIndex: 0
+    };
+
+    // 1. Colorway chips
+    const colorLabel = document.createElement('div');
+    colorLabel.style.cssText = 'font-size: 13px; font-weight: 600; color: #FFF8E7; margin-bottom: 6px;';
+    colorLabel.textContent = `Outfit: ${COLORWAYS[cust.colorwayIndex]?.name || 'Rust Coral'}`;
+    s6.appendChild(colorLabel);
+
+    const chipsRow = document.createElement('div');
+    chipsRow.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;';
+
+    COLORWAYS.forEach((c, idx) => {
+      const chip = document.createElement('button');
+      chip.style.cssText = `
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: ${c.coat};
+        border: ${cust.colorwayIndex === idx ? '3px solid #FFF8E7' : '2px solid rgba(255,255,255,0.25)'};
+        cursor: pointer;
+        position: relative;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      `;
+      chip.title = c.name;
+      chip.onclick = () => {
+        cust.colorwayIndex = idx;
+        this.saveManager.state.customization = cust;
+        this.saveManager.saveToLocalStorage();
+        colorLabel.textContent = `Outfit: ${c.name}`;
+        Array.from(chipsRow.children).forEach((child: any, cIdx) => {
+          child.style.border = cIdx === idx ? '3px solid #FFF8E7' : '2px solid rgba(255,255,255,0.25)';
+        });
+        this.onCustomizationChange?.(cust);
+      };
+      chipsRow.appendChild(chip);
+    });
+    s6.appendChild(chipsRow);
+
+    // 2. Hats selector
+    const HATS = ['Knit Beanie', 'Straw Sunhat', 'Alpine Beret', 'Floral Crown'];
+    const hatRow = document.createElement('div');
+    hatRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px;';
+    const hatTitle = document.createElement('span');
+    hatTitle.textContent = `Headwear: ${HATS[cust.hatIndex] || HATS[0]}`;
+    hatTitle.style.cssText = 'color: #FFF8E7;';
+    const hatCycleBtn = document.createElement('button');
+    hatCycleBtn.textContent = '🎩 Change Hat';
+    hatCycleBtn.style.cssText = this.btnStyle('#27AE60');
+    hatCycleBtn.onclick = () => {
+      cust.hatIndex = (cust.hatIndex + 1) % HATS.length;
+      this.saveManager.state.customization = cust;
+      this.saveManager.saveToLocalStorage();
+      hatTitle.textContent = `Headwear: ${HATS[cust.hatIndex]}`;
+      this.onCustomizationChange?.(cust);
+    };
+    hatRow.appendChild(hatTitle);
+    hatRow.appendChild(hatCycleBtn);
+    s6.appendChild(hatRow);
+
+    // 3. Backpack selector
+    const PACKS = ['Leather Rucksack', 'Canvas Satchel', 'Herb Basket'];
+    const packRow = document.createElement('div');
+    packRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; font-size: 13px;';
+    const packTitle = document.createElement('span');
+    packTitle.textContent = `Pack: ${PACKS[cust.backpackIndex] || PACKS[0]}`;
+    packTitle.style.cssText = 'color: #FFF8E7;';
+    const packCycleBtn = document.createElement('button');
+    packCycleBtn.textContent = '🎒 Change Pack';
+    packCycleBtn.style.cssText = this.btnStyle('#D35400');
+    packCycleBtn.onclick = () => {
+      cust.backpackIndex = (cust.backpackIndex + 1) % PACKS.length;
+      this.saveManager.state.customization = cust;
+      this.saveManager.saveToLocalStorage();
+      packTitle.textContent = `Pack: ${PACKS[cust.backpackIndex]}`;
+      this.onCustomizationChange?.(cust);
+    };
+    packRow.appendChild(packTitle);
+    packRow.appendChild(packCycleBtn);
+    s6.appendChild(packRow);
+
+    this.container.appendChild(s6);
   }
 
   private createSection(titleText: string, descText: string): HTMLDivElement {
