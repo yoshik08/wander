@@ -18,6 +18,8 @@ import { WildCreatureManager } from './entities/wild-creature';
 import { DiegeticMap } from './ui/map';
 import { PhotoMode } from './ui/photo-mode';
 import { SaveManager } from './systems/save';
+import { SparringSystem, Combatant } from './systems/sparring';
+import { SparringHUD } from './ui/sparring-hud';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -53,6 +55,9 @@ const photoMode = new PhotoMode();
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
+const sparring = new SparringSystem();
+const sparringHud = new SparringHUD(sparring);
+
 
 // Photo Mode Hooks
 const photoBtn = document.getElementById('photo-btn');
@@ -147,6 +152,7 @@ const interactPrompt = document.getElementById('interact-prompt');
 const interactIcon = document.getElementById('interact-icon');
 const interactLabel = document.getElementById('interact-label');
 let currentRestSpot: { x: number; y: number; label: string } | null = null;
+let currentSparTarget: any = null;
 
 if (interactPrompt) {
   interactPrompt.addEventListener('click', (e) => {
@@ -154,6 +160,31 @@ if (interactPrompt) {
     if (player.action === 'sit') {
       player.action = 'idle';
       camera.targetZoom = 1.0;
+    } else if (currentSparTarget && !sparring.isActive) {
+      // Start Sparring!
+      camera.targetZoom = 2.0; // Ease closer
+      
+      // We need Combatant objects. Player uses a mock one for now.
+      const playerC: Combatant = {
+        genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped' } as any,
+        level: 5,
+        currentResolve: 20,
+        maxResolve: 20,
+        status: 'None',
+        statusTurns: 0
+      };
+      
+      const wildC: Combatant = {
+        genome: currentSparTarget.genome,
+        level: 3,
+        currentResolve: currentSparTarget.genome.stats.vigor,
+        maxResolve: currentSparTarget.genome.stats.vigor,
+        status: 'None',
+        statusTurns: 0
+      };
+      
+      sparring.startSpar(playerC, wildC);
+      sparringHud.update();
     } else if (currentRestSpot) {
       player.action = 'sit';
       player.pos.x = currentRestSpot.x;
@@ -445,7 +476,27 @@ const loop = new GameLoop({
       }
     }
 
-    if (player.action === 'sit') {
+    // Sparring Proximity Check
+    currentSparTarget = null;
+    if (!sparring.isActive) {
+      let closestSparDist = 48;
+      for (const c of wildCreatures.getActiveCreatures()) {
+        const d = Math.hypot(player.pos.x - c.pos.x, player.pos.y - c.pos.y);
+        if (d < closestSparDist) {
+          closestSparDist = d;
+          currentSparTarget = c;
+        }
+      }
+    }
+
+    if (sparring.isActive) {
+      camera.targetZoom = 2.0;
+      if (interactPrompt) interactPrompt.style.display = 'none';
+      // If spar ended or yielded?
+      if (!sparring.isActive) {
+         camera.targetZoom = 1.0;
+      }
+    } else if (player.action === 'sit') {
       camera.targetZoom = 0.82;
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
@@ -455,6 +506,33 @@ const loop = new GameLoop({
       if (inputState.interactPressed) {
         player.action = 'idle';
         camera.targetZoom = 1.0;
+      }
+    } else if (currentSparTarget) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '⚔️';
+        interactLabel.textContent = `Spar with ${currentSparTarget.genome.name} [E]`;
+      }
+      if (inputState.interactPressed) {
+        camera.targetZoom = 2.0;
+        const playerC: Combatant = {
+          genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped' } as any,
+          level: 5,
+          currentResolve: 20,
+          maxResolve: 20,
+          status: 'None',
+          statusTurns: 0
+        };
+        const wildC: Combatant = {
+          genome: currentSparTarget.genome,
+          level: 3,
+          currentResolve: currentSparTarget.genome.stats.vigor,
+          maxResolve: currentSparTarget.genome.stats.vigor,
+          status: 'None',
+          statusTurns: 0
+        };
+        sparring.startSpar(playerC, wildC);
+        sparringHud.update();
       }
     } else if (currentRestSpot) {
       if (interactPrompt && interactLabel && interactIcon) {

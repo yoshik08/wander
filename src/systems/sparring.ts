@@ -23,14 +23,14 @@ export interface Move {
 }
 
 export const MOVES: Record<string, Move> = {
-  'Tackle': { name: 'Tackle', type: 'Neutral', category: 'Physical', power: 40, description: 'A basic physical strike.' },
-  'Vine Whip': { name: 'Vine Whip', type: 'Flora', category: 'Physical', power: 45, description: 'Strikes with a swift vine.' },
-  'Water Gun': { name: 'Water Gun', type: 'Aqua', category: 'Elemental', power: 40, description: 'A blast of water.' },
-  'Ember': { name: 'Ember', type: 'Ignis', category: 'Elemental', power: 40, description: 'A small flame.' },
-  'Rock Throw': { name: 'Rock Throw', type: 'Terra', category: 'Physical', power: 50, description: 'Throws a solid rock.' },
-  'Gust': { name: 'Gust', type: 'Aero', category: 'Elemental', power: 40, description: 'A sharp gust of wind.' },
-  'Sleep Powder': { name: 'Sleep Powder', type: 'Flora', category: 'Status', power: 0, statusEffect: 'Sleep', description: 'Induces sleep.' },
-  'Glare': { name: 'Glare', type: 'Neutral', category: 'Status', power: 0, statusEffect: 'Daze', description: 'Dazes the target.' }
+  'Dash': { name: 'Dash', type: 'Neutral', category: 'Physical', power: 40, description: 'A basic physical strike.' },
+  'Bramble Lash': { name: 'Bramble Lash', type: 'Flora', category: 'Physical', power: 45, description: 'Strikes with a swift vine.' },
+  'Aqua Burst': { name: 'Aqua Burst', type: 'Aqua', category: 'Elemental', power: 40, description: 'A blast of water.' },
+  'Cinder Spark': { name: 'Cinder Spark', type: 'Ignis', category: 'Elemental', power: 40, description: 'A small flame.' },
+  'Pebble Toss': { name: 'Pebble Toss', type: 'Terra', category: 'Physical', power: 50, description: 'Throws a solid rock.' },
+  'Breeze Strike': { name: 'Breeze Strike', type: 'Aero', category: 'Elemental', power: 40, description: 'A sharp gust of wind.' },
+  'Spores': { name: 'Spores', type: 'Flora', category: 'Status', power: 0, statusEffect: 'Sleep', description: 'Induces sleep.' },
+  'Intimidate': { name: 'Intimidate', type: 'Neutral', category: 'Status', power: 0, statusEffect: 'Daze', description: 'Dazes the target.' }
 };
 
 export class SparringSystem {
@@ -150,8 +150,8 @@ export class SparringSystem {
     const pSpeed = this.playerCreature.genome.stats.haste;
     const wSpeed = this.wildCreature.genome.stats.haste;
     
-    // AI picks a random move (for now, assume Tackle)
-    const wildMove = MOVES['Tackle']; 
+    // AI picks a random move (for now, assume Dash)
+    const wildMove = MOVES['Dash']; 
 
     if (pSpeed >= wSpeed) {
       this.useMove(this.playerCreature, this.wildCreature, playerMove);

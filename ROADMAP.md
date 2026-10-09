@@ -92,7 +92,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 **Focus**: Saving and Creature Generation.
 
 ### Step C1.1: Save State Architecture
-- **Action**: Implement a robust save manager (`src/systems/save.ts`) handling Folio (seen/befriended), Party (up to 6), Sanctuary list, items, and badges. Must support export/import to file.
+- [x] **Action**: Implement a robust save manager (`src/systems/save.ts`) handling Folio (seen/befriended), Party (up to 6), Sanctuary list, items, and badges. Must support export/import to file.
 - **Files**: `src/systems/save.ts` (new)
 - **Done When**: Game state can be exported as JSON and re-imported successfully.
 
