@@ -84,14 +84,21 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/world/chunk.ts`, `src/entities/character.ts`, `src/main.ts`
 - **Done When**: Walking near a keepsake plays a chime (console log for now) and increments a counter.
 
-### Step 8.2: Diegetic Map UI
+### [x] Step 8.2: Diegetic Map UI
 - **Action**: Pressing 'M' renders a full-screen parchment map over the game. Reveal chunks as they are visited by storing explored coordinates in a Set.
 - **Files**: `src/ui/map.ts` (new), `src/main.ts`
 - **Done When**: The map accurately reflects the noise-generated biomes of explored chunks.
 
 ---
 
-## Milestone 9 - 15 (See PLAN.md for high-level details)
-- **Audio**: Build `WebAudioSynth` class with oscillators for chimes, wind noise, and river white noise.
-- **Save System**: Serialize chunk explored data, player pos, and time to `localStorage`.
-- **PWA**: Add `manifest.json` and basic service worker.
+## Milestone 9: Calm Activities & Modes
+
+### Step 9.1: Resting on Benches & Logs
+- **Action**: Pressing 'E' or interact button near benches or fallen logs lets the wanderer sit down in a relaxed pose with smoothed camera zoom pull-back, breathing wind sighs, and cat curling up at their feet.
+- **Files**: `src/entities/character.ts`, `src/world/chunk.ts`, `src/main.ts`
+- **Done When**: Player sits on bench with eased camera pull-out, and stands up on movement.
+
+### Step 9.2: Photo Mode & Calm Autoplay
+- **Action**: Pressing 'P' enters letterboxed Photo Mode with pan/zoom and postcard filter toggles (film, watercolour, polaroid, dusk).
+- **Files**: `src/ui/photo-mode.ts`, `src/main.ts`
+- **Done When**: Clean UI-free snapshot capture with artistic postcard borders.

@@ -100,7 +100,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [ ] Interactive Journal (J) with page-turning animation and completion tracker
 - [ ] 20 hidden landmarks per seed with postcard notification on discovery
 - [ ] Poetic place name generator ("Apricot Hollow", "The Sleeping Pines") and region title cards
-- [ ] Hand-drawn parchment Map (M) with fog-of-war reveal and custom pins (up to 10)
+- [x] Hand-drawn parchment Map (M) with fog-of-war reveal and custom pins (up to 10)
 - [ ] Garden plot near spawn for planting collected seeds and flowers
 
 ---

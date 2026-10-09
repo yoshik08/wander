@@ -14,6 +14,7 @@ import { LightingSystem } from './systems/lighting';
 import { WeatherSystem } from './systems/weather';
 import { WildlifeSystem } from './entities/boids';
 import { Cat } from './entities/cat';
+import { DiegeticMap } from './ui/map';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -36,6 +37,21 @@ const weather = new WeatherSystem(chunkManager.seed);
 const wildlife = new WildlifeSystem(chunkManager.seed);
 wildlife.spawnCreaturesAround(player.pos.x, player.pos.y);
 const cat = new Cat(player.pos.x + 24, player.pos.y + 12, 0);
+const diegeticMap = new DiegeticMap();
+
+// Map UI button hook
+const mapBtn = document.getElementById('map-btn');
+if (mapBtn) {
+  mapBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    diegeticMap.toggle();
+  });
+}
+canvas.addEventListener('click', () => {
+  if (diegeticMap.isOpen) {
+    diegeticMap.close();
+  }
+});
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
@@ -125,6 +141,20 @@ const loop = new GameLoop({
 
     if (inputState.debugPressed) {
       showDebug = !showDebug;
+    }
+
+    if (inputState.mapPressed) {
+      diegeticMap.toggle();
+    }
+    if (inputState.menuPressed && diegeticMap.isOpen) {
+      diegeticMap.close();
+    }
+    diegeticMap.update(dt);
+
+    if (diegeticMap.isOpen) {
+      inputState.move.x = 0;
+      inputState.move.y = 0;
+      inputState.isRunning = false;
     }
 
     // Dynamic wind modulation driven by weather
@@ -519,6 +549,24 @@ const loop = new GameLoop({
       renderer.drawCircle(screenOrigin.x, screenOrigin.y, 35, hexToRgba('#FFFFFF', 0.2));
       renderer.drawCircle(screenCurrent.x, screenCurrent.y, 16, hexToRgba('#FFFFFF', 0.5));
     }
+
+    // ==========================================
+    // LAYER 11: Diegetic Map UI
+    // ==========================================
+    diegeticMap.render(
+      renderer,
+      art,
+      player.pos,
+      player.facingAngle,
+      cat.pos,
+      chunkManager,
+      renderer.width,
+      renderer.height,
+      camera.zoom,
+      camPos.x,
+      camPos.y,
+      time
+    );
 
     // ==========================================
     // LAYER 9: Debug Overlay (F3)

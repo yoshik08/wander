@@ -14,6 +14,7 @@ export class ChunkManager {
   private workers: Worker[] = [];
   private nextWorkerIdx: number = 0;
   readonly collectedKeepsakes: Set<string> = new Set();
+  readonly exploredChunks: Set<string> = new Set();
   onChunkUnloaded?: (chunk: Chunk) => void;
 
   collectKeepsake(id: string): boolean {
@@ -24,6 +25,14 @@ export class ChunkManager {
 
   isKeepsakeCollected(id: string): boolean {
     return this.collectedKeepsakes.has(id);
+  }
+
+  markExplored(chunkX: number, chunkY: number): void {
+    this.exploredChunks.add(`${chunkX},${chunkY}`);
+  }
+
+  isExplored(chunkX: number, chunkY: number): boolean {
+    return this.exploredChunks.has(`${chunkX},${chunkY}`);
   }
 
   constructor(seedInput?: string | number) {
@@ -66,6 +75,7 @@ export class ChunkManager {
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
         const key = `${dx},${dy}`;
+        this.markExplored(dx, dy);
         if (!this.chunks.has(key)) {
           const data = generateChunkData(dx, dy, this.seed);
           this.chunks.set(key, new Chunk(dx, dy, data));
@@ -111,6 +121,7 @@ export class ChunkManager {
   update(cameraWorldX: number, cameraWorldY: number): void {
     const centerChunkX = Math.floor(cameraWorldX / CHUNK_PIXEL_SIZE);
     const centerChunkY = Math.floor(cameraWorldY / CHUNK_PIXEL_SIZE);
+    this.markExplored(centerChunkX, centerChunkY);
 
     // 1. Request new chunks in load radius
     for (let dy = -CHUNK_LOAD_RADIUS; dy <= CHUNK_LOAD_RADIUS; dy++) {

@@ -90,3 +90,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Biome Discovery & Placement**: Chunks procedurally scatter context-rich keepsakes (blue jay feathers, pinecones, ancient acorns, pressed blossom petals, riverstones, shells, clovers) matched to climate and biomes.
 - **Visual Presentation**: Each keepsake features a gentle floating bob, warm golden aura, and star glint animation that draws the eye naturally without overwhelming the landscape.
 - **Collection Polish**: Proximity pickup triggers celebratory dust bursts, console chime audio cues, and a diegetic glassmorphic toast notification with poetic descriptions.
+
+## Step 8.2 (Diegetic Map UI) Critique
+- **Vellum Parchment Aesthetic**: Responsive antique vellum sheet with weathered sepia borders, drop shadows, and corner brackets creates an authentic explorer feel without jarring modern UI elements.
+- **Fog of War & Biome Grid**: 7x7 chunk grid dynamically reveals traversed domains with biome-accurate color fills, water markers, landmark campfire pins, and uncollected keepsake glints.
+- **Orientation & Zero Allocation**: Player heading needle, companion cat icon, and top-right compass rose provide clear situational orientation while maintaining strict zero-allocation scratch color structs for 120Hz smooth operation.
