@@ -110,8 +110,8 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [ ] Stone skipping on lakes with bouncing physics
 - [ ] Timing-free relaxing fishing mini-activity
 - [ ] Wind chime interactions and campfire lighting / sleeping till morning
-- [ ] Photo mode (P) with postcard filters (film, watercolour, polaroid, dusk)
-- [ ] Calm mode (toggle to hide all UI and let the world play autonomously)
+- [x] Photo mode (P) with postcard filters (film, watercolour, polaroid, dusk)
+- [x] Calm mode (toggle to hide all UI and let the world play autonomously)
 
 ---
 

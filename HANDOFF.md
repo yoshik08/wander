@@ -39,10 +39,11 @@
   - Milestone 8 (Step 8.3): Interactive Journal ('J' toggle, HUD button, parchment album, watercolor keepsake stamps, completion tracker bar, and expedition folio stats logbook).
   - Milestone 8 (Step 8.4): Landmarks & Place Names (poetic region name generator "Apricot Hollow", region boundary title cards, 20 deterministic hidden landmarks, and postcard notifications).
   - Milestone 8 (Step 8.5): Garden Plot (specialized 4-bed tilled soil plot near spawn at (448, 432), seed planting from inventory/keepsakes, rain and interactive watering, progressive growth stages: sprout -> growing -> blooming, and persistent save state).
+  - Milestone 9 (Step 9.2): Photo Mode & Calm Mode (wired PhotoMode with letterbox frame, 5 postcard filters [Normal, Vintage Film, Watercolor Wash, Polaroid Instant, Golden Dusk], zoom [0.6x to 2.2x], shutter flash + PNG export, dedicated HUD controls, and Calm Mode toggling [C key / button] that hides all UI and engages gentle auto-wandering on idle).
 - **Completed in this step**:
-  - Milestone 8 (Step 8.5): Garden Plot.
+  - Milestone 9 (Step 9.2): Photo Mode & Calm Mode.
 - **Next Item in ROADMAP.md**:
-  - Milestone 9 (Step 9.2): Photo Mode & Calm Mode (wire PhotoMode with letterbox frame, filters, zoom, shutter capture, and Calm Mode UI hide toggle).
+  - Milestone 9 (Step 9.3): Activities (Stone skipping on water with bouncing physics, and timing-free fishing at docks/shores).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

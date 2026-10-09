@@ -51,7 +51,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 
 ## Milestone 9: Calm Activities & Modes (Remaining)
 
-### Step 9.2: Photo Mode & Calm Autoplay
+### Step 9.2: Photo Mode & Calm Autoplay [x]
 - **Action**: Wire up the existing `src/ui/photo-mode.ts` in `main.ts`. Press 'P' to enter letterboxed Photo Mode, allowing pan/zoom and filter toggling. Add 'Calm mode' to hide UI.
 - **Files**: `src/main.ts`, `src/ui/photo-mode.ts`
 - **Done When**: Pressing 'P' successfully pauses/alters the game view into a cinematic framer with working filters.
