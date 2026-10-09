@@ -49,9 +49,9 @@ export class Character {
   // Turning lean angle
   turnLean: number = 0;
 
-  // Footsteps trail and dust
+  // Footsteps trail
   footsteps: Footstep[] = [];
-  dustParticles: { pos: Vec2, life: number, maxLife: number }[] = [];
+  onStep?: (pos: Vec2, angle: number, isRunning: boolean) => void;
   private stepTimer: number = 0;
 
   // Movement tuning
@@ -93,7 +93,7 @@ export class Character {
       const strideFreq = this.action === 'run' ? 16 : 10;
       this.walkCycle += dt * strideFreq;
 
-      // Spawn footsteps & dust
+      // Spawn footsteps & trigger onStep
       this.stepTimer += dt * strideFreq;
       if (this.stepTimer >= Math.PI) {
         this.stepTimer -= Math.PI;
@@ -103,14 +103,9 @@ export class Character {
           life: 1.0
         });
         if (this.footsteps.length > 24) this.footsteps.shift();
-        
-        // Spawn dust when running
-        if (currentSpeed > this.walkSpeed) {
-          this.dustParticles.push({
-            pos: vec2(this.pos.x + (Math.random() - 0.5) * 10, this.pos.y + 2),
-            life: 0.6 + Math.random() * 0.4,
-            maxLife: 1.0
-          });
+
+        if (this.onStep) {
+          this.onStep(this.pos, this.facingAngle, this.action === 'run');
         }
       }
     } else {
@@ -128,18 +123,11 @@ export class Character {
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;
 
-    // Decay footsteps & dust
+    // Decay footsteps
     for (let i = this.footsteps.length - 1; i >= 0; i--) {
       this.footsteps[i].life -= dt * 0.35;
       if (this.footsteps[i].life <= 0) {
         this.footsteps.splice(i, 1);
-      }
-    }
-    for (let i = this.dustParticles.length - 1; i >= 0; i--) {
-      this.dustParticles[i].life -= dt;
-      this.dustParticles[i].pos.y -= dt * 10.0; // drift up
-      if (this.dustParticles[i].life <= 0) {
-        this.dustParticles.splice(i, 1);
       }
     }
 
@@ -179,12 +167,6 @@ export class Character {
     for (const step of this.footsteps) {
       const stepAlpha = step.life * 0.35;
       renderer.drawRect(step.pos.x - 2 * s, step.pos.y - 1 * s, 4 * s, 2 * s, hexToRgba('#2A4D24', stepAlpha));
-    }
-
-    // 1b. Dust Particles
-    for (const dust of this.dustParticles) {
-      const dAlpha = (dust.life / dust.maxLife) * 0.4;
-      renderer.drawCircle(dust.pos.x, dust.pos.y, 2 * s, hexToRgba('#D0D3D4', dAlpha));
     }
 
     // 2. Drop Shadow under character (soft dark-green blob shadow)

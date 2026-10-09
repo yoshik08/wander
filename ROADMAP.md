@@ -11,7 +11,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Reuse**: `drawDropShadow`, `renderer.drawPolygon`
 - **Done When**: All biomes have distinct painterly palettes and new props render correctly without black outlines.
 
-### Step 4.2: Global Wind Field & CPU Particle Pool
+### [x] Step 4.2: Global Wind Field & CPU Particle Pool
 - **Action**: Implement a `ParticleSystem` class that manages an array of particles (pollen, petals, leaves). Update `main.ts` to spawn particles based on the current biome and `globalWind`.
 - **Files**: `src/systems/particles.ts` (new), `src/main.ts`
 - **Reuse**: Pass `globalWind` to the particle system for advection. Use `renderer.drawCircle` and `renderer.drawQuad` for particles.

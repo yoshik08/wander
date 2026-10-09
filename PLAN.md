@@ -64,9 +64,9 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
   - Rocky rises/cliffs, ponds & marsh, lakes, sandy coast, autumn maple woods,
   - Misty highlands, rare snowy peaks, rare glowing mushroom hollow
 - [x] Procedural vegetation: wind-bent grass, wild flowers, layered swaying trees, ferns, mushrooms
-- [ ] Depth sorting (Y-sorting) for all environmental props, structures, and characters
-- [ ] Global curl-noise wind field driving grass, trees, petals, and scarf coherently
-- [ ] Particle system (CPU pool + GPU rendering): pollen, petals, leaves, dust, rain, snow, mist, fireflies
+- [x] Depth sorting (Y-sorting) for all environmental props, structures, and characters
+- [x] Global curl-noise wind field driving grass, trees, petals, and scarf coherently
+- [x] Particle system (CPU pool + GPU rendering): pollen, petals, leaves, dust, rain, snow, mist, fireflies
 - [ ] Dynamic grass parting and spring-back around the character; water ripples
 
 ---

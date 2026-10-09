@@ -8,6 +8,7 @@ import { CHUNK_PIXEL_SIZE } from './world/chunk';
 import { renderStructure } from './world/structures';
 import { hexToRgba, vec2, Vec2 } from './core/math';
 import { ArtToolkit } from './render/art';
+import { ParticleSystem } from './systems/particles';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -23,6 +24,19 @@ camera.snapTo(player.pos.x, player.pos.y);
 
 const input = new InputManager(canvas);
 const chunkManager = new ChunkManager();
+const particles = new ParticleSystem(chunkManager.seed);
+
+// Dust puffs from character footsteps
+player.onStep = (pos, angle, isRunning) => {
+  particles.spawnFootstepDust(pos.x, pos.y, angle);
+  if (isRunning) {
+    particles.spawnFootstepDust(pos.x, pos.y, angle);
+  }
+};
+
+// Seed initial ambient particles across the screen
+const initialBiome = chunkManager.getBiomeAt(player.pos.x, player.pos.y);
+particles.seedViewport(camera.pos.x, camera.pos.y, renderer.width, renderer.height, camera.zoom, initialBiome, 90);
 
 // Resize handling with devicePixelRatio
 function handleResize(): void {
@@ -100,6 +114,20 @@ const loop = new GameLoop({
 
     // Stream and prune chunks around camera
     chunkManager.update(camera.pos.x, camera.pos.y);
+
+    // Update ambient and footstep particles
+    const currentBiome = chunkManager.getBiomeAt(player.pos.x, player.pos.y);
+    particles.update(
+      dt,
+      time,
+      camera.pos.x,
+      camera.pos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom,
+      currentBiome,
+      globalWind
+    );
   },
 
   render: (alpha: number) => {
@@ -248,7 +276,12 @@ const loop = new GameLoop({
     }
 
     // ==========================================
-    // LAYER 6: Touch Virtual Joystick UI
+    // LAYER 6: Atmospheric Particles (Pollen, Petals, Leaves, Dust, Spores)
+    // ==========================================
+    particles.render(renderer, time);
+
+    // ==========================================
+    // LAYER 7: Touch Virtual Joystick UI
     // ==========================================
     const joy = input.getTouchJoystickDisplay();
     if (joy && joy.active) {
@@ -260,7 +293,7 @@ const loop = new GameLoop({
     }
 
     // ==========================================
-    // LAYER 7: Debug Overlay (F3)
+    // LAYER 8: Debug Overlay (F3)
     // ==========================================
     if (debugOverlay) {
       if (showDebug) {
@@ -273,6 +306,7 @@ const loop = new GameLoop({
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
+          <div>Particles: ${particles.getActiveCount()} active</div>
           <div>Seed: "${chunkManager.seedRaw}"</div>
         `;
       } else {

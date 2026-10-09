@@ -932,18 +932,46 @@ export class WebGL2Renderer implements IRenderer {
     const offset = this.quadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX;
     const r = color.r, g = color.g, b = color.b, a = color.a;
 
-    const pts = [[x0, y0], [x1, y1], [x2, y2], [x2, y2]];
-    for (let i = 0; i < 4; i++) {
-      const idx = offset + i * 8;
-      this.vertexData[idx + 0] = pts[i][0];
-      this.vertexData[idx + 1] = pts[i][1];
-      this.vertexData[idx + 2] = 0;
-      this.vertexData[idx + 3] = 0;
-      this.vertexData[idx + 4] = r;
-      this.vertexData[idx + 5] = g;
-      this.vertexData[idx + 6] = b;
-      this.vertexData[idx + 7] = a;
-    }
+    // V0
+    this.vertexData[offset + 0] = x0;
+    this.vertexData[offset + 1] = y0;
+    this.vertexData[offset + 2] = 0;
+    this.vertexData[offset + 3] = 0;
+    this.vertexData[offset + 4] = r;
+    this.vertexData[offset + 5] = g;
+    this.vertexData[offset + 6] = b;
+    this.vertexData[offset + 7] = a;
+
+    // V1
+    this.vertexData[offset + 8] = x1;
+    this.vertexData[offset + 9] = y1;
+    this.vertexData[offset + 10] = 0;
+    this.vertexData[offset + 11] = 0;
+    this.vertexData[offset + 12] = r;
+    this.vertexData[offset + 13] = g;
+    this.vertexData[offset + 14] = b;
+    this.vertexData[offset + 15] = a;
+
+    // V2
+    this.vertexData[offset + 16] = x2;
+    this.vertexData[offset + 17] = y2;
+    this.vertexData[offset + 18] = 0;
+    this.vertexData[offset + 19] = 0;
+    this.vertexData[offset + 20] = r;
+    this.vertexData[offset + 21] = g;
+    this.vertexData[offset + 22] = b;
+    this.vertexData[offset + 23] = a;
+
+    // V3 (duplicate of V2 for quad batching)
+    this.vertexData[offset + 24] = x2;
+    this.vertexData[offset + 25] = y2;
+    this.vertexData[offset + 26] = 0;
+    this.vertexData[offset + 27] = 0;
+    this.vertexData[offset + 28] = r;
+    this.vertexData[offset + 29] = g;
+    this.vertexData[offset + 30] = b;
+    this.vertexData[offset + 31] = a;
+
     this.quadCount++;
   }
 
