@@ -17,6 +17,14 @@ import { Cat } from './entities/cat';
 import { WildCreatureManager } from './entities/wild-creature';
 import { DiegeticMap } from './ui/map';
 import { PhotoMode } from './ui/photo-mode';
+import { SaveManager } from './systems/save';
+
+// Add saveManager to window for global access/debug
+declare global {
+  interface Window {
+    saveManager: SaveManager;
+  }
+}
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -42,6 +50,9 @@ const cat = new Cat(player.pos.x + 24, player.pos.y + 12, 0);
 const wildCreatures = new WildCreatureManager();
 const diegeticMap = new DiegeticMap();
 const photoMode = new PhotoMode();
+const saveManager = new SaveManager();
+saveManager.loadFromLocalStorage();
+window.saveManager = saveManager;
 
 // Photo Mode Hooks
 const photoBtn = document.getElementById('photo-btn');
