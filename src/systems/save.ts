@@ -43,6 +43,8 @@ export interface SaveState {
   settings: GameSettings;
   landmarks: string[];
   garden: SavedGardenPlot[];
+  catches: string[];
+  stonesSkipped: number;
 }
 
 export class SaveManager {
@@ -73,6 +75,8 @@ export class SaveManager {
       clearedObstacles: [],
       landmarks: [],
       garden: [],
+      catches: [],
+      stonesSkipped: 0,
       settings: {
         speed2x: false,
         colourblindMode: false,

@@ -32,6 +32,7 @@ import { SettingsModal } from './ui/settings-modal';
 import { JournalUI } from './ui/journal';
 import { LandmarkManager } from './world/landmarks';
 import { GardenSystem } from './world/garden';
+import { ActivityManager } from './entities/activities';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -536,6 +537,11 @@ const interactIcon = document.getElementById('interact-icon');
 const interactLabel = document.getElementById('interact-label');
 let currentRestSpot: { x: number; y: number; label: string } | null = null;
 let currentSparTarget: any = null;
+let currentWaterSpot: Vec2 | null = null;
+const activityManager = new ActivityManager();
+if (saveManager.state.stonesSkipped) {
+  activityManager.stonesSkippedCount = saveManager.state.stonesSkipped;
+}
 
 if (interactPrompt) {
   interactPrompt.addEventListener('click', (e) => {
@@ -543,6 +549,30 @@ if (interactPrompt) {
     if (player.action === 'sit') {
       player.action = 'idle';
       camera.targetZoom = 1.0;
+    } else if (activityManager.isFishing) {
+      if (activityManager.fishingStatus === 'hooked') {
+        const res = activityManager.reelIn();
+        if (res.caught && res.item) {
+          player.action = 'idle';
+          saveManager.state.catches = saveManager.state.catches || [];
+          if (!saveManager.state.catches.includes(res.item.name)) {
+            saveManager.state.catches.push(res.item.name);
+          }
+          if (res.item.keepsakeId && !saveManager.state.keepsakes.includes(res.item.keepsakeId)) {
+            saveManager.state.keepsakes.push(res.item.keepsakeId);
+          }
+          saveManager.saveToLocalStorage();
+          for (let i = 0; i < 14; i++) {
+            particles.spawnRipple(activityManager.fishingBobberPos.x + (Math.random() - 0.5) * 16, activityManager.fishingBobberPos.y + (Math.random() - 0.5) * 16, 12);
+          }
+          showKeepsakeToast(`${res.item.icon} ${res.item.name}`, `${res.item.description} (${res.item.lengthInches}″)`, saveManager.state.catches.length);
+        } else {
+          player.action = 'idle';
+        }
+      } else {
+        activityManager.stopFishing();
+        player.action = 'idle';
+      }
     } else if (currentSparTarget && !sparring.isActive) {
       if (saveManager.state.settings?.peacefulMode) {
         // Peaceful Observe
@@ -594,6 +624,11 @@ if (interactPrompt) {
       for (let s = 0; s < 4; s++) {
         particles.spawnFootstepDust(player.pos.x, player.pos.y, s * (Math.PI / 2));
       }
+    } else if (currentWaterSpot) {
+      player.action = 'fish';
+      player.vel.x = 0;
+      player.vel.y = 0;
+      activityManager.startFishing(player.pos, player.facingAngle, currentWaterSpot);
     }
   });
 }
@@ -1599,14 +1634,81 @@ const loop = new GameLoop({
           showKeepsakeToast('💧 Watered Garden', `Tended to ${nearbyGardenPlot.plantName}. It drinks deeply and thrives!`, Math.round(nearbyGardenPlot.growth * 100));
         }
       }
-    } else {
-      if (interactPrompt) {
-        interactPrompt.style.display = 'none';
+    } else if (activityManager.isFishing) {
+      currentWaterSpot = null;
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        if (activityManager.fishingStatus === 'hooked') {
+          interactIcon.textContent = '🎣';
+          interactLabel.textContent = `Reel In Catch! [E / Space]`;
+        } else if (activityManager.fishingStatus === 'nibble') {
+          interactIcon.textContent = '🌊';
+          interactLabel.textContent = `Gentle nibble on line...`;
+        } else {
+          interactIcon.textContent = '🎣';
+          interactLabel.textContent = `Fishing peacefully... [E to pack up]`;
+        }
       }
-      if (camera.targetZoom !== 1.0) {
-        camera.targetZoom = 1.0;
+      if (inputState.interactPressed || (activityManager.fishingStatus === 'hooked' && inputState.actionPressed)) {
+        const res = activityManager.reelIn();
+        if (res.caught && res.item) {
+          player.action = 'idle';
+          saveManager.state.catches = saveManager.state.catches || [];
+          if (!saveManager.state.catches.includes(res.item.name)) {
+            saveManager.state.catches.push(res.item.name);
+          }
+          if (res.item.keepsakeId && !saveManager.state.keepsakes.includes(res.item.keepsakeId)) {
+            saveManager.state.keepsakes.push(res.item.keepsakeId);
+          }
+          saveManager.saveToLocalStorage();
+          for (let i = 0; i < 14; i++) {
+            particles.spawnRipple(activityManager.fishingBobberPos.x + (Math.random() - 0.5) * 16, activityManager.fishingBobberPos.y + (Math.random() - 0.5) * 16, 12);
+          }
+          showKeepsakeToast(`${res.item.icon} ${res.item.name}`, `${res.item.description} (${res.item.lengthInches}″)`, saveManager.state.catches.length);
+        } else {
+          player.action = 'idle';
+        }
+      }
+    } else {
+      const waterActivity = currentLayer === 0 ? activityManager.checkWaterNearby(player.pos, player.facingAngle, chunkManager, currentLayer) : null;
+      if (waterActivity && waterActivity.waterTarget) {
+        currentWaterSpot = waterActivity.waterTarget;
+        if (interactPrompt && interactLabel && interactIcon) {
+          interactPrompt.style.display = 'flex';
+          interactIcon.textContent = '🌊';
+          interactLabel.textContent = `Fish [E] • Skip Stone [Space]`;
+        }
+        if (inputState.interactPressed) {
+          player.action = 'fish';
+          player.vel.x = 0;
+          player.vel.y = 0;
+          activityManager.startFishing(player.pos, player.facingAngle, waterActivity.waterTarget);
+        } else if (inputState.actionPressed) {
+          activityManager.skipStone(player.pos, player.facingAngle, waterActivity.waterTarget);
+          saveManager.state.stonesSkipped = activityManager.stonesSkippedCount;
+          saveManager.saveToLocalStorage();
+        }
+      } else {
+        currentWaterSpot = null;
+        if (interactPrompt) {
+          interactPrompt.style.display = 'none';
+        }
+        if (camera.targetZoom !== 1.0) {
+          camera.targetZoom = 1.0;
+        }
       }
     }
+
+    // Update Activities (Stone skipping & Fishing)
+    activityManager.update(
+      dt,
+      (rx, ry, radius) => particles.spawnRipple(rx, ry, radius),
+      (sx, sy, count) => {
+        for (let c = 0; c < count; c++) {
+          particles.spawnFootstepDust(sx, sy, Math.random() * Math.PI * 2);
+        }
+      }
+    );
 
     // Update NPCs, Apex Myths & Easter Eggs
     npcManager.update(dt);
@@ -1903,6 +2005,11 @@ const loop = new GameLoop({
     for (const item of depthItems) {
       item.draw();
     }
+
+    // ==========================================
+    // LAYER 5b: Activities (Skipping Stones & Fishing Gear)
+    // ==========================================
+    activityManager.render(renderer, art, p, player.facingAngle);
 
     // ==========================================
     // LAYER 5a: Fluttering Meadow Butterflies

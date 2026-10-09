@@ -3,7 +3,7 @@ import { VerletRope } from './verlet';
 import { IRenderer } from '../render/types';
 import { ArtToolkit } from '../render/art';
 
-export type CharacterAction = 'idle' | 'walk' | 'run' | 'sit' | 'wade';
+export type CharacterAction = 'idle' | 'walk' | 'run' | 'sit' | 'wade' | 'fish';
 
 export interface CharacterCustomization {
   colorwayIndex: number; // 0 to 7
@@ -74,12 +74,12 @@ export class Character {
     const hasInput = Math.hypot(inputMove.x, inputMove.y) > 0.05;
     const targetSpeed = (isRunningInput ? this.runSpeed : this.walkSpeed) * this.speedMultiplier;
 
-    if (this.action === 'sit') {
+    if (this.action === 'sit' || this.action === 'fish') {
       if (hasInput) {
-        // Player pushed movement controls: stand up!
+        // Player pushed movement controls: stand up or stop fishing!
         this.action = 'idle';
       } else {
-        // Remain seated peacefully
+        // Remain seated or fishing peacefully
         this.vel.x = 0;
         this.vel.y = 0;
         this.turnLean = lerp(this.turnLean, 0, 1 - Math.exp(-8 * dt));
@@ -194,12 +194,15 @@ export class Character {
 
     // 3. Animation Swings
     const isSitting = this.action === 'sit';
-    const swing = (this.action === 'idle' || isSitting) ? 0 : Math.sin(this.walkCycle);
+    const isFishing = this.action === 'fish';
+    const swing = (this.action === 'idle' || isSitting || isFishing) ? 0 : Math.sin(this.walkCycle);
     const bob = isSitting
       ? Math.sin(this.walkCycle) * 0.4 * s - 2.0 * s
-      : (this.action === 'idle'
-        ? Math.sin(this.walkCycle) * 0.6 * s
-        : Math.abs(Math.sin(this.walkCycle)) * -1.8 * s);
+      : (isFishing
+        ? Math.sin(this.walkCycle) * 0.3 * s - 0.5 * s
+        : (this.action === 'idle'
+          ? Math.sin(this.walkCycle) * 0.6 * s
+          : Math.abs(Math.sin(this.walkCycle)) * -1.8 * s));
 
     let ang = this.facingAngle;
     while (ang > Math.PI) ang -= Math.PI * 2;
@@ -252,6 +255,12 @@ export class Character {
 
       renderer.drawRect(p.x + 3.3 * s, torsoY + 2.0 * s, 2.2 * s, 4.5 * s, coatColor);
       renderer.drawRect(p.x + 2.3 * s, torsoY + 6.0 * s, 2.2 * s, 2.0 * s, skinColor);
+    } else if (isFishing) {
+      // Arms angled forward holding fishing rod
+      renderer.drawRect(p.x - 5.5 * s, torsoY + 2.5 * s, 2.5 * s, 4.0 * s, coatColor);
+      renderer.drawRect(p.x + 3.0 * s, torsoY + 2.5 * s, 2.5 * s, 4.0 * s, coatColor);
+      renderer.drawRect(p.x - 3.5 * s, torsoY + 5.5 * s, 2.0 * s, 2.0 * s, skinColor);
+      renderer.drawRect(p.x + 1.5 * s, torsoY + 5.5 * s, 2.0 * s, 2.0 * s, skinColor);
     } else {
       const armSwingL = -swing * 3 * s;
       const armSwingR = swing * 3 * s;

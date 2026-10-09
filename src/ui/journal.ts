@@ -488,6 +488,14 @@ export class JournalUI {
                     <div style="font-size: 11px; color: #7F8C8D;">Hidden Landmarks</div>
                     <div style="font-size: 18px; font-weight: 700; color: #E67E22;">${(this.saveManager.state.landmarks || []).length} / 20</div>
                   </div>
+                  <div style="background: #F9F5EC; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: #7F8C8D;">River Catches</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #1F618D;">${(this.saveManager.state.catches || []).length} / 8</div>
+                  </div>
+                  <div style="background: #F9F5EC; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: #7F8C8D;">Stones Skipped</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #7D6608;">${this.saveManager.state.stonesSkipped || 0}</div>
+                  </div>
                 </div>
               </div>
 

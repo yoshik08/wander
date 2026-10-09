@@ -786,5 +786,51 @@ export class ArtToolkit {
     // Core spark
     this.renderer.drawCircle(x, y, 1.8, hexToRgba('#FFFF66', glow * 0.95));
   }
+
+  /**
+   * Draws a flat river stone skipping across the water with parabolic height and shadow.
+   */
+  drawSkippedStone(x: number, y: number, arcHeight: number, scale: number = 1.0): void {
+    // Water surface shadow
+    this.drawDropShadow(x, y, 6 * scale, 3 * scale);
+
+    // Stone body
+    const stoneY = y - arcHeight;
+    this.renderer.drawCircle(x, stoneY, 3.2 * scale, hexToRgba('#7F8C8D'));
+    this.renderer.drawCircle(x, stoneY + 0.8 * scale, 2.5 * scale, hexToRgba('#566573'));
+    // Sun glint on smooth surface
+    this.renderer.drawCircle(x - 0.8 * scale, stoneY - 0.8 * scale, 1.4 * scale, hexToRgba('#EAEDED', 0.9));
+  }
+
+  /**
+   * Draws a classic red & white bobber floating on water with ripples.
+   */
+  drawFishingFloat(x: number, y: number, bobOffset: number = 0, isHooked: boolean = false): void {
+    this.drawRipple(x, y, isHooked ? 8 : 4.5, isHooked ? 0.65 : 0.35);
+
+    const fy = y + bobOffset;
+    // Wooden antenna peg
+    this.renderer.drawLine(x, fy - 5, x, fy + 3, 1.2, hexToRgba('#D4AC0D'));
+    // Top hemisphere (crimson)
+    this.renderer.drawCircle(x, fy - 1, 3.2, hexToRgba('#E74C3C'));
+    // Bottom hemisphere (ivory white)
+    this.renderer.drawCircle(x, fy + 1.2, 2.8, hexToRgba('#FDFEFE'));
+  }
+
+  /**
+   * Draws a flexible bamboo fishing rod and gentle curved line down to the float.
+   */
+  drawFishingRod(baseX: number, baseY: number, tipX: number, tipY: number, lineTargetX: number, lineTargetY: number): void {
+    // Bamboo pole
+    this.renderer.drawLine(baseX, baseY, tipX, tipY, 2.0, hexToRgba('#7D5A2F'));
+    // Cork grip
+    const gripEndX = baseX + (tipX - baseX) * 0.25;
+    const gripEndY = baseY + (tipY - baseY) * 0.25;
+    this.renderer.drawLine(baseX, baseY, gripEndX, gripEndY, 3.0, hexToRgba('#C39B64'));
+    // Brass reel accent
+    this.renderer.drawCircle(baseX + (tipX - baseX) * 0.15, baseY + (tipY - baseY) * 0.15, 2.0, hexToRgba('#F1C40F'));
+    // Monofilament line
+    this.renderer.drawLine(tipX, tipY, lineTargetX, lineTargetY, 1.0, hexToRgba('#ECF0F1', 0.75));
+  }
 }
 
