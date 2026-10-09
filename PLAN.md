@@ -163,7 +163,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone C1: State and Procedural Creatures
-- [ ] Save state: Folio (seen/befriended), Party (6), Sanctuary list, items, badges
+- [x] Save state: Folio (seen/befriended), Party (6), Sanctuary list, items, badges
 - [x] Procedural creatures: species 1-150 from hash(seed+id). Archetypes, appendages, type-locked hue ranges, noise patterns
 - [x] Drawn with the art toolkit, idle bob/blink animation. Syllable grammar names
 - [x] Evolution = same seed, complexity 1.0->2.0 (bigger, more appendages, richer colour)
@@ -184,32 +184,32 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone C3: Party and Sanctuary
-- [ ] Party leader follows you on a trailing path with smooth steering. Pet/feed by click or tap
-- [ ] Sanctuary at world 0,0 (with the Ancient Tree landmark) where all extra creatures roam; UI to swap them in and out
-- [ ] Nicknames
+- [x] Party leader follows you on a trailing path with smooth steering. Pet/feed by click or tap
+- [x] Sanctuary at world 0,0 (with the Ancient Tree landmark) where all extra creatures roam; UI to swap them in and out
+- [x] Nicknames
 
 ---
 
 ## Milestone C4: World POIs
-- [ ] Resting Crystals that heal the party, placed deterministically and sparsely. Walking slowly also regenerates Resolve
-- [ ] Nomad Camps at biome edges: tents, a crystal, a trader, a move tutor, NPC dialogue
-- [ ] Waystones every ~500 tiles; discover them to fast travel from the map. Map custom pins
+- [x] Resting Crystals that heal the party, placed deterministically and sparsely. Walking slowly also regenerates Resolve
+- [x] Nomad Camps at biome edges: tents, a crystal, a trader, a move tutor, NPC dialogue
+- [x] Waystones every ~500 tiles; discover them to fast travel from the map. Map custom pins
 
 ---
 
 ## Milestone C5: Traversal Abilities
-- [ ] Aqua: glide over water (oceans open up)
-- [ ] Flora: clear brambles
-- [ ] Terra: push boulders
-- [ ] Aero: hop 1-tile gaps
-- [ ] Ignis: light up dark caves
+- [x] Aqua: glide over water (oceans open up)
+- [x] Flora: clear brambles
+- [x] Terra: push boulders
+- [x] Aero: hop 1-tile gaps
+- [x] Ignis: light up dark caves
 
 ---
 
 ## Milestone C6: Caves and Wardens
-- [ ] Cave entrances lead to a separate darker underground noise map, with a light radius, rare spawns, and a strong "Alpha" creature at the end
-- [ ] 8 Wardens beside elemental monuments far from spawn; beating one grants a badge
-- [ ] A rival, The Wanderer, who appears now and then at your top level +1
+- [x] Cave entrances lead to a separate darker underground noise map, with a light radius, rare spawns, and a strong "Alpha" creature at the end
+- [x] 8 Wardens beside elemental monuments far from spawn; beating one grants a badge
+- [x] A rival, The Wanderer, who appears now and then at your top level +1
 
 ---
 

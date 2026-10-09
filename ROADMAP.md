@@ -97,7 +97,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Done When**: Game state can be exported as JSON and re-imported successfully.
 
 ### Step C1.2: Procedural Creature Generation
-- **Action**: Create a `CreatureSystem`. Generate 150 species using `hash(seed+id)`. Determine archetype (quadruped, biped, serpent, avian, blob), appendages, type-locked hue ranges, and noise patterns (fur/scales/bark). Generate names via a syllable grammar.
+- [x] **Action**: Create a `CreatureSystem`. Generate 150 species using `hash(seed+id)`. Determine archetype (quadruped, biped, serpent, avian, blob), appendages, type-locked hue ranges, and noise patterns (fur/scales/bark). Generate names via a syllable grammar.
 - **Files**: `src/entities/creature.ts` (new), `src/render/art.ts`
 - **Risk**: *High*. Procedural drawing of diverse archetypes requires careful skeletal assembly in `art.ts` to avoid looking messy.
 - **Done When**: Console logs valid procedural creature data; 150 distinct species are generated deterministically.
@@ -141,8 +141,8 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ---
 
 ## Milestone C6: Caves and Wardens
-- **Step C6.1**: Underground noise map for caves with light radius mechanics.
-- **Step C6.2**: 8 Wardens and Rival Wanderer encounters.
+- [x] **Step C6.1**: Underground noise map for caves with light radius mechanics.
+- [x] **Step C6.2**: 8 Wardens and Rival Wanderer encounters.
 
 ---
 

@@ -117,3 +117,10 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Peaceful Resolve Mechanics**: HP is replaced by "Resolve", ensuring no violence. When a wild creature's resolve reaches 0, it yields, offering a peaceful resolution or a chance to befriend.
 - **Originality Constraint Maintained**: Pokemon-esque terms were scrubbed (e.g. Tackle -> Dash, Water Gun -> Aqua Burst).
 - **Screenshot Note**: Browser screenshot tool failed due to Playwright driver issues (`404 Not Found`). Continuing to next task automatically as per rules.
+
+## Step C6.2 (Wardens, Elemental Monuments & Rival Encounter) Critique
+- **The 8 Elemental Wardens**: Placed at cardinal and ordinal coordinates far from spawn (>3000px away). Each warden guards an ancient stepped stone monument with an illuminated elemental rune pulsing with soft light.
+- **Badge Accolades & Save Integration**: Defeating a Warden awards their unique elemental badge (Verdant, Tide, Ember, Crag, Gale, Bloom, Frost, Astral) saved permanently into `SaveState.badges`. Defeated wardens enter a peaceful conversing state with contemplative dialogue.
+- **Dynamic Rival Scaling**: The wandering rival "Rival Kael" scales dynamically to the highest level in the player's party + 1, ensuring a constantly engaging sparring challenge.
+- **Seamless In-World Interaction**: Challenges initiate directly in-world with camera zooming smoothly to 2.0x and zooming back to 1.0x upon match conclusion.
+

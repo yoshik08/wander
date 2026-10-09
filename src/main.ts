@@ -19,6 +19,7 @@ import { WildCreatureManager } from './entities/wild-creature';
 import { DiegeticMap } from './ui/map';
 import { PhotoMode } from './ui/photo-mode';
 import { SaveManager } from './systems/save';
+import { NPCManager, Warden, RivalWanderer } from './entities/npc';
 import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
@@ -60,8 +61,96 @@ const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
 saveManager.state.clearedObstacles.forEach(o => chunkManager.clearedObstacles.add(o));
+const npcManager = new NPCManager(chunkManager.seedRaw);
+npcManager.syncDefeatedBadges(saveManager.state.badges);
 const sparring = new SparringSystem();
+sparring.onYield = (opponent) => {
+  if (opponent.badgeReward) {
+    if (!saveManager.state.badges.includes(opponent.badgeReward)) {
+      saveManager.state.badges.push(opponent.badgeReward);
+      saveManager.saveToLocalStorage();
+      npcManager.syncDefeatedBadges(saveManager.state.badges);
+      if (toastBanner && toastTitle && toastDesc && toastCount) {
+        toastTitle.textContent = `🏆 Badge Claimed: ${opponent.badgeReward}`;
+        toastDesc.textContent = `You triumphed in a spar with ${opponent.trainerName || 'the Warden'}!`;
+        toastCount.textContent = `Badges: ${saveManager.state.badges.length}/8`;
+        toastBanner.style.display = 'block';
+        requestAnimationFrame(() => {
+          if (toastBanner) {
+            toastBanner.style.opacity = '1';
+            toastBanner.style.transform = 'translate(-50%, 0)';
+          }
+        });
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => {
+          if (toastBanner) {
+            toastBanner.style.opacity = '0';
+            toastBanner.style.transform = 'translate(-50%, 10px)';
+            setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+          }
+        }, 5000);
+      }
+    }
+  } else if (opponent.id === 'rival_kael') {
+    npcManager.rival.defeated = true;
+    if (toastBanner && toastTitle && toastDesc && toastCount) {
+      toastTitle.textContent = `✨ Rival Kael yielded!`;
+      toastDesc.textContent = `"Incredible harmony! You and your companions are one with this world."`;
+      toastCount.textContent = `Rival Encounter Complete`;
+      toastBanner.style.display = 'block';
+      requestAnimationFrame(() => {
+        if (toastBanner) {
+          toastBanner.style.opacity = '1';
+          toastBanner.style.transform = 'translate(-50%, 0)';
+        }
+      });
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        if (toastBanner) {
+          toastBanner.style.opacity = '0';
+          toastBanner.style.transform = 'translate(-50%, 10px)';
+          setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+        }
+      }, 5000);
+    }
+  }
+};
 const sparringHud = new SparringHUD(sparring);
+
+function getPlayerMaxLevel(): number {
+  if (saveManager.state.party.length > 0) {
+    return Math.max(...saveManager.state.party.map(p => p.level));
+  }
+  return 5;
+}
+
+function getPlayerCombatant(): Combatant {
+  if (saveManager.state.party.length > 0) {
+    const lead = saveManager.state.party[0];
+    const genome = generateCreatureGenome(chunkManager.seedRaw, lead.speciesId, 1.0);
+    const maxResolve = lead.maxResolve ?? (30 + Math.floor(lead.level * 3.5 + genome.stats.vigor * 2));
+    return {
+      id: lead.id,
+      genome: {
+        ...genome,
+        name: lead.nickname || genome.name
+      },
+      level: lead.level,
+      currentResolve: lead.currentResolve || maxResolve,
+      maxResolve,
+      status: 'None',
+      statusTurns: 0
+    };
+  }
+  return {
+    genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 25, strike: 15, guard: 12, haste: 12 }, archetype: 'Biped', moves: ['Dash', 'Bramble Lash', 'Aqua Burst', 'Cinder Spark'] } as any,
+    level: 5,
+    currentResolve: 25,
+    maxResolve: 25,
+    status: 'None',
+    statusTurns: 0
+  };
+}
 let partyLeader: PartyLeader | null = null;
 if (saveManager.state.party.length > 0) {
   partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
@@ -186,17 +275,7 @@ if (interactPrompt) {
     } else if (currentSparTarget && !sparring.isActive) {
       // Start Sparring!
       camera.targetZoom = 2.0; // Ease closer
-      
-      // We need Combatant objects. Player uses a mock one for now.
-      const playerC: Combatant = {
-        genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped' } as any,
-        level: 5,
-        currentResolve: 20,
-        maxResolve: 20,
-        status: 'None',
-        statusTurns: 0
-      };
-      
+      const playerC = getPlayerCombatant();
       const wildC: Combatant = {
         genome: currentSparTarget.genome,
         level: 3,
@@ -579,9 +658,24 @@ const loop = new GameLoop({
       }
     }
 
+    // Warden & Rival Proximity Check
+    let targetWarden: Warden | null = null;
+    let targetRival: RivalWanderer | null = null;
+    if (currentLayer === 0 && !sparring.isActive) {
+      for (const w of npcManager.wardens) {
+        if (Math.hypot(player.pos.x - w.x, player.pos.y - w.y) < 48) {
+          targetWarden = w;
+          break;
+        }
+      }
+      if (!targetWarden && Math.hypot(player.pos.x - npcManager.rival.x, player.pos.y - npcManager.rival.y) < 48) {
+        targetRival = npcManager.rival;
+      }
+    }
+
     // Sparring Proximity Check
     currentSparTarget = null;
-    if (!sparring.isActive) {
+    if (!sparring.isActive && !targetWarden && !targetRival) {
       let closestSparDist = 48;
       for (const c of wildCreatures.getActiveCreatures()) {
         const d = Math.hypot(player.pos.x - c.pos.x, player.pos.y - c.pos.y);
@@ -602,10 +696,8 @@ const loop = new GameLoop({
     if (sparring.isActive) {
       camera.targetZoom = 2.0;
       if (interactPrompt) interactPrompt.style.display = 'none';
-      // If spar ended or yielded?
-      if (!sparring.isActive) {
-         camera.targetZoom = 1.0;
-      }
+    } else if (camera.targetZoom === 2.0) {
+      camera.targetZoom = 1.0;
     } else if (canInteractWaystone) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
@@ -757,6 +849,108 @@ const loop = new GameLoop({
         player.action = 'idle';
         camera.targetZoom = 1.0;
       }
+    } else if (targetWarden) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        if (!targetWarden.defeated) {
+          interactIcon.textContent = '⚔️';
+          interactLabel.textContent = `Challenge ${targetWarden.name} [E]`;
+        } else {
+          interactIcon.textContent = '💬';
+          interactLabel.textContent = `Speak with ${targetWarden.name} [E]`;
+        }
+      }
+      if (inputState.interactPressed) {
+        if (!targetWarden.defeated) {
+          camera.targetZoom = 2.0;
+          const playerC = getPlayerCombatant();
+          const wardenC: Combatant = {
+            id: targetWarden.id,
+            trainerName: targetWarden.name,
+            badgeReward: targetWarden.badgeName,
+            genome: targetWarden.creature.genome,
+            level: targetWarden.creature.level,
+            currentResolve: targetWarden.creature.currentResolve,
+            maxResolve: targetWarden.creature.maxResolve,
+            status: 'None',
+            statusTurns: 0
+          };
+          sparring.startSpar(playerC, wardenC);
+          sparringHud.update();
+        } else {
+          if (toastBanner && toastTitle && toastDesc && toastCount) {
+            toastTitle.textContent = `${targetWarden.name} (${targetWarden.title})`;
+            toastDesc.textContent = `"${targetWarden.dialogue.defeat}"`;
+            toastCount.textContent = `Badge: ${targetWarden.badgeName} (Owned)`;
+            toastBanner.style.display = 'block';
+            requestAnimationFrame(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '1';
+                toastBanner.style.transform = 'translate(-50%, 0)';
+              }
+            });
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '0';
+                toastBanner.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+              }
+            }, 4500);
+          }
+        }
+      }
+    } else if (targetRival) {
+      const rivalCreature = npcManager.getRivalCreature(getPlayerMaxLevel(), chunkManager.seedRaw);
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        if (!targetRival.defeated) {
+          interactIcon.textContent = '⚔️';
+          interactLabel.textContent = `Spar with Rival Kael (Lv.${rivalCreature.level}) [E]`;
+        } else {
+          interactIcon.textContent = '💬';
+          interactLabel.textContent = `Speak with Rival Kael [E]`;
+        }
+      }
+      if (inputState.interactPressed) {
+        if (!targetRival.defeated) {
+          camera.targetZoom = 2.0;
+          const playerC = getPlayerCombatant();
+          const rivalC: Combatant = {
+            id: targetRival.id,
+            trainerName: targetRival.name,
+            genome: rivalCreature.genome,
+            level: rivalCreature.level,
+            currentResolve: rivalCreature.currentResolve,
+            maxResolve: rivalCreature.maxResolve,
+            status: 'None',
+            statusTurns: 0
+          };
+          sparring.startSpar(playerC, rivalC);
+          sparringHud.update();
+        } else {
+          if (toastBanner && toastTitle && toastDesc && toastCount) {
+            toastTitle.textContent = `${targetRival.name} (${targetRival.title})`;
+            toastDesc.textContent = `"${targetRival.dialogue.defeat}"`;
+            toastCount.textContent = `Friendly Rival`;
+            toastBanner.style.display = 'block';
+            requestAnimationFrame(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '1';
+                toastBanner.style.transform = 'translate(-50%, 0)';
+              }
+            });
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '0';
+                toastBanner.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+              }
+            }, 4500);
+          }
+        }
+      }
     } else if (currentSparTarget) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
@@ -765,14 +959,7 @@ const loop = new GameLoop({
       }
       if (inputState.interactPressed) {
         camera.targetZoom = 2.0;
-        const playerC: Combatant = {
-          genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped', moves: ['Dash', 'Bramble Lash', 'Aqua Burst', 'Cinder Spark'] } as any,
-          level: 5,
-          currentResolve: 20,
-          maxResolve: 20,
-          status: 'None',
-          statusTurns: 0
-        };
+        const playerC = getPlayerCombatant();
         const wildC: Combatant = {
           id: currentSparTarget.id,
           genome: currentSparTarget.genome,
@@ -819,6 +1006,9 @@ const loop = new GameLoop({
         camera.targetZoom = 1.0;
       }
     }
+
+    // Update NPCs
+    npcManager.update(dt);
 
     // Advance 24-minute Day/Night Cycle
     timeSystem.update(dt);
@@ -1046,6 +1236,17 @@ const loop = new GameLoop({
       depthItems.push({
         baseY: crPos.y,
         draw: () => creature.render(renderer, art, alpha, time, p)
+      });
+    }
+
+    // Elemental Monuments
+    npcManager.renderMonuments(renderer, art, currentLayer, camPos);
+
+    // NPCs (Wardens & Rival) in Depth sorting
+    for (const npc of npcManager.getRenderableEntities(currentLayer, camPos)) {
+      depthItems.push({
+        baseY: npc.y,
+        draw: () => npc.draw(renderer)
       });
     }
 

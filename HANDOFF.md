@@ -27,10 +27,12 @@
   - Milestone C4 (Step C4.1): Resting Crystals and Nomad Camps generation.
   - Milestone C4 (Step C4.2): Waystones and Fast Travel system.
   - Milestone C5 (Step C5.1): Traversal Abilities.
-- **In progress**:
   - Milestone C6 (Step C6.1): Underground noise map for caves with light radius mechanics.
+  - Milestone C6 (Step C6.2): 8 Wardens beside elemental monuments and Rival Wanderer encounters with badges and scaling resolve spar.
+- **Completed in this step**:
+  - Milestone C6 (Step C6.2): 8 Wardens and Rival Wanderer encounters.
 - **Next Item in ROADMAP.md**:
-  - Milestone C6 (Step C6.1): Underground noise map for caves with light radius mechanics.
+  - Milestone C7 (Step C7.1): 4 Apex creatures and time-based roaming myths.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

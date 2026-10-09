@@ -127,23 +127,34 @@ export class SparringHUD {
     
     if (this.sys.turn !== 'player' || !this.sys.playerCreature || this.sys.wildCreature?.currentResolve === 0) {
       if (this.sys.wildCreature?.currentResolve === 0) {
-        const btn = document.createElement('button');
-        btn.textContent = 'Offer Resonance Lure';
-        btn.style.cssText = this.btnStyle('#A2D9CE');
-        btn.onclick = () => {
-          this.sys.befriend();
-          this.update();
-        };
-        this.movesBox.appendChild(btn);
+        if (this.sys.wildCreature.trainerName) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Acknowledge Victory';
+          btn.style.cssText = this.btnStyle('#F4D06F');
+          btn.onclick = () => {
+            this.sys.endSpar();
+            this.update();
+          };
+          this.movesBox.appendChild(btn);
+        } else {
+          const btn = document.createElement('button');
+          btn.textContent = 'Offer Resonance Lure';
+          btn.style.cssText = this.btnStyle('#A2D9CE');
+          btn.onclick = () => {
+            this.sys.befriend();
+            this.update();
+          };
+          this.movesBox.appendChild(btn);
 
-        const leave = document.createElement('button');
-        leave.textContent = 'Leave';
-        leave.style.cssText = this.btnStyle('#999');
-        leave.onclick = () => {
-          this.sys.endSpar();
-          this.update();
-        };
-        this.movesBox.appendChild(leave);
+          const leave = document.createElement('button');
+          leave.textContent = 'Leave';
+          leave.style.cssText = this.btnStyle('#999');
+          leave.onclick = () => {
+            this.sys.endSpar();
+            this.update();
+          };
+          this.movesBox.appendChild(leave);
+        }
       }
       return;
     }

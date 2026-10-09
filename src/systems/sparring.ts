@@ -10,6 +10,8 @@ export interface Combatant {
   maxResolve: number;
   status: CombatStatus;
   statusTurns: number;
+  trainerName?: string;
+  badgeReward?: string;
 }
 
 export type MoveType = 'Physical' | 'Elemental' | 'Status';
@@ -41,18 +43,24 @@ export class SparringSystem {
   
   turn: 'player' | 'wild' = 'player';
   log: string[] = [];
+  onYield?: (opponent: Combatant) => void;
 
   startSpar(playerC: Combatant, wildC: Combatant) {
     this.isActive = true;
     this.playerCreature = playerC;
     this.wildCreature = wildC;
     this.turn = 'player';
-    this.log = [`A wild ${wildC.genome.name} appeared!`, `Go, ${playerC.genome.name}! `];
+    if (wildC.trainerName) {
+      this.log = [`${wildC.trainerName} challenges you to a friendly spar!`, `Go, ${playerC.genome.name}! `];
+    } else {
+      this.log = [`A wild ${wildC.genome.name} appeared!`, `Go, ${playerC.genome.name}! `];
+    }
 
     // Auto-win check
     if (playerC.level >= wildC.level + 10) {
       this.wildCreature.currentResolve = 0;
-      this.log.push(`The wild ${wildC.genome.name} yielded immediately to your overwhelming strength.`);
+      this.log.push(`${wildC.genome.name} yielded immediately to your overwhelming strength.`);
+      if (this.onYield) this.onYield(this.wildCreature);
     }
   }
 
@@ -138,6 +146,7 @@ export class SparringSystem {
       
       if (defender.currentResolve === 0) {
         this.log.push(`${defender.genome.name} yielded!`);
+        if (this.onYield) this.onYield(defender);
       }
     }
   }
