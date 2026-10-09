@@ -147,7 +147,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ---
 
 ## Milestone C7: Rare Things and Atmosphere
-- **Step C7.1**: 4 Apex creatures and time-based roaming myths.
+- [x] **Step C7.1**: 4 Apex creatures and time-based roaming myths.
 - **Step C7.2**: Shooting stars, auroras, and weather-locked spawns.
 
 ---

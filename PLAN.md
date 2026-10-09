@@ -214,8 +214,8 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone C7: Rare Things and Atmosphere
-- [ ] 4 Apex creatures at the far cardinal edges, each behind a small puzzle
-- [ ] One roaming myth whose position changes with real time
+- [x] 4 Apex creatures at the far cardinal edges, each behind a small puzzle
+- [x] One roaming myth whose position changes with real time
 - [ ] Creatures that only appear in rain, snow or night
 - [ ] Shooting stars at night; aurora in snow biomes
 

@@ -124,3 +124,9 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Dynamic Rival Scaling**: The wandering rival "Rival Kael" scales dynamically to the highest level in the player's party + 1, ensuring a constantly engaging sparring challenge.
 - **Seamless In-World Interaction**: Challenges initiate directly in-world with camera zooming smoothly to 2.0x and zooming back to 1.0x upon match conclusion.
 
+## Step C7.1 (Cardinal Apex Shrines & Real-Time Roaming Myth) Critique
+- **The 4 Cardinal Apex Guardians**: Ancient sanctuaries at the far ends of the map (North Zephyros, South Terranox, East Ignisaur, West Hydravos) sealed beneath harmonic barriers with twin resonance pedestals.
+- **Diegetic Environmental Puzzles**: Interacting with both shrine plinths shatters the barrier dome with a burst of stardust light, awakening the massive Apex entity (scale 2.2x, level 45, majestic radiant auras).
+- **The Real-Time Celestial Myth Lunaris**: Lunaris the Star-Walker traces an ethereal orbital path across the meadow synchronized to real-world local time (`new Date()`), radiating shifting prismatic colors and trailing celestial dust.
+
+

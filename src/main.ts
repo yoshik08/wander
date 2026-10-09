@@ -20,6 +20,7 @@ import { DiegeticMap } from './ui/map';
 import { PhotoMode } from './ui/photo-mode';
 import { SaveManager } from './systems/save';
 import { NPCManager, Warden, RivalWanderer } from './entities/npc';
+import { ApexMythManager, ApexCreature, RoamingMyth } from './entities/apex-myths';
 import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
@@ -63,6 +64,8 @@ window.saveManager = saveManager;
 saveManager.state.clearedObstacles.forEach(o => chunkManager.clearedObstacles.add(o));
 const npcManager = new NPCManager(chunkManager.seedRaw);
 npcManager.syncDefeatedBadges(saveManager.state.badges);
+const apexMythManager = new ApexMythManager(chunkManager.seedRaw);
+apexMythManager.syncSavedPuzzles(saveManager.state.clearedObstacles);
 const sparring = new SparringSystem();
 sparring.onYield = (opponent) => {
   if (opponent.badgeReward) {
@@ -658,10 +661,41 @@ const loop = new GameLoop({
       }
     }
 
+    // Apex & Myth Proximity Check
+    let canActivatePedestal: { apex: ApexCreature; pedIndex: number; label: string } | null = null;
+    let targetApex: ApexCreature | null = null;
+    let targetMyth: RoamingMyth | null = null;
+    if (currentLayer === 0 && !sparring.isActive) {
+      for (const apex of apexMythManager.apexCreatures) {
+        if (!apex.puzzleSolved) {
+          for (let pi = 0; pi < apex.puzzlePedestals.length; pi++) {
+            const ped = apex.puzzlePedestals[pi];
+            if (!ped.activated && Math.hypot(player.pos.x - ped.x, player.pos.y - ped.y) < 36) {
+              canActivatePedestal = { apex, pedIndex: pi, label: ped.label };
+              break;
+            }
+          }
+          if (canActivatePedestal) break;
+        } else {
+          if (Math.hypot(player.pos.x - apex.x, player.pos.y - apex.y) < 54) {
+            targetApex = apex;
+            break;
+          }
+        }
+      }
+
+      if (!targetApex && !canActivatePedestal) {
+        const m = apexMythManager.roamingMyth;
+        if (Math.hypot(player.pos.x - m.pos.x, player.pos.y - m.pos.y) < 54) {
+          targetMyth = m;
+        }
+      }
+    }
+
     // Warden & Rival Proximity Check
     let targetWarden: Warden | null = null;
     let targetRival: RivalWanderer | null = null;
-    if (currentLayer === 0 && !sparring.isActive) {
+    if (currentLayer === 0 && !sparring.isActive && !targetApex && !canActivatePedestal && !targetMyth) {
       for (const w of npcManager.wardens) {
         if (Math.hypot(player.pos.x - w.x, player.pos.y - w.y) < 48) {
           targetWarden = w;
@@ -675,7 +709,7 @@ const loop = new GameLoop({
 
     // Sparring Proximity Check
     currentSparTarget = null;
-    if (!sparring.isActive && !targetWarden && !targetRival) {
+    if (!sparring.isActive && !targetWarden && !targetRival && !targetApex && !targetMyth && !canActivatePedestal) {
       let closestSparDist = 48;
       for (const c of wildCreatures.getActiveCreatures()) {
         const d = Math.hypot(player.pos.x - c.pos.x, player.pos.y - c.pos.y);
@@ -849,6 +883,87 @@ const loop = new GameLoop({
         player.action = 'idle';
         camera.targetZoom = 1.0;
       }
+    } else if (canActivatePedestal) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '✧';
+        interactLabel.textContent = `Resonate with ${canActivatePedestal.label} [E]`;
+      }
+      if (inputState.interactPressed) {
+        canActivatePedestal.apex.puzzlePedestals[canActivatePedestal.pedIndex].activated = true;
+        const allActivated = canActivatePedestal.apex.puzzlePedestals.every(p => p.activated);
+        if (allActivated) {
+          canActivatePedestal.apex.puzzleSolved = true;
+          if (!saveManager.state.clearedObstacles.includes(canActivatePedestal.apex.puzzleId)) {
+            saveManager.state.clearedObstacles.push(canActivatePedestal.apex.puzzleId);
+            saveManager.saveToLocalStorage();
+          }
+          if (toastBanner && toastTitle && toastDesc && toastCount) {
+            toastTitle.textContent = `✨ Shrine Seal Shattered!`;
+            toastDesc.textContent = `${canActivatePedestal.apex.name} (${canActivatePedestal.apex.title}) awakens!`;
+            toastCount.textContent = `Apex Shrines Awakened`;
+            toastBanner.style.display = 'block';
+            requestAnimationFrame(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '1';
+                toastBanner.style.transform = 'translate(-50%, 0)';
+              }
+            });
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '0';
+                toastBanner.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+              }
+            }, 5000);
+          }
+        }
+      }
+    } else if (targetApex) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '👑';
+        interactLabel.textContent = `Spar with ${targetApex.name} (Lv.${targetApex.level}) [E]`;
+      }
+      if (inputState.interactPressed) {
+        camera.targetZoom = 2.0;
+        const playerC = getPlayerCombatant();
+        const apexC: Combatant = {
+          id: targetApex.id,
+          trainerName: targetApex.name,
+          genome: targetApex.genome,
+          level: targetApex.level,
+          currentResolve: targetApex.currentResolve,
+          maxResolve: targetApex.maxResolve,
+          status: 'None',
+          statusTurns: 0
+        };
+        sparring.startSpar(playerC, apexC);
+        sparringHud.update();
+      }
+    } else if (targetMyth) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🌟';
+        interactLabel.textContent = `Commune with ${targetMyth.name} (Lv.${targetMyth.level}) [E]`;
+      }
+      if (inputState.interactPressed) {
+        camera.targetZoom = 2.0;
+        const playerC = getPlayerCombatant();
+        const mythC: Combatant = {
+          id: targetMyth.id,
+          trainerName: targetMyth.name,
+          genome: targetMyth.genome,
+          level: targetMyth.level,
+          currentResolve: targetMyth.currentResolve,
+          maxResolve: targetMyth.maxResolve,
+          status: 'None',
+          statusTurns: 0
+        };
+        sparring.startSpar(playerC, mythC);
+        sparringHud.update();
+      }
     } else if (targetWarden) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
@@ -1007,8 +1122,9 @@ const loop = new GameLoop({
       }
     }
 
-    // Update NPCs
+    // Update NPCs & Apex Myths
     npcManager.update(dt);
+    apexMythManager.update(dt);
 
     // Advance 24-minute Day/Night Cycle
     timeSystem.update(dt);
@@ -1239,14 +1355,23 @@ const loop = new GameLoop({
       });
     }
 
-    // Elemental Monuments
+    // Elemental Monuments & Apex Shrines
     npcManager.renderMonuments(renderer, art, currentLayer, camPos);
+    apexMythManager.renderShrines(renderer, art, currentLayer, camPos);
 
     // NPCs (Wardens & Rival) in Depth sorting
     for (const npc of npcManager.getRenderableEntities(currentLayer, camPos)) {
       depthItems.push({
         baseY: npc.y,
         draw: () => npc.draw(renderer)
+      });
+    }
+
+    // Apex Creatures & Roaming Myth in Depth sorting
+    for (const apex of apexMythManager.getRenderableEntities(currentLayer, camPos)) {
+      depthItems.push({
+        baseY: apex.y,
+        draw: () => apex.draw(renderer, art)
       });
     }
 
