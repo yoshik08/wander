@@ -85,3 +85,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Companion Physics & Personality**: The procedural cat companion seamlessly transitions between following at matched paces, sitting with alert ear twitches and blinking eyes, and curling into a snug sleeping ball when the wanderer pauses.
 - **Organic Tail Simulation**: Verlet rope simulation gives the tail natural inertia and wind responsiveness, swishing during sits and wrapping around the body during sleep.
 - **Depth & Placement**: Y-sorting and dynamic drop shadows place the cat cleanly into the 2.5D meadow plane without z-fighting or clipping.
+
+## Step 8.1 (Collectible Keepsakes) Critique
+- **Biome Discovery & Placement**: Chunks procedurally scatter context-rich keepsakes (blue jay feathers, pinecones, ancient acorns, pressed blossom petals, riverstones, shells, clovers) matched to climate and biomes.
+- **Visual Presentation**: Each keepsake features a gentle floating bob, warm golden aura, and star glint animation that draws the eye naturally without overwhelming the landscape.
+- **Collection Polish**: Proximity pickup triggers celebratory dust bursts, console chime audio cues, and a diegetic glassmorphic toast notification with poetic descriptions.

@@ -79,7 +79,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 8: Keepsakes, Journal & Map
 **Focus**: Meta-progression and UI.
 
-### Step 8.1: Collectible Keepsakes
+### [x] Step 8.1: Collectible Keepsakes
 - **Action**: Scatter items (feathers, special flowers) during chunk generation. Implement proximity collection.
 - **Files**: `src/world/chunk.ts`, `src/entities/character.ts`, `src/main.ts`
 - **Done When**: Walking near a keepsake plays a chime (console log for now) and increments a counter.

@@ -41,6 +41,11 @@
     <div id="game-container">
       <canvas id="game-canvas"></canvas>
       <div id="debug-overlay" style="display: none; position: absolute; top: 12px; left: 12px; pointer-events: none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.5; color: #E0F2FE; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+      <div id="toast-banner" style="display: none; opacity: 0; position: absolute; bottom: 32px; left: 50%; transform: translate(-50%, 10px); pointer-events: none; text-align: center; background: rgba(24, 38, 22, 0.94); backdrop-filter: blur(8px); padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255, 235, 180, 0.40); box-shadow: 0 8px 24px rgba(0,0,0,0.45); color: #FFF8E7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; transition: opacity 0.35s ease, transform 0.35s ease; z-index: 1000;">
+        <div id="toast-title" style="font-size: 15px; font-weight: 700; color: #FAD02C; margin-bottom: 2px;"></div>
+        <div id="toast-desc" style="font-size: 13px; color: #E8F8F5; font-style: italic;"></div>
+        <div id="toast-count" style="font-size: 11px; color: #A2D9CE; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;"></div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

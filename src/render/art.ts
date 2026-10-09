@@ -449,4 +449,57 @@ export class ArtToolkit {
     this.renderer.drawCircle(x + span * 0.65, y - 1.2, 1.3 * flap + 0.3, innerColor);
     this.renderer.drawCircle(x + span * 0.50, y + 1.2, 2.1 * flap + 0.5, mainColor);
   }
+
+  /**
+   * Draws a floating collectible keepsake item with gentle bobbing, glowing aura, and glint.
+   */
+  drawKeepsake(x: number, y: number, type: string, time: number): void {
+    const bob = Math.sin(time * 3.2 + x * 0.05) * 2.2;
+    this.drawDropShadow(x, y + 2, 7, 4);
+
+    // Golden warm aura halo
+    this.renderer.drawCircle(x, y - 3 + bob, 5.5, hexToRgba('#FFF9D2', 0.32 + 0.12 * Math.sin(time * 4)));
+
+    // Specific item illustration
+    if (type === 'blue_feather') {
+      this.renderer.drawLine(x - 3, y - 1 + bob, x + 3, y - 7 + bob, 1.8, hexToRgba('#2980B9'));
+      this.renderer.drawLine(x - 1, y - 2 + bob, x + 4, y - 6 + bob, 1.2, hexToRgba('#85C1E9'));
+    } else if (type === 'pine_cone') {
+      this.renderer.drawCircle(x, y - 4 + bob, 3.2, hexToRgba('#6E2C00'));
+      this.renderer.drawCircle(x, y - 2 + bob, 2.4, hexToRgba('#512E5F'));
+    } else if (type === 'acorn') {
+      this.renderer.drawCircle(x, y - 3 + bob, 2.8, hexToRgba('#935116'));
+      this.renderer.drawCircle(x, y - 5 + bob, 2.2, hexToRgba('#566573'));
+    } else if (type === 'amber_leaf') {
+      this.renderer.drawCircle(x, y - 4 + bob, 3.4, hexToRgba('#E67E22'));
+      this.renderer.drawCircle(x + 1, y - 4 + bob, 2.0, hexToRgba('#F39C12'));
+    } else if (type === 'cherry_petal') {
+      this.renderer.drawCircle(x, y - 4 + bob, 3.2, hexToRgba('#F1948A'));
+      this.renderer.drawCircle(x, y - 4 + bob, 1.6, hexToRgba('#FADBD8'));
+    } else if (type === 'glowing_spore') {
+      this.renderer.drawCircle(x, y - 4 + bob, 4.0, hexToRgba('#1ABC9C', 0.5));
+      this.renderer.drawCircle(x, y - 4 + bob, 2.2, hexToRgba('#E8F8F5'));
+    } else if (type === 'smooth_pebble') {
+      this.renderer.drawCircle(x, y - 3 + bob, 3.5, hexToRgba('#7F8C8D'));
+      this.renderer.drawCircle(x - 1, y - 4 + bob, 1.8, hexToRgba('#BDC3C7'));
+    } else if (type === 'seashell') {
+      this.renderer.drawCircle(x, y - 3 + bob, 3.2, hexToRgba('#FADBD8'));
+      this.renderer.drawCircle(x, y - 3 + bob, 1.8, hexToRgba('#F5EEF8'));
+    } else if (type === 'quartz_crystal') {
+      this.renderer.drawCircle(x, y - 4 + bob, 3.0, hexToRgba('#D2B4DE'));
+      this.renderer.drawCircle(x - 0.5, y - 4.5 + bob, 1.5, hexToRgba('#FFFFFF'));
+    } else {
+      // wild_clover or default lucky clover
+      this.renderer.drawCircle(x - 1.5, y - 4.5 + bob, 1.8, hexToRgba('#27AE60'));
+      this.renderer.drawCircle(x + 1.5, y - 4.5 + bob, 1.8, hexToRgba('#27AE60'));
+      this.renderer.drawCircle(x - 1.5, y - 1.5 + bob, 1.8, hexToRgba('#27AE60'));
+      this.renderer.drawCircle(x + 1.5, y - 1.5 + bob, 1.8, hexToRgba('#27AE60'));
+    }
+
+    // Sparkle star glint
+    const glint = (time * 1.5 + x * 0.2) % 2.5;
+    if (glint < 0.25) {
+      this.renderer.drawCircle(x + 2, y - 7 + bob, 1.2, hexToRgba('#FFFFFF', 0.85));
+    }
+  }
 }

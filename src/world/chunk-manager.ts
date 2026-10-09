@@ -13,7 +13,18 @@ export class ChunkManager {
   private pendingRequests: Set<string> = new Set();
   private workers: Worker[] = [];
   private nextWorkerIdx: number = 0;
+  readonly collectedKeepsakes: Set<string> = new Set();
   onChunkUnloaded?: (chunk: Chunk) => void;
+
+  collectKeepsake(id: string): boolean {
+    if (this.collectedKeepsakes.has(id)) return false;
+    this.collectedKeepsakes.add(id);
+    return true;
+  }
+
+  isKeepsakeCollected(id: string): boolean {
+    return this.collectedKeepsakes.has(id);
+  }
 
   constructor(seedInput?: string | number) {
     // 1. Parse or generate seed

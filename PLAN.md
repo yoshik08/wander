@@ -96,7 +96,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 8: Keepsakes, Journal, Landmarks & Map
-- [ ] 60+ collectible keepsakes across biomes and seasons with procedural illustrations and poetic notes
+- [x] 60+ collectible keepsakes across biomes and seasons with procedural illustrations and poetic notes
 - [ ] Interactive Journal (J) with page-turning animation and completion tracker
 - [ ] 20 hidden landmarks per seed with postcard notification on discovery
 - [ ] Poetic place name generator ("Apricot Hollow", "The Sleeping Pines") and region title cards

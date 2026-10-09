@@ -14,10 +14,11 @@
   - Milestone 6 (Step 6.2): Rain & Puddles (high-velocity rain streaks, impact ripple splashes, organic path puddles, damp footstep splashes).
   - Milestone 7 (Step 7.1): Flocking Birds & Butterflies (Boids steering flocks, flap/glide cycles, sun-offset shadows, perched & fluttering species-patterned butterflies).
   - Milestone 7 (Step 7.2): The Cat Companion (feline companion with follow, sit, curled sleep states, Verlet rope tail, ear twitches, blinks, and trot physics).
+  - Milestone 8 (Step 8.1): Collectible Keepsakes (biome-specific items, floating bob, golden glow, proximity collection, glassmorphic toast notifications).
 - **In progress**:
-  - Milestone 8 (Step 8.1): Collectible Keepsakes.
+  - Milestone 8 (Step 8.2): Diegetic Map UI.
 - **Next Item in ROADMAP.md**:
-  - Milestone 8 (Step 8.1): Collectible Keepsakes.
+  - Milestone 8 (Step 8.2): Diegetic Map UI.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

@@ -78,6 +78,38 @@ chunkManager.onChunkUnloaded = (chunk) => {
   renderer.freeChunk(chunk);
 };
 
+// Keepsake notification toast banner
+const toastBanner = document.getElementById('toast-banner');
+const toastTitle = document.getElementById('toast-title');
+const toastDesc = document.getElementById('toast-desc');
+const toastCount = document.getElementById('toast-count');
+let toastTimer: number | null = null;
+
+function showKeepsakeToast(name: string, desc: string, totalCount: number): void {
+  if (!toastBanner || !toastTitle || !toastDesc || !toastCount) return;
+  toastTitle.textContent = `✨ Found: ${name}`;
+  toastDesc.textContent = `"${desc}"`;
+  toastCount.textContent = `Keepsakes: ${totalCount} collected`;
+  toastBanner.style.display = 'block';
+  requestAnimationFrame(() => {
+    if (toastBanner) {
+      toastBanner.style.opacity = '1';
+      toastBanner.style.transform = 'translate(-50%, 0)';
+    }
+  });
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    if (toastBanner) {
+      toastBanner.style.opacity = '0';
+      toastBanner.style.transform = 'translate(-50%, 10px)';
+      setTimeout(() => {
+        if (toastBanner) toastBanner.style.display = 'none';
+      }, 400);
+    }
+  }, 4500);
+}
+
 // Reusable depth item buffer to prevent per-frame allocations
 interface DepthItem {
   baseY: number;
@@ -174,6 +206,35 @@ const loop = new GameLoop({
       const ry = camera.pos.y + Math.cos(time * 2.7) * 150;
       if (chunkManager.isWaterAt(rx, ry)) {
         particles.spawnRipple(rx, ry, 9);
+      }
+    }
+
+    // Collect keepsakes on proximity
+    const chunksNearPlayer = chunkManager.getVisibleChunks(
+      player.pos.x,
+      player.pos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom
+    );
+    for (const chunk of chunksNearPlayer) {
+      const baseWorldX = chunk.chunkX * CHUNK_PIXEL_SIZE;
+      const baseWorldY = chunk.chunkY * CHUNK_PIXEL_SIZE;
+      for (const k of chunk.data.keepsakes) {
+        if (!chunkManager.isKeepsakeCollected(k.id)) {
+          const kWorldX = baseWorldX + k.x;
+          const kWorldY = baseWorldY + k.y;
+          const dist = Math.hypot(player.pos.x - kWorldX, player.pos.y - kWorldY);
+          if (dist < 24) {
+            chunkManager.collectKeepsake(k.id);
+            k.collected = true;
+            console.log('[KEEPSAKE CHIME] Collected:', k.name);
+            for (let s = 0; s < 6; s++) {
+              particles.spawnFootstepDust(kWorldX, kWorldY, s * (Math.PI / 3));
+            }
+            showKeepsakeToast(k.name, k.desc, chunkManager.collectedKeepsakes.size);
+          }
+        }
       }
     }
 
@@ -354,6 +415,18 @@ const loop = new GameLoop({
           draw: () => renderStructure(renderer, struct, time, globalWind, art)
         });
       }
+
+      // Collectible keepsakes in chunk
+      for (const k of data.keepsakes) {
+        if (!chunkManager.isKeepsakeCollected(k.id)) {
+          const kx = baseWorldX + k.x;
+          const ky = baseWorldY + k.y;
+          depthItems.push({
+            baseY: ky,
+            draw: () => art.drawKeepsake(kx, ky, k.type, time)
+          });
+        }
+      }
     }
 
     // Player in Depth sorting
@@ -465,6 +538,7 @@ const loop = new GameLoop({
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>
           <div>Companion: Cat (${cat.state})</div>
+          <div>Keepsakes: ${chunkManager.collectedKeepsakes.size} collected</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
           <div>Particles: ${particles.getActiveCount()} active</div>
           <div>Seed: "${chunkManager.seedRaw}"</div>

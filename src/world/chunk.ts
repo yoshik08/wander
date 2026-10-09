@@ -22,6 +22,16 @@ export interface ChunkProp {
   variant: number;
 }
 
+export interface KeepsakeInstance {
+  id: string;
+  type: string;
+  name: string;
+  desc: string;
+  x: number;
+  y: number;
+  collected?: boolean;
+}
+
 export interface ChunkBufferData {
   chunkX: number;
   chunkY: number;
@@ -36,6 +46,7 @@ export interface ChunkBufferData {
   collision: Uint8Array;   // 1024 bytes (0 = walkable, 1 = solid)
   props: ChunkProp[];
   structures: StructureInstance[];
+  keepsakes: KeepsakeInstance[];
 }
 
 export class Chunk {
@@ -443,6 +454,72 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     }
   }
 
+  // 6. Collectible Keepsakes Generation (feathers, cones, shells, clovers, etc.)
+  const keepsakes: KeepsakeInstance[] = [];
+  const keepsakeRng = new PRNG(seedNum ^ (chunkX * 94372) ^ (chunkY * 61471));
+  if (keepsakeRng.next() < 0.75) {
+    for (let attempts = 0; attempts < 12; attempts++) {
+      const tx = keepsakeRng.rangeInt(3, CHUNK_TILES - 4);
+      const ty = keepsakeRng.rangeInt(3, CHUNK_TILES - 4);
+      const idx = ty * CHUNK_TILES + tx;
+      if (collision[idx] === 0 && (tileFlags[idx] & TILE_FLAG_WATER) === 0) {
+        const b = biome[idx] as BiomeType;
+        let kType = 'blue_feather';
+        let kName = 'Blue Jay Feather';
+        let kDesc = 'A fallen sapphire feather from high morning boughs.';
+
+        if (b === BiomeType.PineForest) {
+          kType = 'pine_cone';
+          kName = 'Ancient Pinecone';
+          kDesc = 'Smells of rich pine resin and sun-warmed forest needles.';
+        } else if (b === BiomeType.BirchGrove) {
+          kType = 'acorn';
+          kName = 'Golden Oak Acorn';
+          kDesc = 'The tiny seed of a mighty forest giant.';
+        } else if (b === BiomeType.AutumnMaple) {
+          kType = 'amber_leaf';
+          kName = 'Autumn Maple Leaf';
+          kDesc = 'A radiant amber leaf preserving the warmth of late summer.';
+        } else if (b === BiomeType.CherryBlossom) {
+          kType = 'cherry_petal';
+          kName = 'Pressed Blossom';
+          kDesc = 'A delicate fragrant petal pressed softly between pages.';
+        } else if (b === BiomeType.GlowingHollow) {
+          kType = 'glowing_spore';
+          kName = 'Moonlit Spore Pod';
+          kDesc = 'Glows with a soft cyan luminescence in twilight.';
+        } else if (b === BiomeType.LakesRivers || b === BiomeType.MarshPonds) {
+          kType = 'smooth_pebble';
+          kName = 'Riverstone';
+          kDesc = 'Worn silky smooth by mountain currents over centuries.';
+        } else if (b === BiomeType.SandyCoast) {
+          kType = 'seashell';
+          kName = 'Sun-Washed Shell';
+          kDesc = 'Whispers with the gentle roar of distant ocean tides.';
+        } else if (b === BiomeType.SnowyPeaks) {
+          kType = 'quartz_crystal';
+          kName = 'Frost Quartz';
+          kDesc = 'Catches morning sunlight in clear glacial facets.';
+        } else if (b === BiomeType.WildflowerFields) {
+          kType = 'wild_clover';
+          kName = 'Four-Leaf Clover';
+          kDesc = 'A rare lucky four-petaled clover found amidst wild grasses.';
+        }
+
+        keepsakes.push({
+          id: `k_${chunkX}_${chunkY}_0`,
+          type: kType,
+          name: kName,
+          desc: kDesc,
+          x: tx * TILE_SIZE + 12,
+          y: ty * TILE_SIZE + 12,
+          collected: false
+        });
+        break;
+      }
+    }
+  }
+
   return {
     chunkX,
     chunkY,
@@ -456,6 +533,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     foamMask,
     collision,
     props,
-    structures
+    structures,
+    keepsakes
   };
 }

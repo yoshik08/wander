@@ -87,6 +87,18 @@ describe('Procedural Paths, Bridges & Structures', () => {
     expect(chunk1.structures[0].x).toBe(chunk2.structures[0].x);
     expect(chunk1.structures[0].y).toBe(chunk2.structures[0].y);
   });
+
+  it('scatters deterministic collectible keepsakes with valid metadata', () => {
+    const chunk1 = generateChunkData(1, 1, 'keepsake-seed-42');
+    const chunk2 = generateChunkData(1, 1, 'keepsake-seed-42');
+    expect(chunk1.keepsakes.length).toBe(chunk2.keepsakes.length);
+    if (chunk1.keepsakes.length > 0) {
+      expect(chunk1.keepsakes[0].id).toBe(chunk2.keepsakes[0].id);
+      expect(chunk1.keepsakes[0].name).toBe(chunk2.keepsakes[0].name);
+      expect(chunk1.keepsakes[0].x).toBe(chunk2.keepsakes[0].x);
+      expect(chunk1.keepsakes[0].y).toBe(chunk2.keepsakes[0].y);
+    }
+  });
 });
 
 describe('Traversability Guarantee Across 500 Random Seeds', () => {
