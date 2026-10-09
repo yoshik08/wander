@@ -117,7 +117,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Done When**: Player can engage a wild creature, ease camera in, and take turns resolving attacks until one yields.
 
 ### Step C2.2: Stats & Moves
-- **Action**: Generate Vigor, Strike, Guard, Haste from species seed. Implement 4 move slots, learned by level, with same-type/weather bonuses and statuses (Sleep, Daze, Rooted). Add Resonance Lure logic to befriend.
+- [x] **Action**: Generate Vigor, Strike, Guard, Haste from species seed. Implement 4 move slots, learned by level, with same-type/weather bonuses and statuses (Sleep, Daze, Rooted). Add Resonance Lure logic to befriend.
 - **Files**: `src/systems/sparring.ts`, `src/entities/creature.ts`
 - **Done When**: Math correctly resolves attack damage based on typing and stats. Befriending works.
 

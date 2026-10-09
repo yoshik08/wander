@@ -21,10 +21,11 @@
   - Milestone C1 (Step C1.3): Creature Overworld Spawning (Biome partitioning, roaming AI, depth-sorted rendering).
   - Milestone C1 (Step C1.1): Save State Architecture.
   - Milestone C2 (Step C2.1): Sparring State Machine (Resolve, elements, effectiveness loop).
-- **In progress**:
   - Milestone C2 (Step C2.2): Stats & Moves (Individual creature movesets, species stats).
+- **In progress**:
+  - Milestone C3 (Step C3.1): Party leader trailing path and petting interactions.
 - **Next Item in ROADMAP.md**:
-  - Milestone C2 (Step C2.2): Stats & Moves.
+  - Milestone C3 (Step C3.1): Party leader trailing path and petting interactions.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

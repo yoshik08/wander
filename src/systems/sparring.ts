@@ -3,6 +3,7 @@ import { CreatureGenome, CreatureType } from '../entities/creature';
 export type CombatStatus = 'None' | 'Sleep' | 'Daze' | 'Rooted';
 
 export interface Combatant {
+  id?: string;
   genome: CreatureGenome;
   level: number;
   currentResolve: number;
@@ -176,7 +177,24 @@ export class SparringSystem {
 
   befriend() {
     if (this.wildCreature && this.wildCreature.currentResolve === 0) {
-      this.log.push(`You offered a Resonance Lure... ${this.wildCreature.genome.name} joined your Sanctuary!`);
+      const saved: any = {
+        id: this.wildCreature.id || `cr_${Date.now()}`,
+        speciesId: this.wildCreature.genome.speciesId,
+        level: this.wildCreature.level,
+        currentResolve: this.wildCreature.maxResolve
+      };
+      
+      let dest = 'Sanctuary';
+      if (window.saveManager.state.party.length < 6) {
+        window.saveManager.state.party.push(saved);
+        dest = 'Party';
+      } else {
+        window.saveManager.state.sanctuary.push(saved);
+      }
+      
+      window.saveManager.saveToLocalStorage();
+      
+      this.log.push(`You offered a Resonance Lure... ${this.wildCreature.genome.name} joined your ${dest}!`);
       this.endSpar();
       return true;
     }

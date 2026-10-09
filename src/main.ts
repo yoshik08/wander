@@ -20,6 +20,7 @@ import { PhotoMode } from './ui/photo-mode';
 import { SaveManager } from './systems/save';
 import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
+import { PartyLeader } from './entities/party-leader';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -57,6 +58,10 @@ saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
 const sparring = new SparringSystem();
 const sparringHud = new SparringHUD(sparring);
+let partyLeader: PartyLeader | null = null;
+if (saveManager.state.party.length > 0) {
+  partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
+}
 
 
 // Photo Mode Hooks
@@ -401,6 +406,13 @@ const loop = new GameLoop({
     // Update cat companion
     cat.update(dt, time, player.pos, player.vel, globalWind, player.action);
 
+    // Update party leader companion
+    if (!partyLeader && saveManager.state.party.length > 0) {
+      partyLeader = new PartyLeader(player.pos.x - 20, player.pos.y - 10, saveManager.state.party[0], chunkManager.seedRaw);
+    }
+    if (partyLeader) {
+      partyLeader.update(dt, time, player.pos, player.action === 'sit');
+    }
     // Ambient gentle water ripples (fish / breeze surface disturbances)
     if (Math.sin(time * 1.8) > 0.96) {
       const rx = camera.pos.x + Math.sin(time * 3.1) * 200;
@@ -489,12 +501,33 @@ const loop = new GameLoop({
       }
     }
 
+    let canPetLeader = false;
+    if (partyLeader && !sparring.isActive && currentSparTarget === null) {
+      if (Math.hypot(player.pos.x - partyLeader.pos.x, player.pos.y - partyLeader.pos.y) < 40) {
+        canPetLeader = true;
+      }
+    }
+
     if (sparring.isActive) {
       camera.targetZoom = 2.0;
       if (interactPrompt) interactPrompt.style.display = 'none';
       // If spar ended or yielded?
       if (!sparring.isActive) {
          camera.targetZoom = 1.0;
+      }
+    } else if (canPetLeader) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '💖';
+        interactLabel.textContent = `Pet ${partyLeader!.genome.name} [E]`;
+      }
+      if (inputState.interactPressed) {
+        partyLeader!.state = 'sit';
+        partyLeader!.timer = 0;
+        // spawn particles
+        for (let i = 0; i < 3; i++) {
+          particles.spawnRipple(partyLeader!.pos.x + (Math.random() - 0.5) * 10, partyLeader!.pos.y - 10 + (Math.random() - 0.5) * 10, 8);
+        }
       }
     } else if (player.action === 'sit') {
       camera.targetZoom = 0.82;
@@ -524,6 +557,7 @@ const loop = new GameLoop({
           statusTurns: 0
         };
         const wildC: Combatant = {
+          id: currentSparTarget.id,
           genome: currentSparTarget.genome,
           level: 3,
           currentResolve: currentSparTarget.genome.stats.vigor,
@@ -762,6 +796,14 @@ const loop = new GameLoop({
       baseY: cp.y,
       draw: () => cat.render(renderer, art, alpha, time)
     });
+
+    // Party Leader in Depth sorting
+    if (partyLeader) {
+      depthItems.push({
+        baseY: partyLeader.prevPos.y + (partyLeader.pos.y - partyLeader.prevPos.y) * alpha,
+        draw: () => partyLeader!.draw(renderer, art, alpha, time)
+      });
+    }
 
     // Wild creatures in Depth sorting
     for (const creature of wildCreatures.getActiveCreatures()) {
