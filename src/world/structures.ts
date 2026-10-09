@@ -23,7 +23,8 @@ export type StructureType =
   | 'brambles'
   | 'boulder'
   | 'gap'
-  | 'cave_entrance';
+  | 'cave_entrance'
+  | 'garden_plot';
 
 export interface StructureInstance {
   id: string;
@@ -106,6 +107,21 @@ export function generateChunkStructures(
       baseY: sanctuaryY + 16,
       width: 32,
       height: 48,
+      variant: 0,
+      solidTiles: []
+    });
+
+    // Garden Plot in the sunny meadow clearing southeast of campfire
+    const gardenX = baseWorldX + CHUNK_PIXEL_SIZE / 2 + 64;
+    const gardenY = baseWorldY + CHUNK_PIXEL_SIZE / 2 + 48;
+    structures.push({
+      id: `spawn-garden-${seed}`,
+      type: 'garden_plot',
+      x: gardenX,
+      y: gardenY,
+      baseY: gardenY + 24,
+      width: 72,
+      height: 52,
       variant: 0,
       solidTiles: []
     });
@@ -606,6 +622,11 @@ export function renderStructure(
       ], hexToRgba('#5D6D7E'));
       // The dark maw
       renderer.drawCircle(x, baseY - 4, 14, hexToRgba('#0A0A0A', 0.95));
+      break;
+    }
+
+    case 'garden_plot': {
+      // Custom rendered by GardenSystem
       break;
     }
 

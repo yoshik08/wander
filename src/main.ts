@@ -31,6 +31,7 @@ import { WaystoneUI } from './ui/waystone-ui';
 import { SettingsModal } from './ui/settings-modal';
 import { JournalUI } from './ui/journal';
 import { LandmarkManager } from './world/landmarks';
+import { GardenSystem } from './world/garden';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -170,6 +171,9 @@ landmarkManager.onLandmarkDiscovered = (landmark) => {
     }, 5000);
   }
 };
+
+const gardenSystem = new GardenSystem();
+gardenSystem.load(saveManager.state.garden);
 
 const easterEggs = new EasterEggSystem();
 (window as any).triggerSleepPile = () => easterEggs.onSleepPile?.();
@@ -851,6 +855,9 @@ const loop = new GameLoop({
     // Update landmarks and region detection
     landmarkManager.update(player.pos, currentBiome);
 
+    // Update garden growth
+    gardenSystem.update(dt, weatherInfo.isRaining);
+
     // Update wild creatures roaming in nearby chunks
     wildCreatures.syncWithChunks(chunksNearPlayer, chunkManager.seedRaw);
     wildCreatures.update(dt, time, (wx, wy) => chunkManager.isTraversable(currentLayer, wx, wy), player.pos);
@@ -1492,6 +1499,52 @@ const loop = new GameLoop({
         });
         if (healed) saveManager.saveToLocalStorage();
       }
+    } else if (currentLayer === 0 && gardenSystem.getClosestSlot(player.pos, 32)) {
+      const nearbyGardenPlot = gardenSystem.getClosestSlot(player.pos, 32)!;
+      if (nearbyGardenPlot.stage === 'empty') {
+        if (interactPrompt && interactLabel && interactIcon) {
+          interactPrompt.style.display = 'flex';
+          interactIcon.textContent = '🌱';
+          interactLabel.textContent = `Plant Seed in Garden Bed #${nearbyGardenPlot.id + 1} [E]`;
+        }
+        if (inputState.interactPressed) {
+          const availableSeed = saveManager.state.keepsakes.find(k => ['wild_clover', 'cherry_petal', 'acorn', 'glowing_spore', 'amber_leaf', 'blue_feather'].includes(k)) || 'wild_clover';
+          gardenSystem.plantSeed(nearbyGardenPlot.id, availableSeed);
+          saveManager.state.garden = gardenSystem.save();
+          saveManager.saveToLocalStorage();
+          for (let i = 0; i < 10; i++) {
+            particles.spawnFootstepDust(gardenSystem.getSlotWorldPos(nearbyGardenPlot).x, gardenSystem.getSlotWorldPos(nearbyGardenPlot).y, Math.random() * Math.PI * 2);
+          }
+          showKeepsakeToast('🌱 Meadow Garden', `Planted ${nearbyGardenPlot.plantName} in Bed #${nearbyGardenPlot.id + 1}.`, gardenSystem.slots.filter(s => s.stage !== 'empty').length);
+        }
+      } else if (nearbyGardenPlot.stage === 'blooming') {
+        if (interactPrompt && interactLabel && interactIcon) {
+          interactPrompt.style.display = 'flex';
+          interactIcon.textContent = '🌸';
+          interactLabel.textContent = `Admire Blooming ${nearbyGardenPlot.plantName} [E]`;
+        }
+        if (inputState.interactPressed) {
+          for (let i = 0; i < 12; i++) {
+            particles.spawnRipple(gardenSystem.getSlotWorldPos(nearbyGardenPlot).x, gardenSystem.getSlotWorldPos(nearbyGardenPlot).y, 10);
+          }
+          showKeepsakeToast('🌸 Radiant Blossom', `The fragrant ${nearbyGardenPlot.plantName} sways serenely in the meadow wind.`, gardenSystem.slots.filter(s => s.stage === 'blooming').length);
+        }
+      } else {
+        if (interactPrompt && interactLabel && interactIcon) {
+          interactPrompt.style.display = 'flex';
+          interactIcon.textContent = '💧';
+          interactLabel.textContent = `Water ${nearbyGardenPlot.plantName} (${Math.round(nearbyGardenPlot.growth * 100)}%) [E]`;
+        }
+        if (inputState.interactPressed) {
+          gardenSystem.waterSlot(nearbyGardenPlot.id);
+          saveManager.state.garden = gardenSystem.save();
+          saveManager.saveToLocalStorage();
+          for (let i = 0; i < 8; i++) {
+            particles.spawnRipple(gardenSystem.getSlotWorldPos(nearbyGardenPlot).x, gardenSystem.getSlotWorldPos(nearbyGardenPlot).y, 8);
+          }
+          showKeepsakeToast('💧 Watered Garden', `Tended to ${nearbyGardenPlot.plantName}. It drinks deeply and thrives!`, Math.round(nearbyGardenPlot.growth * 100));
+        }
+      }
     } else {
       if (interactPrompt) {
         interactPrompt.style.display = 'none';
@@ -1780,6 +1833,14 @@ const loop = new GameLoop({
       depthItems.push({
         baseY: gpy,
         draw: () => wildlife.drawGroundCreature(renderer, art, gCritter, alpha, time)
+      });
+    }
+
+    // Garden Plot near spawn in Depth sorting
+    if (currentLayer === 0) {
+      depthItems.push({
+        baseY: gardenSystem.pos.y + 16,
+        draw: () => gardenSystem.render(renderer, art, time, globalWind)
       });
     }
 

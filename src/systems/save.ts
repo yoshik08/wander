@@ -18,6 +18,13 @@ export interface GameSettings {
   peacefulMode: boolean;
 }
 
+export interface SavedGardenPlot {
+  id: number;
+  seedType: string;
+  stage: 'empty' | 'sprout' | 'growing' | 'blooming';
+  growth: number;
+}
+
 export interface SaveState {
   version: number;
   seed: string;
@@ -35,6 +42,7 @@ export interface SaveState {
   clearedObstacles: string[];
   settings: GameSettings;
   landmarks: string[];
+  garden: SavedGardenPlot[];
 }
 
 export class SaveManager {
@@ -64,6 +72,7 @@ export class SaveManager {
       waystones: [],
       clearedObstacles: [],
       landmarks: [],
+      garden: [],
       settings: {
         speed2x: false,
         colourblindMode: false,
