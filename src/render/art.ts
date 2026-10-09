@@ -1,5 +1,6 @@
 import { IRenderer } from './types';
 import { ColorRGBA, hexToRgba, Vec2, vec2 } from '../core/math';
+import { CreatureGenome } from '../entities/creature';
 
 export class ArtToolkit {
   private renderer: IRenderer;
@@ -500,6 +501,111 @@ export class ArtToolkit {
     const glint = (time * 1.5 + x * 0.2) % 2.5;
     if (glint < 0.25) {
       this.renderer.drawCircle(x + 2, y - 7 + bob, 1.2, hexToRgba('#FFFFFF', 0.85));
+    }
+  }
+
+  /**
+   * Procedurally draws a wild creature based on its genome.
+   */
+  drawCreature(x: number, baseY: number, time: number, genome: CreatureGenome, state: 'idle' | 'walk' | 'sit' | 'yield', facingLeft: boolean): void {
+    const s = genome.scale;
+    const dir = facingLeft ? -1 : 1;
+    
+    // Animation bob
+    let bob = 0;
+    if (state === 'idle') bob = Math.sin(time * 3 + x * 0.1) * 0.6 * s;
+    else if (state === 'walk') bob = Math.abs(Math.sin(time * 8)) * 2 * s;
+    else if (state === 'sit' || state === 'yield') bob = 3 * s; // Lower to ground
+
+    this.drawDropShadow(x, baseY, 14 * s, 10 * s);
+
+    const cBase = genome.baseColor;
+    const cAcc = genome.accentColor;
+    const y = baseY - 6 * s + bob;
+
+    // Base body based on archetype
+    if (genome.archetype === 'quadruped') {
+      this.renderer.drawRect(x - 6 * s, y - 5 * s, 12 * s, 8 * s, cBase);
+      this.renderer.drawCircle(x + dir * 6 * s, y - 4 * s, 4 * s, cAcc); // Head
+      if (state !== 'sit' && state !== 'yield') {
+        this.renderer.drawRect(x - 5 * s, y + 3 * s, 2 * s, 3 * s, cAcc); // Legs
+        this.renderer.drawRect(x + 3 * s, y + 3 * s, 2 * s, 3 * s, cAcc);
+      }
+    } else if (genome.archetype === 'biped') {
+      this.renderer.drawRect(x - 4 * s, y - 8 * s, 8 * s, 10 * s, cBase);
+      this.renderer.drawCircle(x, y - 10 * s, 5 * s, cAcc); // Head
+      if (state !== 'sit' && state !== 'yield') {
+        this.renderer.drawRect(x - 3 * s, y + 2 * s, 2 * s, 4 * s, cAcc); // Legs
+        this.renderer.drawRect(x + 1 * s, y + 2 * s, 2 * s, 4 * s, cAcc);
+      }
+    } else if (genome.archetype === 'serpent') {
+      const sway = Math.sin(time * 4) * 2 * s;
+      this.renderer.drawCircle(x + dir * 4 * s, y - 4 * s + sway, 4 * s, cAcc); // Head
+      this.renderer.drawRect(x - 6 * s, y - 2 * s, 10 * s, 4 * s, cBase);
+    } else if (genome.archetype === 'avian') {
+      this.renderer.drawCircle(x, y - 2 * s, 5 * s, cBase); // Body
+      this.renderer.drawCircle(x + dir * 3 * s, y - 6 * s, 3 * s, cAcc); // Head
+      // Beak
+      this.renderer.drawRect(x + dir * 5 * s, y - 6 * s, 3 * s, 1.5 * s, hexToRgba('#F5B041'));
+    } else if (genome.archetype === 'blob') {
+      const wobble = Math.sin(time * 5) * 1.5 * s;
+      this.renderer.drawCircle(x, y - 4 * s - wobble, 7 * s, cBase);
+    }
+
+    // Appendages
+    if (genome.appendage === 'horns') {
+      const hY = y - (genome.archetype === 'biped' ? 14 * s : 8 * s);
+      this.renderer.drawLine(x - 2 * s, hY + 2 * s, x - 4 * s, hY - 3 * s, 1.5 * s, cAcc);
+      this.renderer.drawLine(x + 2 * s, hY + 2 * s, x + 4 * s, hY - 3 * s, 1.5 * s, cAcc);
+    } else if (genome.appendage === 'tails') {
+      const tX = x - dir * (genome.archetype === 'quadruped' ? 8 * s : 4 * s);
+      const tailSway = Math.sin(time * 6) * 3 * s;
+      this.renderer.drawLine(tX, y, tX - dir * 5 * s, y - 4 * s + tailSway, 2 * s, cAcc);
+    } else if (genome.appendage === 'wings') {
+      const flap = Math.abs(Math.sin(time * 10)) * 4 * s;
+      this.renderer.drawLine(x, y - 4 * s, x - 6 * s, y - 8 * s + flap, 2 * s, cAcc);
+      this.renderer.drawLine(x, y - 4 * s, x + 6 * s, y - 8 * s + flap, 2 * s, cAcc);
+    } else if (genome.appendage === 'petals') {
+      this.renderer.drawCircle(x, y - 10 * s, 3 * s, cAcc);
+      this.renderer.drawCircle(x - 3 * s, y - 8 * s, 3 * s, cAcc);
+      this.renderer.drawCircle(x + 3 * s, y - 8 * s, 3 * s, cAcc);
+    } else if (genome.appendage === 'fins') {
+      this.renderer.drawRect(x, y - 10 * s, 1 * s, 4 * s, cAcc);
+    }
+
+    // Pattern (details)
+    if (genome.pattern === 'scales') {
+      this.renderer.drawCircle(x - 2 * s, y - 2 * s, 1 * s, cAcc);
+      this.renderer.drawCircle(x + 2 * s, y - 2 * s, 1 * s, cAcc);
+      this.renderer.drawCircle(x, y, 1 * s, cAcc);
+    } else if (genome.pattern === 'fur') {
+      this.renderer.drawLine(x - 3 * s, y, x - 4 * s, y + 2 * s, 1 * s, cAcc);
+      this.renderer.drawLine(x + 3 * s, y, x + 4 * s, y + 2 * s, 1 * s, cAcc);
+    } else if (genome.pattern === 'bark') {
+      this.renderer.drawRect(x - 1 * s, y - 4 * s, 2 * s, 6 * s, cAcc);
+    }
+
+    // Eyes
+    const eX = x + dir * (genome.archetype === 'quadruped' ? 6 * s : (genome.archetype === 'biped' ? 2 * s : 2 * s));
+    const eY = y - (genome.archetype === 'biped' ? 10 * s : (genome.archetype === 'quadruped' ? 5 * s : 4 * s));
+    
+    if (state === 'yield' || state === 'sit') {
+      // Yielded / sleeping eyes (curved lines)
+      this.renderer.drawLine(eX - 1.5*s, eY, eX + 1.5*s, eY, 1*s, hexToRgba('#1B2631'));
+    } else {
+      // Open eyes + blinking
+      const blink = (time * 2 + x * 0.1) % 4 < 0.1;
+      if (!blink) {
+        this.renderer.drawCircle(eX - 1.5 * s, eY, 1.2 * s, hexToRgba('#1B2631'));
+        this.renderer.drawCircle(eX + 1.5 * s, eY, 1.2 * s, hexToRgba('#1B2631'));
+      } else {
+        this.renderer.drawRect(eX - 2*s, eY, 4*s, 0.5*s, hexToRgba('#1B2631'));
+      }
+    }
+
+    // Prismatic Sparkle
+    if (genome.isPrismatic && (time * 5 + x) % 1 < 0.2) {
+      this.renderer.drawCircle(x - 4 * s, y - 8 * s, 1.5 * s, hexToRgba('#FFFFFF'));
     }
   }
 }
