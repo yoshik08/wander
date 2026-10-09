@@ -34,6 +34,11 @@ window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
 });
 
+// Player movement constants
+const acceleration = 1000; // pixels per second^2
+const maxSpeed = 150; // pixels per second
+const friction = 0.9; // when no input
+
 // Game loop
 function loop(now: number) {
   const deltaTime = (now - lastTime) / 1000; // seconds
@@ -54,45 +59,71 @@ function loop(now: number) {
 }
 
 function update(dt: number) {
-  // Update player based on input
-  const speed = 100; // pixels per second
-  let dx = 0;
-  let dy = 0;
-  if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
-  if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
-  if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
-  if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+  // Horizontal input
+  let inputX = 0;
+  let inputY = 0;
+  if (keys['KeyW'] || keys['ArrowUp']) inputY = -1;
+  if (keys['KeyS'] || keys['ArrowDown']) inputY = 1;
+  if (keys['KeyA'] || keys['ArrowLeft']) inputX = -1;
+  if (keys['KeyD'] || keys['ArrowRight']) inputX = 1;
 
-  // Normalize diagonal movement
-  if (dx !== 0 && dy !== 0) {
-    const len = Math.sqrt(dx * dx + dy * dy);
-    dx /= len;
-    dy /= len;
+  // Normalize diagonal input
+  if (inputX !== 0 && inputY !== 0) {
+    const len = Math.sqrt(inputX * inputX + inputY * inputY);
+    inputX /= len;
+    inputY /= len;
   }
 
-  player.vx = dx * speed;
-  player.vy = dy * speed;
+  // Apply acceleration
+  player.vx += inputX * acceleration * dt;
+  player.vy += inputY * acceleration * dt;
+
+  // Clamp to max speed
+  const speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+  if (speed > maxSpeed) {
+    player.vx *= maxSpeed / speed;
+    player.vy *= maxSpeed / speed;
+  }
+
+  // Apply friction when no input
+  if (inputX === 0 && inputY === 0) {
+    player.vx *= friction;
+    player.vy *= friction;
+  }
 
   player.update(dt);
-  camera.update(player, dt);
+  camera.update(player, canvas.height);
 }
 
 function render(ctx: CanvasRenderingContext2D, alpha: number) {
-  // Clear screen with sky color (light blue)
-  ctx.fillStyle = '#87CEEB';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Clear screen (we'll draw sky and ground, so we don't need to clear, but we'll clear for safety)
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw flat meadow (green ground)
+  // Save context and apply camera transform
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+
+  // Draw sky
+  ctx.fillStyle = '#87CEEB';
+  ctx.fillRect(-2000, -2000, 4000, 4000);
+
+  // Draw ground (from y=-200 to y=0 in world coordinates)
   ctx.fillStyle = '#228B22';
-  ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
+  ctx.fillRect(-2000, -200, 4000, 200);
 
   // Draw player with interpolation
   const playerX = player.x + player.vx * alpha;
   const playerY = player.y + player.vy * alpha;
-  camera.apply(ctx, () => {
-    ctx.fillStyle = '#FF0000'; // Red for player placeholder
-    ctx.fillRect(playerX - 8, playerY - 16, 16, 16); // 16x16 rectangle
-  });
+  ctx.fillStyle = '#FF0000'; // Red for player placeholder
+  ctx.fillRect(playerX - 8, playerY - 16, 16, 16); // 16x16 rectangle, feet at playerY
+
+  ctx.restore();
+
+  // Draw UI overlay (debug info) for now
+  ctx.fillStyle = '#000000';
+  ctx.font = '16px monospace';
+  ctx.fillText(`Player: (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`, 10, 20);
+  ctx.fillText(`Camera: (${camera.x.toFixed(1)}, ${camera.y.toFixed(1)})`, 10, 40);
 }
 
 // Start the loop

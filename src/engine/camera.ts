@@ -7,14 +7,12 @@ export class Camera {
     this.y = 0;
   }
 
-  update(player: any, dt: number) {
-    // Simple follow: camera centers on player
+  update(player: any, canvasHeight: number) {
     this.x = player.x;
-    this.y = player.y;
+    this.y = -canvasHeight;
   }
 
   apply(ctx: CanvasRenderingContext2D, callback: () => void) {
-    // Save context, translate by negative camera position to simulate camera movement
     ctx.save();
     ctx.translate(-this.x, -this.y);
     callback();
