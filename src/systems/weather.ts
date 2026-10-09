@@ -30,6 +30,11 @@ export class WeatherSystem {
   private lightningTimer: number = 14.0;
   private lightningIntensity: number = 0.0;
 
+  // Post-rain daylight rainbow system
+  rainbowTimer: number = 0.0;
+  rainbowDuration: number = 45.0;
+  private wasRaining: boolean = false;
+
   // Scratch memory for zero-allocation rendering
   private scratchTint: ColorRGBA = { r: 1, g: 1, b: 1, a: 0 };
   private scratchLightningColor: ColorRGBA = { r: 1, g: 1, b: 1, a: 0 };
@@ -41,7 +46,24 @@ export class WeatherSystem {
     this.stateTimer = 150.0 + this.prng.next() * 120.0; // 2.5 to 4.5 minutes
   }
 
-  update(dt: number): void {
+  triggerRainbow(duration: number = 45.0): void {
+    this.rainbowTimer = duration;
+    this.rainbowDuration = duration;
+  }
+
+  getRainbowIntensity(): number {
+    if (this.rainbowTimer <= 0) return 0;
+    const progress = 1.0 - (this.rainbowTimer / this.rainbowDuration);
+    // Smooth bell curve: fade in over first 20%, hold, fade out over last 30%
+    if (progress < 0.2) {
+      return progress / 0.2;
+    } else if (progress > 0.7) {
+      return (1.0 - progress) / 0.3;
+    }
+    return 1.0;
+  }
+
+  update(dt: number, isDaylight: boolean = true): void {
     // 1. Advance state duration timer
     this.stateTimer -= dt;
     if (this.stateTimer <= 0 && this.transitionProgress >= 1.0) {
@@ -79,6 +101,17 @@ export class WeatherSystem {
       this.wetness = Math.min(1.0, this.wetness + dt * 0.08);
     } else {
       this.wetness = Math.max(0.0, this.wetness - dt * 0.02);
+    }
+
+    // 5. Post-rain daylight rainbow trigger & countdown
+    if (this.wasRaining && !activeIsRain && isDaylight) {
+      this.triggerRainbow(45.0);
+    }
+    this.wasRaining = activeIsRain;
+
+    if (this.rainbowTimer > 0) {
+      this.rainbowTimer -= dt;
+      if (this.rainbowTimer < 0) this.rainbowTimer = 0;
     }
   }
 
@@ -212,7 +245,10 @@ export class WeatherSystem {
     const halfH = (viewHeight / 2) / zoom;
     const margin = 20;
 
-    // 1. Weather ambient overcast/storm tint
+    // 1. Post-rain daylight rainbow arc
+    this.renderRainbow(renderer, camX, camY, viewWidth, viewHeight, zoom);
+
+    // 2. Weather ambient overcast/storm tint
     if (info.ambientTint.a > 0.01) {
       renderer.drawRect(
         camX - halfW - margin,
@@ -223,7 +259,7 @@ export class WeatherSystem {
       );
     }
 
-    // 2. Lightning flash screen illumination
+    // 3. Lightning flash screen illumination
     if (info.lightningFlash > 0.02) {
       this.scratchLightningColor.r = 0.95;
       this.scratchLightningColor.g = 0.98;
@@ -237,6 +273,68 @@ export class WeatherSystem {
         halfH * 2 + margin * 2,
         this.scratchLightningColor
       );
+    }
+  }
+
+  /**
+   * Renders a luminous spectral rainbow arc across the upper daylight sky.
+   */
+  renderRainbow(
+    renderer: IRenderer,
+    camX: number,
+    camY: number,
+    viewWidth: number,
+    viewHeight: number,
+    zoom: number
+  ): void {
+    const intensity = this.getRainbowIntensity();
+    if (intensity <= 0.01) return;
+
+    const halfW = (viewWidth / 2) / zoom;
+    const halfH = (viewHeight / 2) / zoom;
+
+    // Center of curvature placed below viewport for a sweeping natural arch
+    const arcCenterX = camX - halfW * 0.15;
+    const arcCenterY = camY + halfH * 1.35;
+    const baseRadius = halfH * 1.75;
+
+    // Pure daylight spectrum: Red, Orange, Yellow, Green, Cyan, Blue, Violet
+    const colors = [
+      { r: 0.96, g: 0.28, b: 0.22 }, // Red
+      { r: 0.98, g: 0.58, b: 0.18 }, // Orange
+      { r: 0.98, g: 0.86, b: 0.22 }, // Yellow
+      { r: 0.28, g: 0.82, b: 0.42 }, // Green
+      { r: 0.18, g: 0.78, b: 0.92 }, // Cyan
+      { r: 0.28, g: 0.48, b: 0.92 }, // Blue
+      { r: 0.62, g: 0.32, b: 0.88 }  // Violet
+    ];
+
+    const startAngle = Math.PI * 1.18; // Upper left horizon
+    const endAngle = Math.PI * 1.82;   // Upper right horizon
+    const steps = 28;
+    const stepAngle = (endAngle - startAngle) / steps;
+    const bandThickness = 4.2 / zoom;
+
+    for (let c = 0; c < colors.length; c++) {
+      const col = colors[c];
+      const r = baseRadius + (colors.length - 1 - c) * bandThickness;
+      const alpha = intensity * 0.18; // Ethereal translucent rainbow sheen
+
+      for (let s = 0; s < steps; s++) {
+        const a1 = startAngle + s * stepAngle;
+        const a2 = a1 + stepAngle;
+        const x1 = arcCenterX + Math.cos(a1) * r;
+        const y1 = arcCenterY + Math.sin(a1) * r;
+        const x2 = arcCenterX + Math.cos(a2) * r;
+        const y2 = arcCenterY + Math.sin(a2) * r;
+
+        renderer.drawLine(x1, y1, x2, y2, bandThickness * 1.15, {
+          r: col.r,
+          g: col.g,
+          b: col.b,
+          a: alpha
+        });
+      }
     }
   }
 }

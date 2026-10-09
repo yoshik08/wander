@@ -627,8 +627,8 @@ const loop = new GameLoop({
       inputState.isRunning = false;
     }
 
-    // Dynamic wind modulation driven by weather
-    weather.update(dt);
+    // Dynamic wind modulation and rainbow check driven by weather
+    weather.update(dt, !timeSystem.getInfo().isNight);
     const weatherInfo = weather.getInfo();
     const time = performance.now() / 1000;
     globalWind.x = (1.0 + Math.sin(time * 0.8) * 0.6) * weatherInfo.windMultiplier;

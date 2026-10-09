@@ -11,7 +11,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Reuse**: existing color structs.
 - **Done When**: The world visually transitions between spring, summer, autumn, and winter over time.
 
-### Step 6.4: Post-rain Daylight Rainbow
+### Step 6.4: Post-rain Daylight Rainbow [x]
 - **Action**: Add a screen-space rainbow overlay that fades in for 1 in-game minute after rain ends if the time is dawn, morning, or late afternoon.
 - **Files**: `src/systems/weather.ts`, `src/render/webgl2.ts`, `src/main.ts`
 - **Reuse**: `renderer.drawRect` with a custom rainbow fragment shader or additive blended rings.
