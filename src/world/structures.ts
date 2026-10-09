@@ -24,7 +24,8 @@ export type StructureType =
   | 'boulder'
   | 'gap'
   | 'cave_entrance'
-  | 'garden_plot';
+  | 'garden_plot'
+  | 'wind_chime';
 
 export interface StructureInstance {
   id: string;
@@ -122,6 +123,21 @@ export function generateChunkStructures(
       baseY: gardenY + 24,
       width: 72,
       height: 52,
+      variant: 0,
+      solidTiles: []
+    });
+
+    // Spawn Wind Chime beside ancient trees
+    const chimeX = baseWorldX + CHUNK_PIXEL_SIZE / 2 - 48;
+    const chimeY = baseWorldY + CHUNK_PIXEL_SIZE / 2 - 48;
+    structures.push({
+      id: `spawn-chime-${seed}`,
+      type: 'wind_chime',
+      x: chimeX,
+      y: chimeY,
+      baseY: chimeY + 12,
+      width: 16,
+      height: 32,
       variant: 0,
       solidTiles: []
     });
@@ -366,18 +382,18 @@ export function generateChunkStructures(
       return structures;
     }
   }
-  // Scenic Bench, Sitting Log, or Campfire at trailside
+  // Scenic Bench, Sitting Log, Campfire, or Wind Chime at trailside
   if (!isWater) {
     const roll = chunkRng.next();
-    const sType: StructureType = roll < 0.4 ? 'bench' : (roll < 0.7 ? 'sitting_log' : 'campfire');
+    const sType: StructureType = roll < 0.35 ? 'bench' : (roll < 0.60 ? 'sitting_log' : (roll < 0.85 ? 'campfire' : 'wind_chime'));
     structures.push({
       id: `${sType}-${chunkX}-${chunkY}`,
       type: sType,
       x: structWorldX,
       y: structWorldY,
       baseY: structWorldY + 8,
-      width: sType === 'campfire' ? 28 : 26,
-      height: sType === 'campfire' ? 28 : 14,
+      width: sType === 'campfire' ? 28 : (sType === 'wind_chime' ? 16 : 26),
+      height: sType === 'campfire' ? 28 : (sType === 'wind_chime' ? 32 : 14),
       variant: 0,
       solidTiles: []
     });
@@ -868,6 +884,41 @@ export function renderStructure(
           renderer.drawCircle(sx, sy - sH / 2, 2, hexToRgba('#F39C12', 0.7));
         }
       }
+      break;
+    }
+
+    case 'wind_chime': {
+      // 1. Soft ground shadow
+      renderer.drawCircle(x, baseY, 6, hexToRgba('#1B2631', 0.28));
+
+      // 2. Carved wooden post & overhang crossbar
+      renderer.drawRect(x - 2, y - 24, 4, 26, hexToRgba('#4A2E16')); // Main post
+      renderer.drawRect(x - 8, y - 26, 16, 3, hexToRgba('#5C381E')); // Crossbar
+      renderer.drawRect(x - 9, y - 28, 18, 2, hexToRgba('#784212')); // Tiny overhang canopy
+
+      // 3. Gentle wind sway of hanging pipes
+      const sway = Math.sin(time * 3.0 + x * 0.05) * 2.0;
+
+      // Bronze tubes (tuned lengths)
+      const tubeLengths = [12, 16, 14, 10];
+      const tubeOffsets = [-6, -2, 2, 6];
+      for (let t = 0; t < 4; t++) {
+        const tx = x + tubeOffsets[t] + sway * (0.4 + t * 0.15);
+        const ty = y - 23;
+        const len = tubeLengths[t];
+        // Fine thread line
+        renderer.drawLine(x + tubeOffsets[t], y - 23, tx, ty + 3, 1, hexToRgba('#BDC3C7', 0.6));
+        // Bronze metallic pipe
+        renderer.drawRect(tx - 1, ty + 3, 2, len, hexToRgba('#D4AC0D'));
+        renderer.drawRect(tx, ty + 3, 1, len, hexToRgba('#F9E79F', 0.8)); // Metallic shine
+      }
+
+      // Central wooden clapper & swinging chime leaf
+      const clapperX = x + sway * 0.9;
+      const clapperY = y - 13;
+      renderer.drawCircle(clapperX, clapperY, 2.5, hexToRgba('#784212')); // Clapper disk
+      // Dangling amber leaf catching the sun
+      renderer.drawCircle(clapperX + sway * 0.5, clapperY + 8, 3, hexToRgba('#F39C12', 0.9));
       break;
     }
 

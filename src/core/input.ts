@@ -15,6 +15,7 @@ export interface InputState {
   menuPressed: boolean;     // Esc / Gamepad Start
   debugPressed: boolean;    // F3
   calmPressed: boolean;     // C
+  sleepPressed: boolean;    // Z
 }
 
 export class InputManager {
@@ -184,6 +185,7 @@ export class InputManager {
     const menuJust = Boolean(this.justPressed['Escape']);
     const debugJust = Boolean(this.justPressed['F3']);
     const calmJust = Boolean(this.justPressed['KeyC']);
+    const sleepJust = Boolean(this.justPressed['KeyZ']);
 
     // Clear single-frame presses
     this.justPressed = {};
@@ -201,7 +203,8 @@ export class InputManager {
       actionPressed: actionJust,
       menuPressed: menuJust,
       debugPressed: debugJust,
-      calmPressed: calmJust
+      calmPressed: calmJust,
+      sleepPressed: sleepJust
     };
   }
 
@@ -212,6 +215,10 @@ export class InputManager {
       origin: this.touchOrigin,
       current: this.touchCurrent
     };
+  }
+
+  isKeyDown(code: string): boolean {
+    return Boolean(this.keys[code] || this.keys[`Key${code.toUpperCase()}`]);
   }
 
   triggerTouchAction(): void {

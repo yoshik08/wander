@@ -529,6 +529,38 @@ export class AudioSystem {
   }
 
   /**
+   * Delicate crystalline bronze chime for wind chimes.
+   */
+  playChime(pitchMultiplier: number = 1.0): void {
+    if (!this.ctx || !this.sfxGain || this.settings.muted) return;
+
+    try {
+      const t = this.ctx.currentTime;
+      const notes = [659.25, 783.99, 987.77, 1318.51].map(n => n * pitchMultiplier);
+
+      notes.forEach((freq, idx) => {
+        const noteTime = t + idx * 0.08;
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.06, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 1.8);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 1.9);
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
    * Soft wooden acoustic pop for UI button clicks.
    */
   playButtonClick(): void {

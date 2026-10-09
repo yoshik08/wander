@@ -74,15 +74,37 @@ player.speedMultiplier = saveManager.state.settings?.speed2x ? 2.0 : 1.0;
 if (saveManager.state.customization) {
   player.customization = { ...saveManager.state.customization };
 }
-if (saveManager.state.player && (saveManager.state.player.x !== 384 || saveManager.state.player.y !== 384)) {
+// Check for Shared Moment URL deep-link parameters (?seed=...&x=...&y=...&time=...&season=...)
+const urlDeepParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const urlX = urlDeepParams?.get('x');
+const urlY = urlDeepParams?.get('y');
+const urlTime = urlDeepParams?.get('time');
+const urlSeason = urlDeepParams?.get('season');
+
+if (urlX !== null && urlX !== undefined && urlY !== null && urlY !== undefined) {
+  const px = parseFloat(urlX);
+  const py = parseFloat(urlY);
+  if (!isNaN(px) && !isNaN(py)) {
+    player.pos.x = px;
+    player.pos.y = py;
+    camera.snapTo(player.pos.x, player.pos.y);
+  }
+} else if (saveManager.state.player && (saveManager.state.player.x !== 384 || saveManager.state.player.y !== 384)) {
   player.pos.x = saveManager.state.player.x;
   player.pos.y = saveManager.state.player.y;
   camera.snapTo(player.pos.x, player.pos.y);
 }
-if (saveManager.state.timeOfDay !== undefined) {
+
+if (urlTime !== null && urlTime !== undefined) {
+  const th = parseFloat(urlTime);
+  if (!isNaN(th)) timeSystem.currentHour = th;
+} else if (saveManager.state.timeOfDay !== undefined) {
   timeSystem.currentHour = saveManager.state.timeOfDay;
 }
-if (saveManager.state.season) {
+
+if (urlSeason && ['spring', 'summer', 'autumn', 'winter'].includes(urlSeason)) {
+  timeSystem.setSeason(urlSeason as any);
+} else if (saveManager.state.season) {
   timeSystem.setSeason(saveManager.state.season);
 }
 
@@ -676,6 +698,27 @@ if (mapBtn) {
     diegeticMap.toggle();
   });
 }
+
+const shareBtn = document.getElementById('share-btn');
+if (shareBtn) {
+  shareBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    audioSystem.unlock();
+    audioSystem.playButtonClick();
+    const season = timeSystem.getSeasonInfo().season;
+    const hour = timeSystem.currentHour.toFixed(1);
+    const x = Math.round(player.pos.x);
+    const y = Math.round(player.pos.y);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const shareUrl = `${origin}${pathname}?seed=${encodeURIComponent(chunkManager.seedRaw)}&x=${x}&y=${y}&time=${hour}&season=${season}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showKeepsakeToast('🔗 Shared Moment Link', `Saved link (${x}, ${y} in ${season.toUpperCase()} at ${Math.floor(Number(hour))}:00) to clipboard!`, 0);
+      });
+    }
+  });
+}
 canvas.addEventListener('click', (e: MouseEvent) => {
   if (diegeticMap.isOpen) {
     diegeticMap.close();
@@ -1123,10 +1166,17 @@ const loop = new GameLoop({
     let canPushBoulder: { id: string, x: number, y: number } | null = null;
     let canHopGap: { id: string, x: number, y: number } | null = null;
     let canEnterCave = currentLayer < 0; // If underground, can always exit
+    let canRingChime: { x: number; y: number } | null = null;
     let closestRestDist = 32;
 
     for (const chunk of chunksNearPlayer) {
       for (const s of chunk.data.structures) {
+        if (s.type === 'wind_chime') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 36) canRingChime = { x: s.x, y: s.y };
+          continue;
+        }
+
         if (s.type === 'sanctuary_crystal') {
            const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
            if (d < 40) canInteractSanctuary = true;
@@ -1726,13 +1776,30 @@ const loop = new GameLoop({
           sparringHud.update();
         }
       }
-    } else if (currentRestSpot) {
+    } else if (canRingChime) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
-        interactIcon.textContent = '🪑';
-        interactLabel.textContent = `${currentRestSpot.label} [E]`;
+        interactIcon.textContent = '🎐';
+        interactLabel.textContent = 'Ring Wind Chime [E]';
       }
       if (inputState.interactPressed) {
+        audioSystem.unlock();
+        audioSystem.playChime(1.2);
+        for (let i = 0; i < 8; i++) {
+          particles.spawnRipple(canRingChime.x + (Math.random() - 0.5) * 12, canRingChime.y - 12 + (Math.random() - 0.5) * 8, 8);
+        }
+        showKeepsakeToast('🎐 Wind Chime', 'A melodious breeze resonates through bronze pipes.', 0);
+      }
+    } else if (currentRestSpot) {
+      const isCampfire = currentRestSpot.label === 'Warm by Fire';
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = isCampfire ? '🔥' : '🪑';
+        interactLabel.textContent = isCampfire
+          ? 'Warm by Fire [E] | Sleep till Dawn [Z]'
+          : `${currentRestSpot.label} [E]`;
+      }
+      if (inputState.interactPressed || (isCampfire && inputState.sleepPressed)) {
         player.action = 'sit';
         player.pos.x = currentRestSpot.x;
         player.pos.y = currentRestSpot.y;
@@ -1740,6 +1807,15 @@ const loop = new GameLoop({
         camera.targetZoom = 0.82;
         for (let s = 0; s < 4; s++) {
           particles.spawnFootstepDust(player.pos.x, player.pos.y, s * (Math.PI / 2));
+        }
+
+        if (isCampfire && inputState.sleepPressed) {
+          timeSystem.currentHour = 6.0; // Dawn 6:00 AM
+          saveManager.state.timeOfDay = 6.0;
+          for (let i = 0; i < 15; i++) {
+            particles.spawnRipple(player.pos.x + (Math.random() - 0.5) * 16, player.pos.y + (Math.random() - 0.5) * 16, 12);
+          }
+          showKeepsakeToast('☀️ Dawn Awakening', 'You rested beside the glowing embers until dawn. The party is fully refreshed.', 0);
         }
         
         let healed = false;
