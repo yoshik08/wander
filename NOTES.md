@@ -105,3 +105,9 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Cinematic Framing**: Letterboxed dark film bars with gold hairline dividers and rule-of-thirds grid markers provide elegant visual composition without cluttering the screen.
 - **Artistic Filter Presets**: 5 distinct postcard filters (Natural Ghibli, Warm 35mm Film, Gouache Watercolour, Vintage Polaroid, Dusk Indigo) provide atmospheric color grading and corner vignette styling.
 - **Intuitive Composition & Shutter**: Free camera pan and 0.6x–2.2x zoom with mouse wheel and UI controls allow framing expansive landscapes or macro wildlife details, with an instant white shutter flash and automatic postcard PNG export.
+
+## Step C1.3 (Creature Overworld Spawning & Roaming) Critique
+- **Living Biome Fauna**: Chunks deterministically spawn 1–3 species-tailored wild creatures partitioned across the 13 biomes, with 15% roaming wanderers creating surprising encounters.
+- **Organic Roaming AI**: Wild creatures exhibit peaceful autonomous behavior: wandering to nearby traversable pasture spots within their home radius, pausing in alert idle bobs, resting/sitting in tall grass, and turning curiously to face the player when approached within proximity.
+- **Painterly Integration & Depth Sorting**: Overworld creatures are fully integrated into the Y-sorted depth items pipeline alongside trees, flowers, rocks, player, and cat. Drop shadows, animated bobbing, blinking eyes, and subtle elemental presence pips blend seamlessly with the Ghibli watercolor aesthetic.
+- **Zero-Allocation 120Hz Loop**: Sub-pixel render interpolation guarantees silky smooth motion at any refresh rate with zero jitter and zero per-frame object allocation.

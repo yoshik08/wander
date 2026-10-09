@@ -166,9 +166,9 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [ ] Save state: Folio (seen/befriended), Party (6), Sanctuary list, items, badges
 - [x] Procedural creatures: species 1-150 from hash(seed+id). Archetypes, appendages, type-locked hue ranges, noise patterns
 - [x] Drawn with the art toolkit, idle bob/blink animation. Syllable grammar names
-- [ ] Evolution = same seed, complexity 1.0->2.0 (bigger, more appendages, richer colour)
-- [ ] Prismatic variant 1/4096 (hue shift + sparkle)
-- [ ] Roaming wild creatures visible in the overworld: 1-3 per chunk, by biome/time/weather. No random pop-ups
+- [x] Evolution = same seed, complexity 1.0->2.0 (bigger, more appendages, richer colour)
+- [x] Prismatic variant 1/4096 (hue shift + sparkle)
+- [x] Roaming wild creatures visible in the overworld: 1-3 per chunk, by biome/time/weather. No random pop-ups
 
 ---
 

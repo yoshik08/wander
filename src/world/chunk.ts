@@ -32,6 +32,14 @@ export interface KeepsakeInstance {
   collected?: boolean;
 }
 
+export interface CreatureInstance {
+  id: string;
+  speciesId: number;
+  x: number; // local chunk X
+  y: number; // local chunk Y
+  level: number;
+}
+
 export interface ChunkBufferData {
   chunkX: number;
   chunkY: number;
@@ -47,6 +55,7 @@ export interface ChunkBufferData {
   props: ChunkProp[];
   structures: StructureInstance[];
   keepsakes: KeepsakeInstance[];
+  creatures: CreatureInstance[];
 }
 
 export class Chunk {
@@ -66,6 +75,44 @@ export class Chunk {
       return false;
     }
     return this.data.collision[tileY * CHUNK_TILES + tileX] === 1;
+  }
+}
+
+export function pickSpeciesForBiome(biome: BiomeType, rng: PRNG): number {
+  // 15% chance to be a global wanderer
+  if (rng.range(0, 1) < 0.15) {
+    return rng.rangeInt(1, 151);
+  }
+  
+  switch (biome) {
+    case BiomeType.Meadow:
+      return rng.rangeInt(1, 21); // 1 - 20
+    case BiomeType.WildflowerFields:
+      return rng.rangeInt(21, 36); // 21 - 35
+    case BiomeType.BirchGrove:
+      return rng.rangeInt(36, 51); // 36 - 50
+    case BiomeType.PineForest:
+      return rng.rangeInt(51, 66); // 51 - 65
+    case BiomeType.CherryBlossom:
+      return rng.rangeInt(66, 76); // 66 - 75
+    case BiomeType.RockyCliffs:
+      return rng.rangeInt(76, 91); // 76 - 90
+    case BiomeType.MarshPonds:
+      return rng.rangeInt(91, 106); // 91 - 105
+    case BiomeType.LakesRivers:
+      return rng.rangeInt(106, 121); // 106 - 120
+    case BiomeType.SandyCoast:
+      return rng.rangeInt(121, 131); // 121 - 130
+    case BiomeType.AutumnMaple:
+      return rng.rangeInt(131, 141); // 131 - 140
+    case BiomeType.MistyHighlands:
+      return rng.rangeInt(141, 146); // 141 - 145
+    case BiomeType.SnowyPeaks:
+      return rng.rangeInt(146, 149); // 146 - 148
+    case BiomeType.GlowingHollow:
+      return rng.rangeInt(149, 151); // 149 - 150
+    default:
+      return rng.rangeInt(1, 151);
   }
 }
 
@@ -520,6 +567,43 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     }
   }
 
+  // 7. Creature Spawning (1-3 per chunk based on biome and deterministic PRNG)
+  const creatures: CreatureInstance[] = [];
+  const creatureRng = new PRNG(seedNum ^ (chunkX * 1337) ^ (chunkY * 9999));
+  
+  const isSpawnChunk = (chunkX === 0 && chunkY === 0);
+  const numCreatures = isSpawnChunk ? creatureRng.rangeInt(1, 3) : creatureRng.rangeInt(1, 4); // 1-2 in spawn, 1-3 elsewhere
+  for (let i = 0; i < numCreatures; i++) {
+    for (let attempts = 0; attempts < 15; attempts++) {
+      const tx = creatureRng.rangeInt(2, CHUNK_TILES - 3);
+      const ty = creatureRng.rangeInt(2, CHUNK_TILES - 3);
+      const idx = ty * CHUNK_TILES + tx;
+      
+      const wx = tx * TILE_SIZE + 12;
+      const wy = ty * TILE_SIZE + 12;
+      
+      // If spawn chunk, keep distance from player spawn (384, 384)
+      if (isSpawnChunk && Math.hypot(wx - 384, wy - 384) < 110) {
+        continue;
+      }
+      
+      if (collision[idx] === 0 && (tileFlags[idx] & TILE_FLAG_WATER) === 0) {
+        const tileBiome = biome[idx] as BiomeType;
+        const speciesId = pickSpeciesForBiome(tileBiome, creatureRng);
+        const level = isSpawnChunk ? creatureRng.rangeInt(2, 6) : creatureRng.rangeInt(2, 18);
+        
+        creatures.push({
+          id: `c_${chunkX}_${chunkY}_${i}`,
+          speciesId,
+          x: wx,
+          y: wy,
+          level
+        });
+        break;
+      }
+    }
+  }
+
   return {
     chunkX,
     chunkY,
@@ -534,6 +618,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     collision,
     props,
     structures,
-    keepsakes
+    keepsakes,
+    creatures
   };
 }

@@ -14,6 +14,7 @@ import { LightingSystem } from './systems/lighting';
 import { WeatherSystem } from './systems/weather';
 import { WildlifeSystem } from './entities/boids';
 import { Cat } from './entities/cat';
+import { WildCreatureManager } from './entities/wild-creature';
 import { DiegeticMap } from './ui/map';
 import { PhotoMode } from './ui/photo-mode';
 
@@ -38,6 +39,7 @@ const weather = new WeatherSystem(chunkManager.seed);
 const wildlife = new WildlifeSystem(chunkManager.seed);
 wildlife.spawnCreaturesAround(player.pos.x, player.pos.y);
 const cat = new Cat(player.pos.x + 24, player.pos.y + 12, 0);
+const wildCreatures = new WildCreatureManager();
 const diegeticMap = new DiegeticMap();
 const photoMode = new PhotoMode();
 
@@ -193,6 +195,7 @@ let showDebug = false;
 // Hook chunk GPU cleanup
 chunkManager.onChunkUnloaded = (chunk) => {
   renderer.freeChunk(chunk);
+  wildCreatures.onChunkUnloaded(chunk);
 };
 
 // Keepsake notification toast banner
@@ -393,6 +396,10 @@ const loop = new GameLoop({
         }
       }
     }
+
+    // Update wild creatures roaming in nearby chunks
+    wildCreatures.syncWithChunks(chunksNearPlayer, chunkManager.seedRaw);
+    wildCreatures.update(dt, time, (wx, wy) => chunkManager.isTraversable(wx, wy), player.pos);
 
     // 5. Rest Spots (Benches, Logs, Campfire sitting log)
     currentRestSpot = null;
@@ -667,6 +674,15 @@ const loop = new GameLoop({
       draw: () => cat.render(renderer, art, alpha, time)
     });
 
+    // Wild creatures in Depth sorting
+    for (const creature of wildCreatures.getActiveCreatures()) {
+      const crPos = creature.getInterpolatedPos(alpha);
+      depthItems.push({
+        baseY: crPos.y,
+        draw: () => creature.render(renderer, art, alpha, time, p)
+      });
+    }
+
     // Sort and Draw
     depthItems.sort((a, b) => a.baseY - b.baseY);
     for (const item of depthItems) {
@@ -793,6 +809,7 @@ const loop = new GameLoop({
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)} (${player.action})</div>
           <div>Companion: Cat (${cat.state})</div>
+          <div>Creatures: <span style="color: #A78BFA; font-weight: 600;">${wildCreatures.getActiveCreatures().length}</span> roaming</div>
           <div>Keepsakes: ${chunkManager.collectedKeepsakes.size} collected</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
           <div>Particles: ${particles.getActiveCount()} active</div>

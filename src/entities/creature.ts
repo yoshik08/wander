@@ -35,13 +35,13 @@ const SYLLABLES_MID = ['ble', 'in', 'lo', 'ia', 'en', 'os', 'el', 'ul', 'ra', 'k
 const SYLLABLES_END = ['ton', 'is', 'bus', 'fy', 'us', 'a', 'ix', 'ar', 'oth', 'um'];
 
 function generateName(rng: PRNG): string {
-  const parts = rng.rangeInt(2, 4);
+  const parts = rng.rangeInt(2, 3);
   let name = '';
-  name += SYLLABLES_START[rng.rangeInt(0, SYLLABLES_START.length)];
+  name += rng.pick(SYLLABLES_START);
   if (parts === 3) {
-    name += SYLLABLES_MID[rng.rangeInt(0, SYLLABLES_MID.length)];
+    name += rng.pick(SYLLABLES_MID);
   }
-  name += SYLLABLES_END[rng.rangeInt(0, SYLLABLES_END.length)];
+  name += rng.pick(SYLLABLES_END);
   return name;
 }
 
@@ -60,21 +60,17 @@ export function generateCreatureGenome(globalSeed: string | number, speciesId: n
   const seedNum = hashSeed(globalSeed);
   const rng = new PRNG(seedNum ^ (speciesId * 3812831));
   
-  const typeRoll = rng.rangeInt(0, 5);
   const types: CreatureType[] = ['Flora', 'Aqua', 'Ignis', 'Terra', 'Aero'];
-  const type = types[typeRoll];
+  const type = rng.pick(types);
 
-  const archRoll = rng.rangeInt(0, 5);
   const archetypes: Archetype[] = ['quadruped', 'biped', 'serpent', 'avian', 'blob'];
-  const archetype = archetypes[archRoll];
+  const archetype = rng.pick(archetypes);
 
-  const appRoll = rng.rangeInt(0, 6);
   const appendages: Appendage[] = ['horns', 'tails', 'wings', 'petals', 'fins', 'none'];
-  const appendage = appendages[appRoll];
+  const appendage = rng.pick(appendages);
 
-  const patRoll = rng.rangeInt(0, 4);
   const patterns: Pattern[] = ['fur', 'scales', 'bark', 'smooth'];
-  const pattern = patterns[patRoll];
+  const pattern = rng.pick(patterns);
 
   const name = generateName(rng);
   

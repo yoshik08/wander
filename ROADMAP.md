@@ -102,7 +102,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Risk**: *High*. Procedural drawing of diverse archetypes requires careful skeletal assembly in `art.ts` to avoid looking messy.
 - **Done When**: Console logs valid procedural creature data; 150 distinct species are generated deterministically.
 
-### Step C1.3: Creature Overworld Spawning
+### Step C1.3: Creature Overworld Spawning [x]
 - **Action**: Span 1-3 creatures per chunk based on biome/time/weather. Add idle bob/blink animations.
 - **Files**: `src/world/chunk.ts`, `src/main.ts`, `src/render/art.ts`
 - **Done When**: Creatures visually roam the map, correctly rendered using the art toolkit. No random pop-ups.
