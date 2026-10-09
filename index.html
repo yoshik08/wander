@@ -2,34 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="description" content="wander - A calm 2D top-down nature exploration game" />
-    <title>wander</title>
+    <meta name="theme-color" content="#416b3c" />
+    <meta name="description" content="MEADOW — An endless, cozy nature exploration world." />
+    <title>MEADOW</title>
     <style>
-      * {
+      *, *::before, *::after {
         box-sizing: border-box;
-      }
-      html, body {
         margin: 0;
         padding: 0;
+      }
+      html, body {
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #4f9b43;
-        touch-action: none;
+        background-color: #2d4c28;
+        color: #f7fafc;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         user-select: none;
         -webkit-user-select: none;
+        touch-action: none;
       }
-      canvas {
-        display: block;
+      #game-container {
+        position: relative;
         width: 100vw;
         height: 100vh;
+        overflow: hidden;
+      }
+      #game-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
         outline: none;
       }
     </style>
   </head>
   <body>
-    <script type="module" src="/src/engine/main.ts"></script>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

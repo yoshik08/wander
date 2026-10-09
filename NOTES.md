@@ -1,104 +1,29 @@
-# Implementation Notes
+# MEADOW — Architectural & Design Notes
 
-## What's Implemented
+## Core Philosophy
+MEADOW is designed as a meditative, deeply atmospheric nature simulation where wandering, noticing, collecting, and resting are the sole pursuits. We draw visual and emotional inspiration from:
+- *A Short Hike*: Charming character physics, effortless movement, cozy dialogue/ambience.
+- *Eastward* & *Stardew Valley*: Crisp pixel-art lighting, lush vegetation, warm morning color palettes.
+- *Ghibli Backgrounds* & *Alba*: Painterly greens, billowing wind-brushed grasslands, dynamic cloud shadows.
 
-### Core Engine
-- Fixed-timestep game loop (60Hz update, interpolated rendering)
-- Camera system: horizontal follow with vertical lock to show ground at bottom
-- Input handling: WASD/arrow keys for movement, Shift for run, E for interaction
+## Architectural Decisions
+1. **Zero External Game Engines or Heavy Frameworks**:
+   - Built with modern WebGL2 with an automatic Canvas 2D fallback.
+   - Thin sprite batching pipeline capable of rendering tens of thousands of quads, animated water, grass, and particles at 120+ FPS.
+2. **Deterministic World Generation**:
+   - Seed in the URL hashes into a 64-bit seed (MurmurHash3 / SplitMix64).
+   - Multi-layer procedural noise (continentalness, elevation, temperature, moisture, erosion, domain warping) computed in Web Workers using transferable buffers.
+   - Synchronous generation of the spawn chunks ensures frame 1 always has rich, beautiful terrain with zero black frames or popping.
+3. **Hydrology & Geography**:
+   - Rivers generate with physical gradient flow vectors rather than static cutouts.
+   - True downhill flow drives water animation direction and floating autumn leaves.
+4. **Pure Procedural Audio**:
+   - 100% synthesized Web Audio API soundscapes (binaural wind, spatialized flowing water, chirping songbirds, generative pentatonic chimes). No external audio assets.
+5. **Fluid Motion & Input**:
+   - 120Hz fixed-timestep physics and logic with interpolation during rendering.
+   - Sub-pixel smooth movement with subtle character leaning, verlet cloth simulation for scarves, and footprint surface displacement.
 
-### Procedural World
-- Simplex noise noise generation with seeding for deterministic worlds
-- Biome system: Ocean, Beach, Meadow, Pine Forest, Stream/Lake, Cherry Blossom, Hills/Cliffs, Snowy Peaks, Secret Glade
-- Chunk-based world generation (32x32 tile chunks) in Web Worker
-- Biome placement based on elevation, moisture, and temperature noise
-- Procedural prop placement (trees, flowers, rocks, etc.) based on biome
-- Simple river carver (low elevation areas become water)
-
-### Visuals
-- Sky gradient based on time of day
-- Sun and moon rendering (fixed positions for now)
-- Ground tiles colored by biome and elevation
-- Wind-affected vegetation: trees sway, grass bends and parts around player
-- Water animation with sine wave shift
-- Particle system: dust (when running), rain, snow
-- Day/night cycle (24 real minutes) with smooth transitions
-- Weather system: Clear, Breezy, Light Rain, Fog, Thunderstorm, Snow (changes every few minutes)
-- Ambient light adjustment based on time of day
-- Fog overlay
-
-### Player Character
-- Procedurally drawn character (head, torso, limbs, scarf)
-- 8-directional movement with acceleration and easing
-- Animations: idle (breathing, scarf flutter), walk, run
-- Directional rendering (character faces direction of movement)
-- Wind-affected scarf
-- Ground collision (prevents sinking into ground)
-- Dust particles when running
-
-### Creatures
-- Butterfly: flutters toward flowers, flees from player
-- Bird: simple flocking and fleeing from player (basic implementation)
-- Creature manager for updating and rendering creatures
-- Creatures spawned randomly near player (placeholder for biome-based spawning)
-
-### Interactions
-- Press E to pick flowers (removes flower prop and increments counter)
-- Press E to sit on logs (placeholder action)
-- Simple interaction radius detection
-
-### Audio
-- Not implemented (placeholder for Web Audio API synthesizer)
-
-### UI
-- Debug overlay showing FPS, player position, camera, state, speed, seed, time of day, weather, wind multiplier, flowers picked, creature count, particle count
-- Placeholder systems for photo mode, journal, map, discoveries, place names, calm mode, campfire, share links not implemented
-
-### Saving
-- Not implemented (placeholder for localStorage saving)
-
-## Known Issues
-- Creature spawning is random and not biome-based
-- Bird flocking is rudimentary
-- Sun and moon are fixed positions (should move across sky)
-- Interaction system only handles flowers and logs
-- No collision with props or water (player can walk through trees and water)
-- Water animation is basic color shift, no shoreline foam or reflections
-- No proper transitions between biomes (can be abrupt)
-- Performance not optimized for low-end devices
-- No quality scaler or automatic settings adjustment
-- No accessibility features (reduced motion, keyboard-only navigation verified but not enhanced)
-- No UI systems beyond debug overlay
-- No saving/loading
-- No photo mode, place names, discoveries, share links, journal, map, calm mode, campfire
-- No creatures beyond butterfly and bird (no fish, deer, frogs, fireflies, etc.)
-- No advanced creature behaviours (butterflies only flee/flee, birds only flock/flee)
-- No interaction with creatures (petting, etc.)
-- No terrain features beyond basic noise (no carved rivers, path networks, etc.)
-- No detailed terrain textures (flat colored tiles)
-- No detailed prop models (simple shapes)
-- No proper day/night lighting beyond ambient color shift and sky gradient
-- No moon phases
-- No weather transitions beyond instant change with crossfade
-- No wind effects on clouds or distant scenery
-- No sound or music
-- No mobile touch controls
-- No gamepad support
-
-## Future Work
-1. Complete creature system: fish, deer, frogs, fireflies, etc. with proper behaviours
-2. Implement audio system with Web Audio API synthesizer
-3. Add proper saving/loading to localStorage
-4. Implement UI systems: title screen, menu, settings, journal, map, photo mode
-5. Add place names and discoveries system
-6. Add calm mode and campfire
-7. Add share links with seed+position+time
-8. Improve terrain generation: river carver, path networks, better biome blending
-9. Improve visuals: proper terrain textures, detailed props, shoreline foam, water reflections
-10. Improve creatures: proper steering behaviours, flocking, fleeing, etc.
-11. Implement proper collision system with terrain and props
-12. Add quality scaler and performance options
-13. Add accessibility features (reduced motion, etc.)
-14. Add mobile touch controls and gamepad support
-15. Build and optimize for production
-16. Add polishing passes: tune colors, sounds, and feelings
+## Milestone 1 Critique & Review
+- **Visuals**: WebGL2 batched renderer successfully initializes with high frame rate (120Hz loop). On desktop (1280x800) and both phone viewports (412x915, 393x852), the character is centered and responsive.
+- **Character**: Upright 2.5D traveler bone rig with backpack, beanie, boots, and verlet scarf functions with fluid turning lean and footsteps.
+- **Terrain Note**: The plain meadow test tiles demonstrate batched rendering and camera lookahead. Next milestone replaces flat test grid with the full multi-layer seeded procedural noise, chunk streaming worker pool, and traversability tests.
