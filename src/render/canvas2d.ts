@@ -74,15 +74,172 @@ export class Canvas2DRenderer implements IRenderer {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    // Set camera transform in DPR space
+    // Set camera transform in DPR space, snapped to physical device pixels
+    const snappedX = Math.round(this.cameraPos.x * this.cameraZoom * this.dpr) / (this.cameraZoom * this.dpr);
+    const snappedY = Math.round(this.cameraPos.y * this.cameraZoom * this.dpr) / (this.cameraZoom * this.dpr);
     ctx.setTransform(
       this.dpr * this.cameraZoom,
       0,
       0,
       this.dpr * this.cameraZoom,
-      this.dpr * (this.width / 2 - this.cameraPos.x * this.cameraZoom),
-      this.dpr * (this.height / 2 - this.cameraPos.y * this.cameraZoom)
+      Math.round(this.dpr * this.width / 2 - snappedX * this.cameraZoom * this.dpr),
+      Math.round(this.dpr * this.height / 2 - snappedY * this.cameraZoom * this.dpr)
     );
+  }
+
+  drawChunkTerrain(chunk: any): void {
+    if (!chunk.renderCache) {
+      this.buildChunkCanvas(chunk);
+    }
+    const cache = chunk.renderCache;
+    if (!cache || !cache.canvas) return;
+
+    this.ctx.drawImage(cache.canvas, chunk.chunkX * 768, chunk.chunkY * 768);
+    this.drawCalls++;
+  }
+
+  drawChunkWater(chunk: any, time: number): void {
+    if (!chunk.renderCache) {
+      this.buildChunkCanvas(chunk);
+    }
+    const cache = chunk.renderCache;
+    if (!cache || !cache.waterTiles || cache.waterTiles.length === 0) return;
+
+    this.drawWaterBatch(cache.waterTiles, time);
+  }
+
+  drawChunkOverWater(chunk: any): void {
+    if (!chunk.renderCache) {
+      this.buildChunkCanvas(chunk);
+    }
+    const cache = chunk.renderCache;
+    if (!cache) return;
+
+    const ctx = this.ctx;
+    // Draw cached bridges
+    for (const b of cache.bridgeTiles) {
+      ctx.fillStyle = '#3E2723';
+      ctx.fillRect(b.wx, b.wy, 24, 24);
+
+      if (b.isHorizontal) {
+        for (let pIdx = 0; pIdx < 3; pIdx++) {
+          const px = b.wx + pIdx * 8;
+          ctx.fillStyle = '#6D4C41';
+          ctx.fillRect(px + 1, b.wy + 2, 6, 20);
+          ctx.fillStyle = '#8D6E63';
+          ctx.fillRect(px + 1, b.wy + 2, 2, 20);
+        }
+        ctx.fillStyle = '#4A2E16';
+        ctx.fillRect(b.wx, b.wy, 24, 2.5);
+        ctx.fillRect(b.wx, b.wy + 21.5, 24, 2.5);
+      } else {
+        for (let pIdx = 0; pIdx < 3; pIdx++) {
+          const py = b.wy + pIdx * 8;
+          ctx.fillStyle = '#6D4C41';
+          ctx.fillRect(b.wx + 2, py + 1, 20, 6);
+          ctx.fillStyle = '#8D6E63';
+          ctx.fillRect(b.wx + 2, py + 1, 20, 2);
+        }
+        ctx.fillStyle = '#4A2E16';
+        ctx.fillRect(b.wx, b.wy, 2.5, 24);
+        ctx.fillRect(b.wx + 21.5, b.wy, 2.5, 24);
+      }
+      this.drawCalls++;
+    }
+
+    // Draw cached stepping stones
+    for (const s of cache.steppingStones) {
+      this.drawCircle(s.wx + 12, s.wy + 13, 7, { r: 0.11, g: 0.15, b: 0.19, a: 0.35 });
+      this.drawCircle(s.wx + 12, s.wy + 11, 6.5, { r: 0.5, g: 0.55, b: 0.55, a: 1 });
+      this.drawCircle(s.wx + 10, s.wy + 9, 4, { r: 0.58, g: 0.65, b: 0.65, a: 1 });
+      this.drawCircle(s.wx + 14, s.wy + 12, 2.5, { r: 0.15, g: 0.68, b: 0.38, a: 0.7 });
+    }
+  }
+
+  freeChunk(chunk: any): void {
+    chunk.renderCache = null;
+  }
+
+  private buildChunkCanvas(chunk: any): void {
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = 768;
+    offCanvas.height = 768;
+    const offCtx = offCanvas.getContext('2d')!;
+
+    const baseWorldX = chunk.chunkX * 768;
+    const baseWorldY = chunk.chunkY * 768;
+    const data = chunk.data;
+
+    const waterTiles: WaterTileRenderData[] = [];
+    const bridgeTiles: any[] = [];
+    const steppingStones: any[] = [];
+
+    for (let ty = 0; ty < 32; ty++) {
+      for (let tx = 0; tx < 32; tx++) {
+        const idx = ty * 32 + tx;
+        const lx = tx * 24;
+        const ly = ty * 24;
+        const wx = baseWorldX + lx;
+        const wy = baseWorldY + ly;
+        const flag = data.tileFlags[idx];
+        const elev = data.elevation[idx];
+
+        if (flag === 1 || flag === 8) { // water / waterfall
+          offCtx.fillStyle = '#2D5432';
+          offCtx.fillRect(lx, ly, 24, 24);
+          waterTiles.push({
+            x: wx, y: wy, w: 24, h: 24,
+            flowX: data.flowDirX[idx], flowY: data.flowDirY[idx],
+            depth: elev < -0.45 ? 1.0 : 0.4,
+            foamMask: data.foamMask[idx],
+            isWaterfall: flag === 8
+          });
+        } else if (flag === 4) { // bridge
+          offCtx.fillStyle = '#2D5432';
+          offCtx.fillRect(lx, ly, 24, 24);
+          waterTiles.push({
+            x: wx, y: wy, w: 24, h: 24,
+            flowX: data.flowDirX[idx], flowY: data.flowDirY[idx],
+            depth: 0.7, foamMask: 0, isWaterfall: false
+          });
+          bridgeTiles.push({
+            wx, wy,
+            isHorizontal: Math.abs(data.flowDirX[idx]) <= Math.abs(data.flowDirY[idx])
+          });
+        } else if (flag === 16) { // stepping stone
+          offCtx.fillStyle = '#2D5432';
+          offCtx.fillRect(lx, ly, 24, 24);
+          waterTiles.push({
+            x: wx, y: wy, w: 24, h: 24,
+            flowX: data.flowDirX[idx], flowY: data.flowDirY[idx],
+            depth: 0.3, foamMask: data.foamMask[idx], isWaterfall: false
+          });
+          steppingStones.push({ wx, wy });
+        } else if (flag === 2) { // path
+          const pathHash = Math.abs(Math.sin(wx * 11.3 + wy * 67.1));
+          offCtx.fillStyle = pathHash > 0.5 ? '#93704C' : '#A1805B';
+          offCtx.fillRect(lx, ly, 24, 24);
+          if (pathHash > 0.75) {
+            offCtx.fillStyle = '#755635';
+            offCtx.fillRect(lx + 7, ly + 13, 3, 3);
+            offCtx.fillStyle = '#B3926B';
+            offCtx.fillRect(lx + 15, ly + 7, 2, 2);
+          }
+        } else {
+          // Land
+          const tileHash = Math.abs(Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453);
+          offCtx.fillStyle = tileHash > 0.55 ? '#4E8A42' : tileHash > 0.25 ? '#437B38' : '#589C4B';
+          offCtx.fillRect(lx, ly, 24, 24);
+        }
+      }
+    }
+
+    chunk.renderCache = {
+      canvas: offCanvas,
+      waterTiles,
+      bridgeTiles,
+      steppingStones
+    };
   }
 
   drawQuad(

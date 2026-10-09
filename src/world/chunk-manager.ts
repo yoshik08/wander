@@ -12,6 +12,7 @@ export class ChunkManager {
   private pendingRequests: Set<string> = new Set();
   private workers: Worker[] = [];
   private nextWorkerIdx: number = 0;
+  onChunkUnloaded?: (chunk: Chunk) => void;
 
   constructor(seedInput?: string | number) {
     // 1. Parse or generate seed
@@ -110,6 +111,9 @@ export class ChunkManager {
     for (const [key, chunk] of this.chunks.entries()) {
       const dist = Math.max(Math.abs(chunk.chunkX - centerChunkX), Math.abs(chunk.chunkY - centerChunkY));
       if (dist > CHUNK_UNLOAD_RADIUS) {
+        if (this.onChunkUnloaded) {
+          this.onChunkUnloaded(chunk);
+        }
         this.chunks.delete(key);
       }
     }

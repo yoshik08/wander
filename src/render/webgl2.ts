@@ -1,5 +1,17 @@
-import { ColorRGBA, Vec2, vec2 } from '../core/math';
+import { ColorRGBA, hexToRgba, Vec2, vec2 } from '../core/math';
 import { IRenderer, RenderStats, WaterTileRenderData } from './types';
+import {
+  CHUNK_TILES,
+  TILE_SIZE,
+  CHUNK_PIXEL_SIZE,
+  TILE_FLAG_WATER,
+  TILE_FLAG_WATERFALL,
+  TILE_FLAG_BRIDGE,
+  TILE_FLAG_STEPPING_STONE,
+  TILE_FLAG_PATH,
+  Chunk
+} from '../world/chunk';
+import { BIOMES, BiomeType } from '../world/biomes';
 
 const VERTEX_SHADER_SRC = `#version 300 es
 layout(location = 0) in vec2 a_pos;
@@ -10,10 +22,8 @@ uniform mat3 u_matrix;
 
 out vec2 v_uv;
 out vec4 v_color;
-out vec2 v_worldPos;
 
 void main() {
-  v_worldPos = a_pos;
   vec3 pos = u_matrix * vec3(a_pos, 1.0);
   gl_Position = vec4(pos.xy, 0.0, 1.0);
   v_uv = a_uv;
@@ -26,39 +36,11 @@ precision highp float;
 
 in vec2 v_uv;
 in vec4 v_color;
-in vec2 v_worldPos;
 
 out vec4 fragColor;
 
-float hash(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-}
-
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-}
-
 void main() {
-  // Domain warping for edges
-  vec2 warped = v_worldPos + vec2(noise(v_worldPos * 0.05) * 15.0, noise(v_worldPos * 0.05 + 42.0) * 15.0);
-  
-  // Macro noise (low frequency)
-  float n = noise(warped * 0.003);
-  
-  vec3 col = v_color.rgb;
-  
-  // If it's a grassy/natural color, apply the macro noise for sunlit/shaded patches
-  if (col.g > col.r && col.g > col.b && col.g > 0.3) {
-      col += (n - 0.4) * 0.15; // Shift lightness
-  }
-  
-  fragColor = vec4(col, v_color.a);
+  fragColor = v_color;
 }
 `;
 
@@ -100,72 +82,61 @@ uniform float u_time;
 
 out vec4 fragColor;
 
-vec2 random2(vec2 p) {
-    return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
-}
-
-float voronoi(vec2 x) {
-    vec2 n = floor(x);
-    vec2 f = fract(x);
-    float res = 8.0;
-    for(int j=-1; j<=1; j++)
-    for(int i=-1; i<=1; i++) {
-        vec2 b = vec2(float(i), float(j));
-        vec2 r = b - f + random2(n + b);
-        res = min(res, dot(r, r));
-    }
-    return sqrt(res);
-}
-
 void main() {
   float depth = v_props.x;
   int foamMask = int(v_props.y);
   float isWaterfall = v_props.z;
 
-  // 1. Base Depth Color Gradient
-  vec4 deepCol = vec4(0.42, 0.61, 0.71, 0.94);
-  vec4 shallowCol = vec4(0.57, 0.76, 0.85, 0.88);
+  // 1. Base Depth Color Gradient (Calm deep river teal to clear turquoise)
+  vec4 deepCol = vec4(0.09, 0.32, 0.46, 0.94);    // #175276
+  vec4 shallowCol = vec4(0.18, 0.58, 0.65, 0.88); // #2E94A6
   vec4 baseCol = mix(shallowCol, deepCol, clamp(depth, 0.0, 1.0));
 
-  // 2. Smooth Marching Squares Edge & Foam
-  bool n = (foamMask & 1) != 0;
-  bool s = (foamMask & 2) != 0;
-  bool e = (foamMask & 4) != 0;
-  bool w = (foamMask & 8) != 0;
-  
-  float distToLand = 1.0;
-  if (n) distToLand = min(distToLand, v_uv.y);
-  if (s) distToLand = min(distToLand, 1.0 - v_uv.y);
-  if (e) distToLand = min(distToLand, 1.0 - v_uv.x);
-  if (w) distToLand = min(distToLand, v_uv.x);
-  if (n && e) distToLand = min(distToLand, length(vec2(1.0 - v_uv.x, v_uv.y)));
-  if (n && w) distToLand = min(distToLand, length(vec2(v_uv.x, v_uv.y)));
-  if (s && e) distToLand = min(distToLand, length(vec2(1.0 - v_uv.x, 1.0 - v_uv.y)));
-  if (s && w) distToLand = min(distToLand, length(vec2(v_uv.x, 1.0 - v_uv.y)));
-  
-  float waveOffset = sin(v_worldPos.x * 0.1 + u_time * 2.0) * 0.03 + 0.02;
-  float actualEdge = distToLand - waveOffset;
-  
-  if (actualEdge < 0.0 && foamMask != 0) {
-      discard; // Transparent pixel (shows ground underneath)
-  }
-  
-  float foam = 0.0;
-  if (actualEdge < 0.08 && foamMask != 0) {
-      foam = 1.0;
-  }
-
-  // 3. Voronoi Caustics
+  // 2. Flow Mapping (Advected dual wave layers along flow vector)
   vec2 fDir = normalize(v_flow);
   if (length(v_flow) < 0.05) fDir = vec2(0.8, 0.3);
-  
-  float vNoise = voronoi(v_worldPos * 0.05 + fDir * (u_time * 0.8));
-  float caustics = smoothstep(0.05, 0.1, vNoise) - smoothstep(0.1, 0.15, vNoise);
-  vec4 causticsCol = vec4(1.0, 1.0, 1.0, 0.4);
 
-  vec4 foamCol = vec4(1.0, 1.0, 1.0, 0.5);
+  vec2 flowUV1 = v_worldPos * 0.04 + fDir * (u_time * 0.35);
+  vec2 flowUV2 = v_worldPos * 0.04 + fDir * (u_time * 0.35 + 0.5) + vec2(0.37, 0.81);
 
-  // 4. Waterfall Froth & Spray
+  float wave1 = sin(flowUV1.x * 6.28 + flowUV1.y * 3.14 + u_time * 1.8);
+  float wave2 = cos(flowUV2.x * 5.0 - flowUV2.y * 4.2 + u_time * 1.4);
+  float flowNoise = (wave1 + wave2) * 0.5;
+
+  // 3. Shimmer Highlights (Sun glints on surface)
+  float shimmer = smoothstep(0.65, 0.98, flowNoise);
+  vec4 shimmerCol = vec4(1.0, 1.0, 1.0, 0.65);
+
+  // 4. Shoreline Foam (Undulating foam where water meets land edges - no discard, no dark lines)
+  float foam = 0.0;
+  // Bit 0: North
+  if ((foamMask & 1) != 0 && v_uv.y < 0.25) {
+    float edgeDist = v_uv.y / 0.25;
+    float ripple = sin(v_worldPos.x * 0.4 + u_time * 2.5) * 0.15;
+    if (edgeDist < (0.8 + ripple)) foam = max(foam, (1.0 - edgeDist) * 0.85);
+  }
+  // Bit 1: South
+  if ((foamMask & 2) != 0 && v_uv.y > 0.75) {
+    float edgeDist = (1.0 - v_uv.y) / 0.25;
+    float ripple = cos(v_worldPos.x * 0.4 + u_time * 2.5) * 0.15;
+    if (edgeDist < (0.8 + ripple)) foam = max(foam, (1.0 - edgeDist) * 0.85);
+  }
+  // Bit 2: East
+  if ((foamMask & 4) != 0 && v_uv.x > 0.75) {
+    float edgeDist = (1.0 - v_uv.x) / 0.25;
+    float ripple = sin(v_worldPos.y * 0.4 + u_time * 2.5) * 0.15;
+    if (edgeDist < (0.8 + ripple)) foam = max(foam, (1.0 - edgeDist) * 0.85);
+  }
+  // Bit 3: West
+  if ((foamMask & 8) != 0 && v_uv.x < 0.25) {
+    float edgeDist = v_uv.x / 0.25;
+    float ripple = cos(v_worldPos.y * 0.4 + u_time * 2.5) * 0.15;
+    if (edgeDist < (0.8 + ripple)) foam = max(foam, (1.0 - edgeDist) * 0.85);
+  }
+
+  vec4 foamCol = vec4(0.95, 0.98, 1.0, 0.80);
+
+  // 5. Waterfall Froth & Spray
   if (isWaterfall > 0.5) {
     float fallSpeed = u_time * 14.0;
     float cascade = sin(v_worldPos.y * 0.6 - fallSpeed) * cos(v_worldPos.x * 0.8);
@@ -174,11 +145,8 @@ void main() {
     }
   }
 
-  vec4 finalCol = baseCol;
-  finalCol = mix(finalCol, causticsCol, caustics * 0.7);
-  if (foam > 0.0) {
-      finalCol = mix(finalCol, foamCol, foam); // 50% opacity foam
-  }
+  vec4 finalCol = mix(baseCol, shimmerCol, shimmer * 0.35);
+  finalCol = mix(finalCol, foamCol, clamp(foam, 0.0, 1.0));
 
   fragColor = finalCol;
 }
@@ -439,19 +407,341 @@ export class WebGL2Renderer implements IRenderer {
     const w = this.width;
     const h = this.height;
     const zoom = this.cameraZoom;
-    const cx = this.cameraPos.x;
-    const cy = this.cameraPos.y;
+    const dpr = this.dpr;
+
+    // Snap only final draw translation to physical device pixels to prevent any subpixel judder
+    const snappedX = Math.round(this.cameraPos.x * zoom * dpr) / (zoom * dpr);
+    const snappedY = Math.round(this.cameraPos.y * zoom * dpr) / (zoom * dpr);
 
     const sx = (2 * zoom) / w;
     const sy = (-2 * zoom) / h;
-    const tx = -cx * sx;
-    const ty = -cy * sy;
+    const tx = -snappedX * sx;
+    const ty = -snappedY * sy;
 
     return new Float32Array([
       sx, 0, 0,
       0, sy, 0,
       tx, ty, 1
     ]);
+  }
+
+  buildChunkMesh(chunk: Chunk): void {
+    const gl = this.gl;
+    const { chunkX, chunkY, data } = chunk;
+    const baseWorldX = chunkX * CHUNK_PIXEL_SIZE;
+    const baseWorldY = chunkY * CHUNK_PIXEL_SIZE;
+
+    // 1. Terrain Quads (Land, Paths, Pebbles, Riverbed under water)
+    const maxTerrainQuads = CHUNK_TILES * CHUNK_TILES + 300;
+    const terrainData = new Float32Array(maxTerrainQuads * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX);
+    let terrainQuadCount = 0;
+
+    const pushTerrainQuad = (x0: number, y0: number, w: number, h: number, col: ColorRGBA) => {
+      if (terrainQuadCount >= maxTerrainQuads) return;
+      const offset = terrainQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX;
+      const x1 = x0 + w;
+      const y1 = y0 + h;
+      const r = col.r, g = col.g, b = col.b, a = col.a;
+
+      terrainData[offset + 0] = x0; terrainData[offset + 1] = y0;
+      terrainData[offset + 2] = 0;  terrainData[offset + 3] = 0;
+      terrainData[offset + 4] = r;  terrainData[offset + 5] = g; terrainData[offset + 6] = b; terrainData[offset + 7] = a;
+
+      terrainData[offset + 8] = x1; terrainData[offset + 9] = y0;
+      terrainData[offset + 10] = 1; terrainData[offset + 11] = 0;
+      terrainData[offset + 12] = r; terrainData[offset + 13] = g; terrainData[offset + 14] = b; terrainData[offset + 15] = a;
+
+      terrainData[offset + 16] = x1; terrainData[offset + 17] = y1;
+      terrainData[offset + 18] = 1;  terrainData[offset + 19] = 1;
+      terrainData[offset + 20] = r;  terrainData[offset + 21] = g; terrainData[offset + 22] = b; terrainData[offset + 23] = a;
+
+      terrainData[offset + 24] = x0; terrainData[offset + 25] = y1;
+      terrainData[offset + 26] = 0;  terrainData[offset + 27] = 1;
+      terrainData[offset + 28] = r;  terrainData[offset + 29] = g; terrainData[offset + 30] = b; terrainData[offset + 31] = a;
+
+      terrainQuadCount++;
+    };
+
+    // 2. Water Quads (pos, uv, flow, props)
+    const maxWaterQuads = CHUNK_TILES * CHUNK_TILES;
+    const waterData = new Float32Array(maxWaterQuads * this.VERTICES_PER_QUAD * this.FLOATS_PER_WATER_VERTEX);
+    let waterQuadCount = 0;
+
+    const pushWaterQuad = (x0: number, y0: number, w: number, h: number, fx: number, fy: number, depth: number, foam: number, isFall: boolean) => {
+      if (waterQuadCount >= maxWaterQuads) return;
+      const offset = waterQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_WATER_VERTEX;
+      const x1 = x0 + w;
+      const y1 = y0 + h;
+      const fallVal = isFall ? 1.0 : 0.0;
+
+      waterData[offset + 0] = x0; waterData[offset + 1] = y0;
+      waterData[offset + 2] = 0;  waterData[offset + 3] = 0;
+      waterData[offset + 4] = fx; waterData[offset + 5] = fy;
+      waterData[offset + 6] = depth; waterData[offset + 7] = foam; waterData[offset + 8] = fallVal; waterData[offset + 9] = 0;
+
+      waterData[offset + 10] = x1; waterData[offset + 11] = y0;
+      waterData[offset + 12] = 1;  waterData[offset + 13] = 0;
+      waterData[offset + 14] = fx; waterData[offset + 15] = fy;
+      waterData[offset + 16] = depth; waterData[offset + 17] = foam; waterData[offset + 18] = fallVal; waterData[offset + 19] = 0;
+
+      waterData[offset + 20] = x1; waterData[offset + 21] = y1;
+      waterData[offset + 22] = 1;  waterData[offset + 23] = 1;
+      waterData[offset + 24] = fx; waterData[offset + 25] = fy;
+      waterData[offset + 26] = depth; waterData[offset + 27] = foam; waterData[offset + 28] = fallVal; waterData[offset + 29] = 0;
+
+      waterData[offset + 30] = x0; waterData[offset + 31] = y1;
+      waterData[offset + 32] = 0;  waterData[offset + 33] = 1;
+      waterData[offset + 34] = fx; waterData[offset + 35] = fy;
+      waterData[offset + 36] = depth; waterData[offset + 37] = foam; waterData[offset + 38] = fallVal; waterData[offset + 39] = 0;
+
+      waterQuadCount++;
+    };
+
+    // 3. Over-Water Quads (bridges, stepping stones)
+    const maxOverWaterQuads = 600;
+    const overWaterData = new Float32Array(maxOverWaterQuads * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX);
+    let overWaterQuadCount = 0;
+
+    const pushOverWaterQuad = (x0: number, y0: number, w: number, h: number, col: ColorRGBA) => {
+      if (overWaterQuadCount >= maxOverWaterQuads) return;
+      const offset = overWaterQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX;
+      const x1 = x0 + w;
+      const y1 = y0 + h;
+      const r = col.r, g = col.g, b = col.b, a = col.a;
+
+      overWaterData[offset + 0] = x0; overWaterData[offset + 1] = y0;
+      overWaterData[offset + 2] = 0;  overWaterData[offset + 3] = 0;
+      overWaterData[offset + 4] = r;  overWaterData[offset + 5] = g; overWaterData[offset + 6] = b; overWaterData[offset + 7] = a;
+
+      overWaterData[offset + 8] = x1; overWaterData[offset + 9] = y0;
+      overWaterData[offset + 10] = 1; overWaterData[offset + 11] = 0;
+      overWaterData[offset + 12] = r; overWaterData[offset + 13] = g; overWaterData[offset + 14] = b; overWaterData[offset + 15] = a;
+
+      overWaterData[offset + 16] = x1; overWaterData[offset + 17] = y1;
+      overWaterData[offset + 18] = 1;  overWaterData[offset + 19] = 1;
+      overWaterData[offset + 20] = r;  overWaterData[offset + 21] = g; overWaterData[offset + 22] = b; overWaterData[offset + 23] = a;
+
+      overWaterData[offset + 24] = x0; overWaterData[offset + 25] = y1;
+      overWaterData[offset + 26] = 0;  overWaterData[offset + 27] = 1;
+      overWaterData[offset + 28] = r;  overWaterData[offset + 29] = g; overWaterData[offset + 30] = b; overWaterData[offset + 31] = a;
+
+      overWaterQuadCount++;
+    };
+
+    for (let ty = 0; ty < CHUNK_TILES; ty++) {
+      for (let tx = 0; tx < CHUNK_TILES; tx++) {
+        const idx = ty * CHUNK_TILES + tx;
+        const wx = baseWorldX + tx * TILE_SIZE;
+        const wy = baseWorldY + ty * TILE_SIZE;
+
+        const bType = data.biome[idx] as BiomeType;
+        const biomeDef = BIOMES[bType] || BIOMES[BiomeType.Meadow];
+        const elev = data.elevation[idx];
+        const flag = data.tileFlags[idx];
+
+        if (flag === TILE_FLAG_WATER || flag === TILE_FLAG_WATERFALL) {
+          // Riverbed underneath so no dark/black gap
+          pushTerrainQuad(wx, wy, TILE_SIZE, TILE_SIZE, hexToRgba('#2D5432'));
+          // Water tile
+          pushWaterQuad(wx, wy, TILE_SIZE, TILE_SIZE, data.flowDirX[idx], data.flowDirY[idx], elev < -0.45 ? 1.0 : 0.4, data.foamMask[idx], flag === TILE_FLAG_WATERFALL);
+        } else if (flag === TILE_FLAG_BRIDGE) {
+          pushTerrainQuad(wx, wy, TILE_SIZE, TILE_SIZE, hexToRgba('#2D5432'));
+          pushWaterQuad(wx, wy, TILE_SIZE, TILE_SIZE, data.flowDirX[idx], data.flowDirY[idx], 0.7, 0, false);
+
+          // Bridge planks & railings (bridges only where path crosses water!)
+          const isHoriz = Math.abs(data.flowDirX[idx]) <= Math.abs(data.flowDirY[idx]);
+          pushOverWaterQuad(wx, wy, TILE_SIZE, TILE_SIZE, hexToRgba('#3E2723'));
+          if (isHoriz) {
+            for (let pIdx = 0; pIdx < 3; pIdx++) {
+              const px = wx + pIdx * 8;
+              pushOverWaterQuad(px + 1, wy + 2, 6, TILE_SIZE - 4, hexToRgba('#6D4C41'));
+              pushOverWaterQuad(px + 1, wy + 2, 2, TILE_SIZE - 4, hexToRgba('#8D6E63'));
+            }
+            pushOverWaterQuad(wx, wy, TILE_SIZE, 2.5, hexToRgba('#4A2E16'));
+            pushOverWaterQuad(wx, wy + TILE_SIZE - 2.5, TILE_SIZE, 2.5, hexToRgba('#4A2E16'));
+          } else {
+            for (let pIdx = 0; pIdx < 3; pIdx++) {
+              const py = wy + pIdx * 8;
+              pushOverWaterQuad(wx + 2, py + 1, TILE_SIZE - 4, 6, hexToRgba('#6D4C41'));
+              pushOverWaterQuad(wx + 2, py + 1, TILE_SIZE - 4, 2, hexToRgba('#8D6E63'));
+            }
+            pushOverWaterQuad(wx, wy, 2.5, TILE_SIZE, hexToRgba('#4A2E16'));
+            pushOverWaterQuad(wx + TILE_SIZE - 2.5, wy, 2.5, TILE_SIZE, hexToRgba('#4A2E16'));
+          }
+        } else if (flag === TILE_FLAG_STEPPING_STONE) {
+          pushTerrainQuad(wx, wy, TILE_SIZE, TILE_SIZE, hexToRgba('#2D5432'));
+          pushWaterQuad(wx, wy, TILE_SIZE, TILE_SIZE, data.flowDirX[idx], data.flowDirY[idx], 0.3, data.foamMask[idx], false);
+          pushOverWaterQuad(wx + 6, wy + 7, 12, 12, hexToRgba('#1B2631', 0.35));
+          pushOverWaterQuad(wx + 6, wy + 5, 12, 12, hexToRgba('#7F8C8D'));
+          pushOverWaterQuad(wx + 8, wy + 6, 6, 6, hexToRgba('#95A5A6'));
+          pushOverWaterQuad(wx + 12, wy + 10, 4, 4, hexToRgba('#27AE60', 0.7));
+        } else if (flag === TILE_FLAG_PATH) {
+          const pathHash = Math.abs(Math.sin(wx * 11.3 + wy * 67.1));
+          const pathColor = pathHash > 0.5 ? hexToRgba('#93704C') : hexToRgba('#A1805B');
+          pushTerrainQuad(wx, wy, TILE_SIZE, TILE_SIZE, pathColor);
+          if (pathHash > 0.75) {
+            pushTerrainQuad(wx + 7, wy + 13, 3, 3, hexToRgba('#755635', 0.8));
+            pushTerrainQuad(wx + 15, wy + 7, 2.5, 2.5, hexToRgba('#B3926B', 0.8));
+          }
+        } else {
+          // Natural land tile
+          const tileHash = Math.abs(Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453);
+          const baseCol = tileHash > 0.55
+            ? biomeDef.palette.groundPrimary
+            : tileHash > 0.25
+            ? biomeDef.palette.groundSecondary
+            : biomeDef.palette.groundAccent;
+
+          const macroShift = (Math.sin(wx * 0.004) * Math.cos(wy * 0.004)) * 0.06;
+          const col: ColorRGBA = {
+            r: Math.max(0, Math.min(1, baseCol.r + macroShift)),
+            g: Math.max(0, Math.min(1, baseCol.g + macroShift)),
+            b: Math.max(0, Math.min(1, baseCol.b + macroShift)),
+            a: baseCol.a
+          };
+          pushTerrainQuad(wx, wy, TILE_SIZE, TILE_SIZE, col);
+        }
+      }
+    }
+
+    // Build Terrain VAO/VBO
+    const terrainVao = gl.createVertexArray();
+    gl.bindVertexArray(terrainVao);
+    const terrainVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, terrainVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, terrainData.subarray(0, terrainQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
+
+    const stride = this.FLOATS_PER_VERTEX * 4;
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * 4);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 4 * 4);
+
+    // Build Water VAO/VBO if water exists
+    let waterVao: WebGLVertexArrayObject | null = null;
+    let waterVbo: WebGLBuffer | null = null;
+    if (waterQuadCount > 0) {
+      waterVao = gl.createVertexArray();
+      gl.bindVertexArray(waterVao);
+      waterVbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo);
+      gl.bufferData(gl.ARRAY_BUFFER, waterData.subarray(0, waterQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_WATER_VERTEX), gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.waterIbo);
+
+      const waterStride = this.FLOATS_PER_WATER_VERTEX * 4;
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, waterStride, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, waterStride, 2 * 4);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 2, gl.FLOAT, false, waterStride, 4 * 4);
+      gl.enableVertexAttribArray(3);
+      gl.vertexAttribPointer(3, 4, gl.FLOAT, false, waterStride, 6 * 4);
+    }
+
+    // Build Over-Water VAO/VBO if overWater exists
+    let overWaterVao: WebGLVertexArrayObject | null = null;
+    let overWaterVbo: WebGLBuffer | null = null;
+    if (overWaterQuadCount > 0) {
+      overWaterVao = gl.createVertexArray();
+      gl.bindVertexArray(overWaterVao);
+      overWaterVbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, overWaterVbo);
+      gl.bufferData(gl.ARRAY_BUFFER, overWaterData.subarray(0, overWaterQuadCount * this.VERTICES_PER_QUAD * this.FLOATS_PER_VERTEX), gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
+
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * 4);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 4 * 4);
+    }
+
+    gl.bindVertexArray(null);
+
+    chunk.renderCache = {
+      terrainVao,
+      terrainVbo,
+      terrainQuadCount,
+      waterVao,
+      waterVbo,
+      waterQuadCount,
+      overWaterVao,
+      overWaterVbo,
+      overWaterQuadCount
+    };
+  }
+
+  drawChunkTerrain(chunk: any): void {
+    if (!chunk.renderCache) {
+      this.buildChunkMesh(chunk);
+    }
+    const mesh = chunk.renderCache;
+    if (!mesh || mesh.terrainQuadCount === 0) return;
+
+    this.flush(); // Flush any pending dynamic quads
+
+    const gl = this.gl;
+    gl.useProgram(this.program);
+    gl.uniformMatrix3fv(this.uMatrixLoc, false, this.getMatrix());
+
+    gl.bindVertexArray(mesh.terrainVao);
+    gl.drawElements(gl.TRIANGLES, mesh.terrainQuadCount * this.INDICES_PER_QUAD, gl.UNSIGNED_SHORT, 0);
+    this.drawCalls++;
+  }
+
+  drawChunkWater(chunk: any, time: number): void {
+    if (!chunk.renderCache) {
+      this.buildChunkMesh(chunk);
+    }
+    const mesh = chunk.renderCache;
+    if (!mesh || !mesh.waterVao || mesh.waterQuadCount === 0) return;
+
+    this.flush(); // Flush any pending dynamic quads
+
+    const gl = this.gl;
+    gl.useProgram(this.waterProgram);
+    gl.uniformMatrix3fv(this.uWaterMatrixLoc, false, this.getMatrix());
+    gl.uniform1f(this.uWaterTimeLoc, time);
+
+    gl.bindVertexArray(mesh.waterVao);
+    gl.drawElements(gl.TRIANGLES, mesh.waterQuadCount * this.INDICES_PER_QUAD, gl.UNSIGNED_SHORT, 0);
+    this.drawCalls++;
+  }
+
+  drawChunkOverWater(chunk: any): void {
+    if (!chunk.renderCache) {
+      this.buildChunkMesh(chunk);
+    }
+    const mesh = chunk.renderCache;
+    if (!mesh || !mesh.overWaterVao || mesh.overWaterQuadCount === 0) return;
+
+    this.flush(); // Flush any pending dynamic quads
+
+    const gl = this.gl;
+    gl.useProgram(this.program);
+    gl.uniformMatrix3fv(this.uMatrixLoc, false, this.getMatrix());
+
+    gl.bindVertexArray(mesh.overWaterVao);
+    gl.drawElements(gl.TRIANGLES, mesh.overWaterQuadCount * this.INDICES_PER_QUAD, gl.UNSIGNED_SHORT, 0);
+    this.drawCalls++;
+  }
+
+  freeChunk(chunk: any): void {
+    const mesh = chunk.renderCache;
+    if (!mesh) return;
+    const gl = this.gl;
+    if (mesh.terrainVao) gl.deleteVertexArray(mesh.terrainVao);
+    if (mesh.terrainVbo) gl.deleteBuffer(mesh.terrainVbo);
+    if (mesh.waterVao) gl.deleteVertexArray(mesh.waterVao);
+    if (mesh.waterVbo) gl.deleteBuffer(mesh.waterVbo);
+    if (mesh.overWaterVao) gl.deleteVertexArray(mesh.overWaterVao);
+    if (mesh.overWaterVbo) gl.deleteBuffer(mesh.overWaterVbo);
+    chunk.renderCache = null;
   }
 
   flush(): void {

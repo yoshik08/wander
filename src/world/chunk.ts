@@ -42,6 +42,7 @@ export class Chunk {
   readonly chunkX: number;
   readonly chunkY: number;
   data: ChunkBufferData;
+  renderCache: any = null;
 
   constructor(chunkX: number, chunkY: number, data: ChunkBufferData) {
     this.chunkX = chunkX;
@@ -141,13 +142,17 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
       fx /= fLen;
       fy /= fLen;
 
-      // Smoothly blend spawn clearing (0, 0) into gentle meadow
-      const distFromOrigin = Math.hypot(worldX, worldY);
-      if (distFromOrigin < 150) {
-        const blend = Math.max(0, 1.0 - distFromOrigin / 150);
-        elev = elev * (1.0 - blend) + 0.28 * blend;
-        if (distFromOrigin < 90) {
-          isRiver = false;
+      // Smoothly blend spawn clearing into gentle meadow around (256, 256) in chunk (0, 0)
+      const spawnCenterX = CHUNK_PIXEL_SIZE / 2;
+      const spawnCenterY = CHUNK_PIXEL_SIZE / 2;
+      const distFromSpawn = Math.hypot(worldX - spawnCenterX, worldY - spawnCenterY);
+      if (chunkX === 0 && chunkY === 0) {
+        if (distFromSpawn < 160) {
+          const blend = Math.max(0, 1.0 - distFromSpawn / 160);
+          elev = elev * (1.0 - blend) + 0.28 * blend;
+          if (distFromSpawn < 90) {
+            isRiver = false;
+          }
         }
       } else if (isRiver) {
         elev = -0.42; // Riverbed water level
@@ -160,9 +165,9 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
       let isPath = pathVal < 0.024;
 
       // Connect spawn clearing to path network
-      if (distFromOrigin < 160) {
-        const spawnPathDist = Math.abs(worldY - Math.sin(worldX * 0.02) * 18 - 24);
-        if (spawnPathDist < 16) {
+      if (chunkX === 0 && chunkY === 0) {
+        const spawnTrailY = spawnCenterY + Math.sin((worldX - spawnCenterX) * 0.025) * 16;
+        if (worldX >= spawnCenterX - 24 && Math.abs(worldY - spawnTrailY) < 16) {
           isPath = true;
         }
       }
@@ -222,7 +227,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
 
       // Classify Biome
       let bType = isRiver ? BiomeType.LakesRivers : classifyBiome(elev, moist, temp, erosion);
-      if (distFromOrigin < 400 && !isRiver && !isWater) {
+      if (distFromSpawn < 400 && chunkX === 0 && chunkY === 0 && !isRiver && !isWater) {
         bType = BiomeType.Meadow;
       }
       biome[idx] = bType;
@@ -368,9 +373,6 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     }
   }
 
-  // 8. Traversability Guarantee (Flood Fill corridor check & bridge safeguard)
-  ensureChunkTraversability(collision, tileFlags);
-
   return {
     chunkX,
     chunkY,
@@ -386,25 +388,4 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     props,
     structures
   };
-}
-
-/**
- * Ensures a traversable corridor exists across the chunk so the player is never trapped.
- * If water crosses the guaranteed corridor, automatically convert it to a bridge!
- */
-function ensureChunkTraversability(collision: Uint8Array, tileFlags: Uint8Array): void {
-  const mid = Math.floor(CHUNK_TILES / 2);
-  for (let i = 0; i < CHUNK_TILES; i++) {
-    const idxH1 = mid * CHUNK_TILES + i;
-    const idxH2 = (mid + 1) * CHUNK_TILES + i;
-    const idxV1 = i * CHUNK_TILES + mid;
-    const idxV2 = i * CHUNK_TILES + (mid + 1);
-
-    for (const idx of [idxH1, idxH2, idxV1, idxV2]) {
-      collision[idx] = 0; // Ensure walkable
-      if (tileFlags[idx] === TILE_FLAG_WATER || tileFlags[idx] === TILE_FLAG_WATERFALL) {
-        tileFlags[idx] = TILE_FLAG_BRIDGE; // Bridges span water corridors!
-      }
-    }
-  }
 }

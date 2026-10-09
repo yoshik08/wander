@@ -19,6 +19,12 @@ export interface IRenderer {
   screenToWorld(screenX: number, screenY: number): Vec2;
   worldToScreen(worldX: number, worldY: number): Vec2;
 
+  // Chunk static caching
+  drawChunkTerrain(chunk: any): void;
+  drawChunkWater(chunk: any, time: number): void;
+  drawChunkOverWater(chunk: any): void;
+  freeChunk(chunk: any): void;
+
   // Drawing Primitives
   drawRect(x: number, y: number, w: number, h: number, color: ColorRGBA): void;
   drawCircle(x: number, y: number, radius: number, color: ColorRGBA): void;

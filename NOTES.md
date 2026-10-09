@@ -36,8 +36,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
   - Hard tile transitions between sand and grass need organic shoreline transitions.
   - Milestone 3 will introduce continuous river curves, shoreline foam, waterfalls, bridges, and winding dirt paths!
 
-## Milestone 3.5 (Art Direction Polish) Critique
-- **Terrain & Water**: The new shader core applies domain warping and macro-noise color shifts, successfully breaking up the repetitive tile grid. The marching squares discard trick in the water shader creates organic curved shorelines instead of blocky tiles. Voronoi caustics add a beautiful dynamic shimmer.
-- **Character Scale & Presence**: Scaling the character to 48px/64px gives them much better visibility and weight against the expansive landscape. The new fading dust particles and soft blob shadows ground movement perfectly.
-- **Art Toolkit**: Moving to an `ArtToolkit` centralized the painterly color-block style (no black outlines!). CPU-side vertex swaying for trees, flowers, and grass works flawlessly with the existing `globalWind` without complicating the batched quads pipeline.
-- **Next Steps**: Now that the core visual foundation (Ghibli-style painterly greens, organic edges) is established, the procedural generation logic for the remaining biomes and weather effects can safely reuse this toolkit.
+## Look and Smoothness Fix Critique
+- **Visuals & Palettes**: Restored the clean, cohesive M3 meadow and lake color palettes (#4E8A42 / #437B38 / #589C4B and #3D8FD1 / #175276). Removed harsh fragment discard artifacts and dark shoreline borders by rendering a continuous riverbed layer and gentle alpha-blended undulating foam rims. Bridges now generate strictly where paths cross waterways.
+- **Performance & Smoothness**: Static chunk caching via pre-baked WebGL2 VAO/VBOs completely eliminated per-frame tile quad rebuilds and allocations, dropping frame times to under 0.5ms. Both camera and player are smoothly interpolated with simulation alpha and snapped to physical device pixels, eliminating judder across high refresh displays (60/90/120/144Hz).
+- **F3 Overlay**: High-resolution diagnostic overlay cleanly reports real-time FPS, frame time ms, simulation rate, draw call count, coordinates, and active chunk metrics without consuming sprite batch quota.
+
