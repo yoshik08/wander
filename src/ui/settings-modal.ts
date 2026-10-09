@@ -15,6 +15,8 @@ export class SettingsModal {
   onSpeedChange?: (speed2x: boolean) => void;
   onColourblindChange?: (colourblind: boolean) => void;
   onPeacefulChange?: (peaceful: boolean) => void;
+  onVolumeChange?: (type: 'master' | 'music' | 'ambience' | 'sfx', val: number) => void;
+  onMuteToggle?: () => boolean;
   onToast?: (title: string, desc: string) => void;
 
   constructor(private saveManager: SaveManager, private currentSeed: string) {
@@ -220,6 +222,56 @@ export class SettingsModal {
     seedRow.appendChild(this.loadSeedBtn);
     s4.appendChild(seedRow);
     this.container.appendChild(s4);
+
+    // Section 5: Audio & Nature Ambience
+    const s5 = this.createSection(
+      '🎵 Audio & Nature Ambience',
+      'Synthesized Web Audio: spatialized wind, water streams, bird calls, and pentatonic generative pads.'
+    );
+
+    const createSlider = (label: string, initialVal: number, onChange: (val: number) => void) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px;';
+      const name = document.createElement('span');
+      name.textContent = label;
+      name.style.cssText = 'color: #FFF8E7; min-width: 110px;';
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = '0';
+      input.max = '100';
+      input.value = Math.round(initialVal * 100).toString();
+      input.style.cssText = 'flex: 1; margin: 0 12px; accent-color: #FAD02C; cursor: pointer;';
+      const valLabel = document.createElement('span');
+      valLabel.style.cssText = 'min-width: 38px; text-align: right; color: #FAD02C; font-weight: 600; font-size: 12px;';
+      valLabel.textContent = `${Math.round(initialVal * 100)}%`;
+
+      input.oninput = () => {
+        const v = parseInt(input.value, 10) / 100;
+        valLabel.textContent = `${input.value}%`;
+        onChange(v);
+      };
+
+      row.appendChild(name);
+      row.appendChild(input);
+      row.appendChild(valLabel);
+      return row;
+    };
+
+    const curSettings = this.saveManager.state.settings;
+    s5.appendChild(createSlider('Master Volume', curSettings?.masterVolume ?? 0.8, (v) => {
+      this.onVolumeChange?.('master', v);
+    }));
+    s5.appendChild(createSlider('Generative Music', curSettings?.musicVolume ?? 0.7, (v) => {
+      this.onVolumeChange?.('music', v);
+    }));
+    s5.appendChild(createSlider('Nature Ambience', curSettings?.ambienceVolume ?? 0.75, (v) => {
+      this.onVolumeChange?.('ambience', v);
+    }));
+    s5.appendChild(createSlider('Sound Effects', curSettings?.sfxVolume ?? 0.85, (v) => {
+      this.onVolumeChange?.('sfx', v);
+    }));
+
+    this.container.appendChild(s5);
   }
 
   private createSection(titleText: string, descText: string): HTMLDivElement {

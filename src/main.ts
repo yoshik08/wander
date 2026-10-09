@@ -33,6 +33,7 @@ import { JournalUI } from './ui/journal';
 import { LandmarkManager } from './world/landmarks';
 import { GardenSystem } from './world/garden';
 import { ActivityManager } from './entities/activities';
+import { AudioSystem } from './audio/engine';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -69,12 +70,63 @@ const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
 player.speedMultiplier = saveManager.state.settings?.speed2x ? 2.0 : 1.0;
+
+const audioSystem = new AudioSystem();
+if (saveManager.state.settings) {
+  if (saveManager.state.settings.masterVolume !== undefined) audioSystem.setMasterVolume(saveManager.state.settings.masterVolume);
+  if (saveManager.state.settings.musicVolume !== undefined) audioSystem.setMusicVolume(saveManager.state.settings.musicVolume);
+  if (saveManager.state.settings.ambienceVolume !== undefined) audioSystem.setAmbienceVolume(saveManager.state.settings.ambienceVolume);
+  if (saveManager.state.settings.sfxVolume !== undefined) audioSystem.setSfxVolume(saveManager.state.settings.sfxVolume);
+  if (saveManager.state.settings.muted) audioSystem.toggleMute();
+}
+
+const audioBtn = document.getElementById('audio-btn');
+const audioBtnIcon = document.getElementById('audio-btn-icon');
+if (audioBtn) {
+  if (saveManager.state.settings?.muted && audioBtnIcon) {
+    audioBtnIcon.textContent = '🔇 Muted';
+  }
+  audioBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    audioSystem.unlock();
+    const isMuted = audioSystem.toggleMute();
+    if (audioBtnIcon) {
+      audioBtnIcon.textContent = isMuted ? '🔇 Muted' : '🔊 Sound';
+    }
+    if (!saveManager.state.settings) {
+      saveManager.state.settings = { speed2x: false, colourblindMode: false, peacefulMode: false };
+    }
+    saveManager.state.settings.muted = isMuted;
+    saveManager.saveToLocalStorage();
+  });
+}
+
 const settingsModal = new SettingsModal(saveManager, chunkManager.seedRaw);
 settingsModal.onSpeedChange = (speed2x) => {
   player.speedMultiplier = speed2x ? 2.0 : 1.0;
 };
 settingsModal.onColourblindChange = (cb) => {
   sparringHud.colourblindMode = cb;
+};
+settingsModal.onVolumeChange = (type, val) => {
+  audioSystem.unlock();
+  if (!saveManager.state.settings) {
+    saveManager.state.settings = { speed2x: false, colourblindMode: false, peacefulMode: false };
+  }
+  if (type === 'master') {
+    audioSystem.setMasterVolume(val);
+    saveManager.state.settings.masterVolume = val;
+  } else if (type === 'music') {
+    audioSystem.setMusicVolume(val);
+    saveManager.state.settings.musicVolume = val;
+  } else if (type === 'ambience') {
+    audioSystem.setAmbienceVolume(val);
+    saveManager.state.settings.ambienceVolume = val;
+  } else if (type === 'sfx') {
+    audioSystem.setSfxVolume(val);
+    saveManager.state.settings.sfxVolume = val;
+  }
+  saveManager.saveToLocalStorage();
 };
 settingsModal.onToast = (title, desc) => {
   if (toastBanner && toastTitle && toastDesc && toastCount) {
@@ -103,6 +155,8 @@ const journalBtn = document.getElementById('journal-btn');
 if (journalBtn) {
   journalBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    audioSystem.unlock();
+    audioSystem.playButtonClick();
     journalUI.toggle();
   });
 }
@@ -382,7 +436,7 @@ let calmWanderAngle = 0;
 function toggleCalmMode(): void {
   isCalmMode = !isCalmMode;
   const settingsBtn = document.getElementById('settings-btn');
-  const hudButtons = [settingsBtn, photoBtn, mapBtn, journalBtn];
+  const hudButtons = [settingsBtn, photoBtn, mapBtn, journalBtn, audioBtn];
   for (const b of hudButtons) {
     if (b) {
       b.style.opacity = isCalmMode ? '0' : '1';
@@ -405,6 +459,7 @@ function togglePhotoMode(): void {
   const settingsBtn = document.getElementById('settings-btn');
   if (settingsBtn) settingsBtn.style.display = active ? 'none' : 'flex';
   if (journalBtn) journalBtn.style.display = active ? 'none' : 'flex';
+  if (audioBtn) audioBtn.style.display = active ? 'none' : 'flex';
   if (interactPrompt && active) interactPrompt.style.display = 'none';
   updatePhotoUI();
 }
@@ -475,6 +530,8 @@ const settingsBtn = document.getElementById('settings-btn');
 if (settingsBtn) {
   settingsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    audioSystem.unlock();
+    audioSystem.playButtonClick();
     settingsModal.toggle();
   });
 }
@@ -514,6 +571,8 @@ const mapBtn = document.getElementById('map-btn');
 if (mapBtn) {
   mapBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    audioSystem.unlock();
+    audioSystem.playButtonClick();
     diegeticMap.toggle();
   });
 }
@@ -635,7 +694,9 @@ if (interactPrompt) {
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
-  if (chunkManager.isWaterAt(currentLayer, pos.x, pos.y)) {
+  const isWater = chunkManager.isWaterAt(currentLayer, pos.x, pos.y);
+  audioSystem.playStep(isWater ? 'water' : 'grass');
+  if (isWater) {
     particles.spawnRipple(pos.x, pos.y, isRunning ? 18 : 12);
   } else {
     const wet = weather.getInfo().wetness;
@@ -683,6 +744,7 @@ const toastCount = document.getElementById('toast-count');
 let toastTimer: number | null = null;
 
 function showKeepsakeToast(name: string, desc: string, totalCount: number): void {
+  audioSystem.playFanfare();
   if (!toastBanner || !toastTitle || !toastDesc || !toastCount) return;
   toastTitle.textContent = `✨ Found: ${name}`;
   toastDesc.textContent = `"${desc}"`;
@@ -1728,6 +1790,21 @@ const loop = new GameLoop({
 
     // Advance 24-minute Day/Night Cycle
     timeSystem.update(dt);
+
+    // Modulate Procedural Web Audio Engine
+    const nearWater = chunkManager.isWaterAt(currentLayer, player.pos.x + 20, player.pos.y) ||
+                      chunkManager.isWaterAt(currentLayer, player.pos.x - 20, player.pos.y) ||
+                      chunkManager.isWaterAt(currentLayer, player.pos.x, player.pos.y + 20) ||
+                      chunkManager.isWaterAt(currentLayer, player.pos.x, player.pos.y - 20);
+    const waterProximity = nearWater ? 1.0 : (currentWaterSpot ? 0.8 : 0.0);
+    audioSystem.update(
+      dt,
+      timeSystem.getInfo().hour,
+      weatherInfo.windMultiplier,
+      weatherInfo.wetness,
+      waterProximity,
+      currentBiome
+    );
   },
 
   render: (alpha: number) => {

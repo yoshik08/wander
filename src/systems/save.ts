@@ -16,6 +16,11 @@ export interface GameSettings {
   speed2x: boolean;
   colourblindMode: boolean;
   peacefulMode: boolean;
+  masterVolume?: number;
+  musicVolume?: number;
+  ambienceVolume?: number;
+  sfxVolume?: number;
+  muted?: boolean;
 }
 
 export interface SavedGardenPlot {
