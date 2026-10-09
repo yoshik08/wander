@@ -1,5 +1,6 @@
 import { Player } from '../entities/player';
 import { Camera } from './camera';
+import { drawCharacter, CharacterParams } from '../art/character-rig';
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
@@ -36,8 +37,14 @@ window.addEventListener('keyup', (e) => {
 
 // Player movement constants
 const acceleration = 1000; // pixels per second^2
-const maxSpeed = 150; // pixels per second
+const baseMaxSpeed = 100; // pixels per second (walking)
+const runMaxSpeed = 200; // pixels per second (running)
 const friction = 0.9; // when no input
+
+// Character parameters
+const characterScale = 3;
+const characterColor = '#FF6B6B'; // default red
+const scarfColor = '#4ECDC4'; // default teal
 
 // Game loop
 function loop(now: number) {
@@ -73,6 +80,10 @@ function update(dt: number) {
     inputX /= len;
     inputY /= len;
   }
+
+  // Determine if running
+  const runModifier = keys['ShiftLeft'] || keys['ShiftRight'];
+  const maxSpeed = runModifier ? runMaxSpeed : baseMaxSpeed;
 
   // Apply acceleration
   player.vx += inputX * acceleration * dt;
@@ -111,11 +122,20 @@ function render(ctx: CanvasRenderingContext2D, alpha: number) {
   ctx.fillStyle = '#228B22';
   ctx.fillRect(-2000, -200, 4000, 200);
 
-  // Draw player with interpolation
-  const playerX = player.x + player.vx * alpha;
-  const playerY = player.y + player.vy * alpha;
-  ctx.fillStyle = '#FF0000'; // Red for player placeholder
-  ctx.fillRect(playerX - 8, playerY - 16, 16, 16); // 16x16 rectangle, feet at playerY
+  // Draw character
+  const charParams: CharacterParams = {
+    position: {
+      x: player.x,
+      y: player.y - 26 // offset so that feet are at player.y
+    },
+    direction: player.direction,
+    animation: player.animationState,
+    frame: player.animationFrame,
+    scale: characterScale,
+    color: characterColor,
+    scarfColor: scarfColor
+  };
+  drawCharacter(ctx, charParams);
 
   ctx.restore();
 
@@ -124,6 +144,9 @@ function render(ctx: CanvasRenderingContext2D, alpha: number) {
   ctx.font = '16px monospace';
   ctx.fillText(`Player: (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`, 10, 20);
   ctx.fillText(`Camera: (${camera.x.toFixed(1)}, ${camera.y.toFixed(1)})`, 10, 40);
+  ctx.fillText(`State: ${player.animationState} Frame: ${player.animationFrame}`, 10, 60);
+  ctx.fillText(`Dir: ${player.direction.toFixed(2)}`, 10, 80);
+  ctx.fillText(`Speed: ${Math.sqrt(player.vx*player.vx+player.vy*player.vy).toFixed(1)}`, 10, 100);
 }
 
 // Start the loop
