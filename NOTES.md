@@ -100,3 +100,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Calm Eased Presentation**: Pressing interact near wooden benches, mossy fallen logs, or campfire sitting logs smoothly seats the wanderer with legs folded forward, hands in lap, and serene closed eyes accompanied by slow rhythmic breathing.
 - **Cinematic Pull-Back & Companion Cohesion**: Camera smoothly eases to a 0.82 zoom panorama revealing the surrounding meadow and canopy, while the cat companion immediately trots over to curl up and sleep by the player's side.
 - **Intuitive Interaction**: A floating pill badge informs the player of the nearby rest opportunity and dismisses automatically; any directional movement or interact press seamlessly stands the wanderer back up without animation hitches.
+
+## Step 9.2 (Photo Mode & Postcard Filters) Critique
+- **Cinematic Framing**: Letterboxed dark film bars with gold hairline dividers and rule-of-thirds grid markers provide elegant visual composition without cluttering the screen.
+- **Artistic Filter Presets**: 5 distinct postcard filters (Natural Ghibli, Warm 35mm Film, Gouache Watercolour, Vintage Polaroid, Dusk Indigo) provide atmospheric color grading and corner vignette styling.
+- **Intuitive Composition & Shutter**: Free camera pan and 0.6x–2.2x zoom with mouse wheel and UI controls allow framing expansive landscapes or macro wildlife details, with an instant white shutter flash and automatic postcard PNG export.

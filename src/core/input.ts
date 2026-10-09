@@ -10,6 +10,8 @@ export interface InputState {
   journalPressed: boolean;  // J
   mapPressed: boolean;      // M
   photoPressed: boolean;    // P
+  filterPressed: boolean;   // F
+  actionPressed: boolean;   // Space
   menuPressed: boolean;     // Esc / Gamepad Start
   debugPressed: boolean;    // F3
 }
@@ -169,6 +171,8 @@ export class InputManager {
     const journalJust = Boolean(this.justPressed['KeyJ']);
     const mapJust = Boolean(this.justPressed['KeyM']);
     const photoJust = Boolean(this.justPressed['KeyP']);
+    const filterJust = Boolean(this.justPressed['KeyF']);
+    const actionJust = Boolean(this.justPressed['Space']);
     const menuJust = Boolean(this.justPressed['Escape']);
     const debugJust = Boolean(this.justPressed['F3']);
 
@@ -184,6 +188,8 @@ export class InputManager {
       journalPressed: journalJust,
       mapPressed: mapJust,
       photoPressed: photoJust,
+      filterPressed: filterJust,
+      actionPressed: actionJust,
       menuPressed: menuJust,
       debugPressed: debugJust
     };

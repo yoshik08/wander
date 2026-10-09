@@ -15,6 +15,7 @@ import { WeatherSystem } from './systems/weather';
 import { WildlifeSystem } from './entities/boids';
 import { Cat } from './entities/cat';
 import { DiegeticMap } from './ui/map';
+import { PhotoMode } from './ui/photo-mode';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -38,6 +39,81 @@ const wildlife = new WildlifeSystem(chunkManager.seed);
 wildlife.spawnCreaturesAround(player.pos.x, player.pos.y);
 const cat = new Cat(player.pos.x + 24, player.pos.y + 12, 0);
 const diegeticMap = new DiegeticMap();
+const photoMode = new PhotoMode();
+
+// Photo Mode Hooks
+const photoBtn = document.getElementById('photo-btn');
+const photoHud = document.getElementById('photo-hud');
+const photoFilterBtn = document.getElementById('photo-filter-btn');
+const photoFilterName = document.getElementById('photo-filter-name');
+const photoZoomOut = document.getElementById('photo-zoom-out');
+const photoZoomIn = document.getElementById('photo-zoom-in');
+const photoZoomLabel = document.getElementById('photo-zoom-label');
+const photoSnapBtn = document.getElementById('photo-snap-btn');
+const photoCloseBtn = document.getElementById('photo-close-btn');
+
+function togglePhotoMode(): void {
+  const active = photoMode.toggle(player.pos, camera.zoom);
+  if (photoHud) photoHud.style.display = active ? 'flex' : 'none';
+  if (photoBtn) photoBtn.style.display = active ? 'none' : 'flex';
+  if (mapBtn) mapBtn.style.display = active ? 'none' : 'flex';
+  if (interactPrompt && active) interactPrompt.style.display = 'none';
+  updatePhotoUI();
+}
+
+function updatePhotoUI(): void {
+  if (photoFilterName) photoFilterName.textContent = photoMode.getCurrentFilter().name;
+  if (photoZoomLabel) photoZoomLabel.textContent = `${photoMode.targetZoom.toFixed(1)}x`;
+}
+
+if (photoBtn) {
+  photoBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePhotoMode();
+  });
+}
+if (photoCloseBtn) {
+  photoCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePhotoMode();
+  });
+}
+if (photoFilterBtn) {
+  photoFilterBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    photoMode.cycleFilter();
+    updatePhotoUI();
+  });
+}
+if (photoZoomOut) {
+  photoZoomOut.addEventListener('click', (e) => {
+    e.stopPropagation();
+    photoMode.adjustZoom(-0.2);
+    updatePhotoUI();
+  });
+}
+if (photoZoomIn) {
+  photoZoomIn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    photoMode.adjustZoom(0.2);
+    updatePhotoUI();
+  });
+}
+if (photoSnapBtn) {
+  photoSnapBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    photoMode.triggerShutter(canvas);
+  });
+}
+
+// Mouse wheel zoom in photo mode
+window.addEventListener('wheel', (e) => {
+  if (photoMode.isActive) {
+    e.preventDefault();
+    photoMode.adjustZoom(e.deltaY < 0 ? 0.15 : -0.15);
+    updatePhotoUI();
+  }
+}, { passive: false });
 
 // Map UI button hook
 const mapBtn = document.getElementById('map-btn');
@@ -176,10 +252,26 @@ const loop = new GameLoop({
     }
     diegeticMap.update(dt);
 
-    if (diegeticMap.isOpen) {
+    if (inputState.photoPressed) {
+      togglePhotoMode();
+    }
+    if (inputState.menuPressed && photoMode.isActive) {
+      togglePhotoMode();
+    }
+    if (photoMode.isActive) {
+      if (inputState.filterPressed) {
+        photoMode.cycleFilter();
+        updatePhotoUI();
+      }
+      if (inputState.actionPressed) {
+        photoMode.triggerShutter(canvas);
+      }
+      photoMode.update(inputState.move, dt);
       inputState.move.x = 0;
       inputState.move.y = 0;
       inputState.isRunning = false;
+    } else {
+      photoMode.update(vec2(0, 0), dt);
     }
 
     // Dynamic wind modulation driven by weather
@@ -217,8 +309,17 @@ const loop = new GameLoop({
       player.vel.y = 0;
     }
 
-    // Update Camera with Lookahead
-    camera.update(player.pos, player.vel, dt);
+    // Update Camera with Lookahead (or follow Photo Mode pan target)
+    if (photoMode.isActive) {
+      camera.target.x = photoMode.panPos.x;
+      camera.target.y = photoMode.panPos.y;
+      camera.pos.x = photoMode.panPos.x;
+      camera.pos.y = photoMode.panPos.y;
+      camera.zoom = photoMode.zoom;
+      camera.targetZoom = photoMode.targetZoom;
+    } else {
+      camera.update(player.pos, player.vel, dt);
+    }
 
     // Stream and prune chunks around camera
     chunkManager.update(camera.pos.x, camera.pos.y);
@@ -663,10 +764,22 @@ const loop = new GameLoop({
     );
 
     // ==========================================
+    // LAYER 12: Photo Mode Letterbox & Postcard Filter
+    // ==========================================
+    photoMode.render(
+      renderer,
+      art,
+      renderer.width,
+      renderer.height,
+      camPos.x,
+      camPos.y
+    );
+
+    // ==========================================
     // LAYER 9: Debug Overlay (F3)
     // ==========================================
     if (debugOverlay) {
-      if (showDebug) {
+      if (showDebug && !photoMode.isActive) {
         const stats = renderer.getStats();
         const timeInfo = timeSystem.getInfo();
         const weatherInfo = weather.getInfo();

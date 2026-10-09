@@ -17,10 +17,12 @@
   - Milestone 8 (Step 8.1): Collectible Keepsakes (biome-specific items, floating bob, golden glow, proximity collection, glassmorphic toast notifications).
   - Milestone 8 (Step 8.2): Diegetic Map UI (parchment sheet, 7x7 explored chunks fog-of-war, landmark campfire pin, uncollected keepsake glints, player compass needle, cat companion pin).
   - Milestone 9 (Step 9.1): Resting on Benches & Logs (calm sit pose, peaceful breathing, eased 0.82 camera pull-back panorama, cat sleeping curl-up, interact prompt).
+  - Milestone C1 (Step C1.2): Procedural Creature Generation (Archetypes, appendages, patterns, 150 species, types).
+  - Milestone C2 (Step C2.1): Sparring State Machine (Resolve, elements, effectiveness loop).
 - **In progress**:
-  - Milestone 6 (Step 6.3): Four Advancing Seasons.
+  - Milestone C1 (Step C1.3): Creature Overworld Spawning.
 - **Next Item in ROADMAP.md**:
-  - Milestone 6 (Step 6.3): Four Advancing Seasons.
+  - Milestone C1 (Step C1.3): Creature Overworld Spawning.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
