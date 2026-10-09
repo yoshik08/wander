@@ -36,10 +36,11 @@
   - Milestone 6 (Step 6.3): Four Advancing Seasons (2-in-game-day cycles of Spring, Summer, Autumn, and Winter; seasonal foliage in ArtToolkit: autumn amber/russet oaks and golden birch, winter bare oaks and snow-capped pine tiers, seasonal atmospheric overlay tints).
   - Milestone 6 (Step 6.4): Post-rain Daylight Rainbow (screen-space spectral arc overlay with Red, Orange, Yellow, Green, Cyan, Blue, Violet bands, automatic fade in/out when rain stops during daylight).
   - Milestone 7 (Step 7.3): Ground Wildlife Species (deer grazing/fleeing AI, rabbits hopping cycles, foxes trotting/running, marsh frogs hopping, and nocturnal glowing fireflies integrated into depth-sorted layer 5 and atmosphere).
+  - Milestone 8 (Step 8.3): Interactive Journal ('J' toggle, HUD button, parchment album, watercolor keepsake stamps, completion tracker bar, and expedition folio stats logbook).
 - **Completed in this step**:
-  - Milestone 7 (Step 7.3): Ground Wildlife Species.
+  - Milestone 8 (Step 8.3): Interactive Journal.
 - **Next Item in ROADMAP.md**:
-  - Milestone 8 (Step 8.3): Interactive Journal ('J' toggle, parchment album, keepsakes log with watercolor stamps and biome/date discovered).
+  - Milestone 8 (Step 8.4): Landmarks & Place Names (poetic place name generator "Apricot Hollow", region boundary title cards, and hidden landmark discovery postcards).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

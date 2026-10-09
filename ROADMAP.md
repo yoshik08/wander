@@ -32,7 +32,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 8: Keepsakes, Journal & Map (Remaining)
 **Focus**: Lore and meta-progression.
 
-### Step 8.3: Interactive Journal
+### Step 8.3: Interactive Journal [x]
 - **Action**: Press 'J' to render an interactive journal UI overlay (using `canvas2d.ts` or DOM) that logs collected keepsakes with date found and watercolour stamps.
 - **Files**: `src/ui/journal.ts` (new), `src/main.ts`
 - **Done When**: The journal shows all found keepsakes.
