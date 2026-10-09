@@ -1,19 +1,13 @@
 # MEADOW — Project Handoff
 
 ## Current Status
-- **Current Milestone**: Completed Milestone 1. Ready for Milestone 2 (Seeded Infinite World & Worker Streaming).
+- **Current Milestone**: Completed Milestone 2. Ready for Milestone 3 (Hydrology, Water Shader, Paths, Bridges & Structures).
 - **Completed**:
-  - Clean slate setup replacing Wander entirely.
-  - Standing rules in `GEMINI.md`, task checklist in `PLAN.md`, design notes in `NOTES.md`.
-  - Custom WebGL2 batched renderer with automatic Canvas 2D fallback (`src/render/`).
-  - 120Hz fixed-timestep game loop with render interpolation and visibility change pausing (`src/core/loop.ts`).
-  - Unified multi-device input manager for keyboard, gamepad, and touch controls (`src/core/input.ts`).
-  - Smooth camera with lookahead and easing (`src/core/camera.ts`).
-  - Traveler bone rig with customizable colorways, hats, backpacks, and Verlet cloth simulation for the scarf (`src/entities/character.ts`, `src/entities/verlet.ts`).
-  - Strict TypeScript and Vite production build passing with 0 errors. Initial bundle is only 22 kB.
-  - Visual verification with screenshots on desktop (1280x800) and phones (412x915, 393x852).
+  - Milestone 0: Clean slate Vite + TS + Vitest setup, directory structure, strict configs.
+  - Milestone 1: Custom WebGL2 batched renderer with Canvas 2D fallback, 120Hz loop, unified input, camera with lookahead, 2.5D traveler bone rig with Verlet scarf.
+  - Milestone 2: Seeded PRNG suite (MurmurHash3 + Mulberry32), URL seed param, multi-layer noise pipeline, Web Worker chunk streaming with transferable buffers, synchronous spawn chunks, 13 distinct biomes, sliding collision, flat memory footprint, and 500-seed traversability test suite.
 - **Next Item in PLAN.md**:
-  - Milestone 2: Seeded infinite world (MurmurHash3 seed, URL seed param, multi-layer noise pipeline, Web Worker pool with transferable buffers, synchronous spawn chunks, collision mapping, and 500-seed traversability test).
+  - Milestone 3: Hydrology, Water Shader, Paths & Structures (downhill river flow network, waterfalls, custom water shader with flow mapping & shoreline foam, procedural winding dirt paths, wooden bridges, stepping stones, and sparse deterministic landmarks/structures).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

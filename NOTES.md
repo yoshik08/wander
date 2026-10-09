@@ -27,3 +27,11 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Visuals**: WebGL2 batched renderer successfully initializes with high frame rate (120Hz loop). On desktop (1280x800) and both phone viewports (412x915, 393x852), the character is centered and responsive.
 - **Character**: Upright 2.5D traveler bone rig with backpack, beanie, boots, and verlet scarf functions with fluid turning lean and footsteps.
 - **Terrain Note**: The plain meadow test tiles demonstrate batched rendering and camera lookahead. Next milestone replaces flat test grid with the full multi-layer seeded procedural noise, chunk streaming worker pool, and traversability tests.
+
+## Milestone 2 Critique & Review
+- **Streaming & Performance**: Worker pool with transferable buffers generates chunks smoothly in the background while synchronous spawn chunks guarantee immediate frame 1 display. Unloading beyond radius keeps chunk count capped (at ~49 active chunks) preventing memory leaks.
+- **Traversability**: 500-seed automated test validates that spawn points in all seeds have open walkable corridors without pocket entrapment.
+- **Visual Critique**:
+  - The river carver is functional but raw blocky tile steps look unnatural against the landscape.
+  - Hard tile transitions between sand and grass need organic shoreline transitions.
+  - Milestone 3 will introduce continuous river curves, shoreline foam, waterfalls, bridges, and winding dirt paths!

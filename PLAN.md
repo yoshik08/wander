@@ -27,14 +27,14 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 2: Seeded Infinite World & Worker Streaming
-- [ ] Seeded PRNG suite (MurmurHash3 / Mulberry32 / SplitMix64) supporting text and numeric seeds
-- [ ] Seed in URL parameter (`?seed=...`) with deterministic generation across devices
-- [ ] Multi-layer noise pipeline (continentalness, elevation, moisture, temperature, erosion, domain warping)
-- [ ] Web Worker pool for procedural chunk generation (32x32 tiles) with transferable buffers
-- [ ] Synchronous spawn chunk generation so frame 1 is never empty
-- [ ] Dynamic chunk streaming (load/unload radius) with flat memory footprint
-- [ ] Collision mapping (traversable vs blocked tiles)
-- [ ] Traversability verification test across 500 random seeds (spawn pocket prevention)
+- [x] Seeded PRNG suite (MurmurHash3 / Mulberry32 / SplitMix64) supporting text and numeric seeds
+- [x] Seed in URL parameter (`?seed=...`) with deterministic generation across devices
+- [x] Multi-layer noise pipeline (continentalness, elevation, moisture, temperature, erosion, domain warping)
+- [x] Web Worker pool for procedural chunk generation (32x32 tiles) with transferable buffers
+- [x] Synchronous spawn chunk generation so frame 1 is never empty
+- [x] Dynamic chunk streaming (load/unload radius) with flat memory footprint
+- [x] Collision mapping (traversable vs blocked tiles)
+- [x] Traversability verification test across 500 random seeds (spawn pocket prevention)
 
 ---
 
