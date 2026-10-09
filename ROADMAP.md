@@ -28,7 +28,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 5: Dynamic Lighting, Shadows & Post-Processing
 **Focus**: Time of day and cinematic lighting.
 
-### Step 5.1: Time of Day System & Overlays
+### [x] Step 5.1: Time of Day System & Overlays
 - **Action**: Implement a `TimeSystem` that tracks a 24-minute day cycle. Render a fullscreen overlay in `main.ts` using `renderer.drawRect` with blending, matching the spec colors (Dawn: peach 20%, Night: teal 60%).
 - **Files**: `src/systems/time.ts` (new), `src/main.ts`
 - **Done When**: The screen tint smoothly interpolates between Dawn, Noon, Dusk, and Night.

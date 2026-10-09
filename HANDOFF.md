@@ -9,10 +9,11 @@
   - Milestone 3: Hydrology, structures, bridges, paths.
   - Look and Smoothness Fix: Restored calm M3 palettes & water shader; static chunk GPU caching; camera & player simulation interpolation; final device-pixel snapping; F3 debug overlay; organic path bridges.
   - Milestone 4: Procedural Art, Wind Field & Particles (13 biomes, procedural props, wind field, CPU particle pool, dynamic grass parting, water ripples).
+  - Milestone 5 (Step 5.1): Time of Day System & Overlays (24-minute cycle, smooth dawn/morning/noon/golden hour/dusk/night lighting overlays).
 - **In progress**:
-  - Milestone 5 (Step 5.1): Time of Day System & Overlays.
-- **Next Item in ROADMAP.md**:
   - Milestone 5 (Step 5.2): Dynamic Sun Angles & Shadows.
+- **Next Item in ROADMAP.md**:
+  - Milestone 5 (Step 5.3): God Rays & Bloom.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

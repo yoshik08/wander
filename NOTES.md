@@ -51,5 +51,11 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Water Ripple Dynamics**: Walking into stream shallows or stepping stones now casts expanding perspective-ellipse ripple rings, accompanied by ambient water surface ripples across rivers.
 - **Zero-Allocation**: Grass parting is computed on-the-fly per visible instance against interpolated player coordinates without allocating arrays, maintaining zero garbage collection overhead.
 
+## Step 5.1 (Time of Day System & Overlays) Critique
+- **Lighting Atmosphere**: 24-minute full day/night cycle implemented with Ghibli-matched atmospheric overlays (Dawn peach #FFDAB9 at 20%, Noon clear, Golden Hour amber at 16%, Dusk violet/orange at 28%, Night teal #1A2436 at 58%).
+- **Smooth Transition**: The color grading tints interpolate smoothly using trigonometric easing so morning light progresses gracefully without abrupt color stepping.
+- **HUD & Readout**: F3 debug overlay cleanly reports the in-game clock (HH:MM format) and active time phase alongside simulation metrics.
+
+
 
 
