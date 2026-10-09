@@ -53,6 +53,31 @@ canvas.addEventListener('click', () => {
   }
 });
 
+// Rest Interaction Prompt Hook
+const interactPrompt = document.getElementById('interact-prompt');
+const interactIcon = document.getElementById('interact-icon');
+const interactLabel = document.getElementById('interact-label');
+let currentRestSpot: { x: number; y: number; label: string } | null = null;
+
+if (interactPrompt) {
+  interactPrompt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (player.action === 'sit') {
+      player.action = 'idle';
+      camera.targetZoom = 1.0;
+    } else if (currentRestSpot) {
+      player.action = 'sit';
+      player.pos.x = currentRestSpot.x;
+      player.pos.y = currentRestSpot.y;
+      player.facingAngle = Math.PI / 2;
+      camera.targetZoom = 0.82;
+      for (let s = 0; s < 4; s++) {
+        particles.spawnFootstepDust(player.pos.x, player.pos.y, s * (Math.PI / 2));
+      }
+    }
+  });
+}
+
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
   if (chunkManager.isWaterAt(pos.x, pos.y)) {
@@ -228,7 +253,7 @@ const loop = new GameLoop({
     );
 
     // Update cat companion
-    cat.update(dt, time, player.pos, player.vel, globalWind);
+    cat.update(dt, time, player.pos, player.vel, globalWind, player.action);
 
     // Ambient gentle water ripples (fish / breeze surface disturbances)
     if (Math.sin(time * 1.8) > 0.96) {
@@ -265,6 +290,75 @@ const loop = new GameLoop({
             showKeepsakeToast(k.name, k.desc, chunkManager.collectedKeepsakes.size);
           }
         }
+      }
+    }
+
+    // 5. Rest Spots (Benches, Logs, Campfire sitting log)
+    currentRestSpot = null;
+    let closestRestDist = 32;
+
+    for (const chunk of chunksNearPlayer) {
+      for (const s of chunk.data.structures) {
+        let spotX = s.x;
+        let spotY = s.y;
+        let label = 'Rest on Bench';
+        if (s.type === 'bench') {
+          spotX = s.x;
+          spotY = s.y + 1;
+          label = 'Rest on Bench';
+        } else if (s.type === 'sitting_log') {
+          spotX = s.x;
+          spotY = s.y + 1;
+          label = 'Rest on Log';
+        } else if (s.type === 'campfire') {
+          spotX = s.x + 17;
+          spotY = s.y + 2;
+          label = 'Warm by Fire';
+        } else {
+          continue;
+        }
+
+        const d = Math.hypot(player.pos.x - spotX, player.pos.y - spotY);
+        if (d < closestRestDist) {
+          closestRestDist = d;
+          currentRestSpot = { x: spotX, y: spotY, label };
+        }
+      }
+    }
+
+    if (player.action === 'sit') {
+      camera.targetZoom = 0.82;
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🌱';
+        interactLabel.textContent = 'Stand Up [E / Move]';
+      }
+      if (inputState.interactPressed) {
+        player.action = 'idle';
+        camera.targetZoom = 1.0;
+      }
+    } else if (currentRestSpot) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🪑';
+        interactLabel.textContent = `${currentRestSpot.label} [E]`;
+      }
+      if (inputState.interactPressed) {
+        player.action = 'sit';
+        player.pos.x = currentRestSpot.x;
+        player.pos.y = currentRestSpot.y;
+        player.facingAngle = Math.PI / 2;
+        camera.targetZoom = 0.82;
+        for (let s = 0; s < 4; s++) {
+          particles.spawnFootstepDust(player.pos.x, player.pos.y, s * (Math.PI / 2));
+        }
+      }
+    } else {
+      if (interactPrompt) {
+        interactPrompt.style.display = 'none';
+      }
+      if (camera.targetZoom !== 1.0) {
+        camera.targetZoom = 1.0;
       }
     }
 
@@ -584,7 +678,7 @@ const loop = new GameLoop({
           <div>Weather: <span style="color: #67E8F9; font-weight: 600;">${weatherInfo.name}</span> (wind: ${weatherInfo.windMultiplier.toFixed(1)}x, wetness: ${(weatherInfo.wetness * 100).toFixed(0)}%)</div>
           <div>Sim: 120Hz fixed (interp: ${alpha.toFixed(2)})</div>
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
-          <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>
+          <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)} (${player.action})</div>
           <div>Companion: Cat (${cat.state})</div>
           <div>Keepsakes: ${chunkManager.collectedKeepsakes.size} collected</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>

@@ -93,7 +93,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 
 ## Milestone 9: Calm Activities & Modes
 
-### Step 9.1: Resting on Benches & Logs
+### [x] Step 9.1: Resting on Benches & Logs
 - **Action**: Pressing 'E' or interact button near benches or fallen logs lets the wanderer sit down in a relaxed pose with smoothed camera zoom pull-back, breathing wind sighs, and cat curling up at their feet.
 - **Files**: `src/entities/character.ts`, `src/world/chunk.ts`, `src/main.ts`
 - **Done When**: Player sits on bench with eased camera pull-out, and stands up on movement.

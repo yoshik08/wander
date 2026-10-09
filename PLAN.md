@@ -106,7 +106,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 9: Calm Activities & Modes
-- [ ] Resting on benches and logs with eased camera pull-back
+- [x] Resting on benches and logs with eased camera pull-back
 - [ ] Stone skipping on lakes with bouncing physics
 - [ ] Timing-free relaxing fishing mini-activity
 - [ ] Wind chime interactions and campfire lighting / sleeping till morning

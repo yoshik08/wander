@@ -13,6 +13,7 @@ export type StructureType =
   | 'stone_circle'
   | 'campfire'
   | 'bench'
+  | 'sitting_log'
   | 'bridge'
   | 'stepping_stones';
 
@@ -211,17 +212,18 @@ export function generateChunkStructures(
     }
   }
 
-  // Scenic Bench or Campfire at trailside
+  // Scenic Bench, Sitting Log, or Campfire at trailside
   if (!isWater) {
-    const isCamp = chunkRng.next() > 0.5;
+    const roll = chunkRng.next();
+    const sType: StructureType = roll < 0.4 ? 'bench' : (roll < 0.7 ? 'sitting_log' : 'campfire');
     structures.push({
-      id: `${isCamp ? 'camp' : 'bench'}-${chunkX}-${chunkY}`,
-      type: isCamp ? 'campfire' : 'bench',
+      id: `${sType}-${chunkX}-${chunkY}`,
+      type: sType,
       x: structWorldX,
       y: structWorldY,
       baseY: structWorldY + 8,
-      width: isCamp ? 28 : 22,
-      height: isCamp ? 28 : 14,
+      width: sType === 'campfire' ? 28 : 26,
+      height: sType === 'campfire' ? 28 : 14,
       variant: 0,
       solidTiles: []
     });
@@ -263,7 +265,7 @@ export function renderStructure(
     else if (type === 'cottage') art.drawDropShadow(x, baseY, 42, 36);
     else if (type === 'lighthouse') art.drawDropShadow(x, baseY, 32, 60);
     else if (type === 'ruins') art.drawDropShadow(x, baseY, 28, 20);
-    else if (type === 'bench') art.drawDropShadow(x, baseY, 24, 8);
+    else if (type === 'bench' || type === 'sitting_log') art.drawDropShadow(x, baseY, 24, 8);
     else if (type === 'stone_circle') art.drawDropShadow(x, baseY, 32, 16);
   }
 
@@ -311,6 +313,22 @@ export function renderStructure(
       // Backrest slats
       renderer.drawRect(x - 12, y - 7, 24, 5, hexToRgba('#6D4C41'));
       renderer.drawRect(x - 11, y - 6, 22, 2, hexToRgba('#8D6E63'));
+      break;
+    }
+
+    case 'sitting_log': {
+      // Soft ground shadow
+      renderer.drawCircle(x, baseY, 14, hexToRgba('#1B2631', 0.25));
+
+      // Weathered cedar log trunk
+      renderer.drawRect(x - 13, y - 2, 26, 8, hexToRgba('#4E342E'));
+      renderer.drawRect(x - 12, y - 1, 24, 5, hexToRgba('#6D4C41'));
+      renderer.drawCircle(x - 13, y + 2, 3.5, hexToRgba('#8D6E63'));
+      renderer.drawCircle(x + 13, y + 2, 3.5, hexToRgba('#8D6E63'));
+
+      // Velvet moss patches on log top
+      renderer.drawRect(x - 6, y - 2, 9, 2, hexToRgba('#4CAF50', 0.85));
+      renderer.drawRect(x + 5, y - 1, 5, 2, hexToRgba('#66BB6A', 0.8));
       break;
     }
 

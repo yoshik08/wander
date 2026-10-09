@@ -2,6 +2,7 @@ import { Vec2, vec2, ColorRGBA, hexToRgba, lerpAngle, lerp } from '../core/math'
 import { VerletRope } from './verlet';
 import { IRenderer } from '../render/types';
 import { ArtToolkit } from '../render/art';
+import { CharacterAction } from './character';
 
 export type CatState = 'following' | 'sitting' | 'sleeping';
 
@@ -58,9 +59,40 @@ export class Cat {
     this.tailRope = new VerletRope(5, 3.2, vec2(spawnX, spawnY), 0.88);
   }
 
-  update(dt: number, time: number, playerPos: Vec2, playerVel: Vec2, wind: Vec2): void {
+  update(dt: number, time: number, playerPos: Vec2, playerVel: Vec2, wind: Vec2, playerAction: CharacterAction = 'idle'): void {
     this.prevPos.x = this.pos.x;
     this.prevPos.y = this.pos.y;
+
+    if (playerAction === 'sit') {
+      // Wanderer is peacefully resting on a bench or log!
+      // Cat curls up immediately at their feet
+      const benchSpotX = playerPos.x + 14;
+      const benchSpotY = playerPos.y + 6;
+      const distToBenchSpot = Math.hypot(benchSpotX - this.pos.x, benchSpotY - this.pos.y);
+      if (distToBenchSpot > 4) {
+        const moveAngle = Math.atan2(benchSpotY - this.pos.y, benchSpotX - this.pos.x);
+        this.facingAngle = lerpAngle(this.facingAngle, moveAngle, Math.min(1.0, 10.0 * dt));
+        this.vel.x = Math.cos(moveAngle) * 55;
+        this.vel.y = Math.sin(moveAngle) * 55;
+        this.trotCycle += dt * 10;
+        this.state = 'following';
+      } else {
+        this.vel.x = 0;
+        this.vel.y = 0;
+        this.state = 'sleeping';
+      }
+      this.pos.x += this.vel.x * dt;
+      this.pos.y += this.vel.y * dt;
+
+      // Update tail curling around resting body
+      const tailAnchor = vec2(
+        this.pos.x - Math.cos(this.facingAngle) * 7,
+        this.pos.y - Math.sin(this.facingAngle) * 3
+      );
+      const tailCurlForce = vec2(-Math.cos(this.facingAngle) * 8, 4);
+      this.tailRope.update(tailAnchor, tailCurlForce, dt);
+      return;
+    }
 
     // Calculate distance and follow target relative to player
     const dx = playerPos.x - this.pos.x;

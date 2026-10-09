@@ -95,3 +95,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Vellum Parchment Aesthetic**: Responsive antique vellum sheet with weathered sepia borders, drop shadows, and corner brackets creates an authentic explorer feel without jarring modern UI elements.
 - **Fog of War & Biome Grid**: 7x7 chunk grid dynamically reveals traversed domains with biome-accurate color fills, water markers, landmark campfire pins, and uncollected keepsake glints.
 - **Orientation & Zero Allocation**: Player heading needle, companion cat icon, and top-right compass rose provide clear situational orientation while maintaining strict zero-allocation scratch color structs for 120Hz smooth operation.
+
+## Step 9.1 (Resting on Benches & Logs) Critique
+- **Calm Eased Presentation**: Pressing interact near wooden benches, mossy fallen logs, or campfire sitting logs smoothly seats the wanderer with legs folded forward, hands in lap, and serene closed eyes accompanied by slow rhythmic breathing.
+- **Cinematic Pull-Back & Companion Cohesion**: Camera smoothly eases to a 0.82 zoom panorama revealing the surrounding meadow and canopy, while the cat companion immediately trots over to curl up and sleep by the player's side.
+- **Intuitive Interaction**: A floating pill badge informs the player of the nearby rest opportunity and dismisses automatically; any directional movement or interact press seamlessly stands the wanderer back up without animation hitches.

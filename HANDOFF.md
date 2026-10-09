@@ -16,10 +16,11 @@
   - Milestone 7 (Step 7.2): The Cat Companion (feline companion with follow, sit, curled sleep states, Verlet rope tail, ear twitches, blinks, and trot physics).
   - Milestone 8 (Step 8.1): Collectible Keepsakes (biome-specific items, floating bob, golden glow, proximity collection, glassmorphic toast notifications).
   - Milestone 8 (Step 8.2): Diegetic Map UI (parchment sheet, 7x7 explored chunks fog-of-war, landmark campfire pin, uncollected keepsake glints, player compass needle, cat companion pin).
+  - Milestone 9 (Step 9.1): Resting on Benches & Logs (calm sit pose, peaceful breathing, eased 0.82 camera pull-back panorama, cat sleeping curl-up, interact prompt).
 - **In progress**:
-  - Milestone 9 (Step 9.1): Resting on Benches & Logs.
+  - Milestone 9 (Step 9.2): Photo Mode & Postcard Filters.
 - **Next Item in ROADMAP.md**:
-  - Milestone 9 (Step 9.1): Resting on Benches & Logs.
+  - Milestone 9 (Step 9.2): Photo Mode & Postcard Filters.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

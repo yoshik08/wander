@@ -73,6 +73,25 @@ export class Character {
     const hasInput = Math.hypot(inputMove.x, inputMove.y) > 0.05;
     const targetSpeed = isRunningInput ? this.runSpeed : this.walkSpeed;
 
+    if (this.action === 'sit') {
+      if (hasInput) {
+        // Player pushed movement controls: stand up!
+        this.action = 'idle';
+      } else {
+        // Remain seated peacefully
+        this.vel.x = 0;
+        this.vel.y = 0;
+        this.turnLean = lerp(this.turnLean, 0, 1 - Math.exp(-8 * dt));
+        this.walkCycle += dt * 1.5; // slow calm breathing cycle
+
+        // Scarf rests calmly with gentle breeze & gravity
+        const neckAnchor = vec2(this.pos.x, this.pos.y - 12);
+        const scarfForce = vec2(windForce.x * 12, windForce.y * 12 + 15);
+        this.scarfRope.update(neckAnchor, scarfForce, dt);
+        return;
+      }
+    }
+
     if (hasInput) {
       this.vel.x += inputMove.x * this.accel * dt;
       this.vel.y += inputMove.y * this.accel * dt;
@@ -173,10 +192,13 @@ export class Character {
     art.drawCharacterShadow(p.x, p.y, s);
 
     // 3. Animation Swings
-    const swing = this.action === 'idle' ? 0 : Math.sin(this.walkCycle);
-    const bob = this.action === 'idle'
-      ? Math.sin(this.walkCycle) * 0.6 * s
-      : Math.abs(Math.sin(this.walkCycle)) * -1.8 * s;
+    const isSitting = this.action === 'sit';
+    const swing = (this.action === 'idle' || isSitting) ? 0 : Math.sin(this.walkCycle);
+    const bob = isSitting
+      ? Math.sin(this.walkCycle) * 0.4 * s - 2.0 * s
+      : (this.action === 'idle'
+        ? Math.sin(this.walkCycle) * 0.6 * s
+        : Math.abs(Math.sin(this.walkCycle)) * -1.8 * s);
 
     let ang = this.facingAngle;
     while (ang > Math.PI) ang -= Math.PI * 2;
@@ -188,15 +210,23 @@ export class Character {
     const isFacingLeft = Math.abs(ang) >= Math.PI * 0.75;
 
     // 4. Legs & Boots
-    const legL_X = p.x - 2.5 * s;
-    const legR_X = p.x + 1.5 * s;
-    const legSwingOffset = swing * 2.5 * s;
+    if (isSitting) {
+      // Relaxed forward legs over seat edge
+      renderer.drawRect(p.x - 3.8 * s, p.y - 3.0 * s, 3.2 * s, 3.0 * s, pantsColor);
+      renderer.drawRect(p.x + 0.6 * s, p.y - 3.0 * s, 3.2 * s, 3.0 * s, pantsColor);
+      renderer.drawRect(p.x - 4.2 * s, p.y - 0.8 * s, 3.6 * s, 2.2 * s, bootColor);
+      renderer.drawRect(p.x + 0.6 * s, p.y - 0.8 * s, 3.6 * s, 2.2 * s, bootColor);
+    } else {
+      const legL_X = p.x - 2.5 * s;
+      const legR_X = p.x + 1.5 * s;
+      const legSwingOffset = swing * 2.5 * s;
 
-    renderer.drawRect(legL_X, p.y - 6*s + bob + legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
-    renderer.drawRect(legL_X - 0.5*s, p.y - 2*s + legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
+      renderer.drawRect(legL_X, p.y - 6*s + bob + legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
+      renderer.drawRect(legL_X - 0.5*s, p.y - 2*s + legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
 
-    renderer.drawRect(legR_X, p.y - 6*s + bob - legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
-    renderer.drawRect(legR_X - 0.5*s, p.y - 2*s - legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
+      renderer.drawRect(legR_X, p.y - 6*s + bob - legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
+      renderer.drawRect(legR_X - 0.5*s, p.y - 2*s - legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
+    }
 
     // 5. Backpack
     const torsoY = p.y - 14*s + bob;
@@ -214,13 +244,22 @@ export class Character {
     renderer.drawRect(p.x - 4.5*s, torsoY, 9*s, 2*s, hexToRgba('#FFFFFF', 0.2));
 
     // Arms
-    const armSwingL = -swing * 3 * s;
-    const armSwingR = swing * 3 * s;
-    renderer.drawRect(p.x - 6*s, torsoY + 1.5*s + armSwingL * 0.4, 2.5*s, 5.5*s, coatColor);
-    renderer.drawRect(p.x - 5.5*s, torsoY + 7*s + armSwingL * 0.4, 2*s, 2*s, skinColor);
+    if (isSitting) {
+      // Hands resting peacefully on lap/knees
+      renderer.drawRect(p.x - 5.5 * s, torsoY + 2.0 * s, 2.2 * s, 4.5 * s, coatColor);
+      renderer.drawRect(p.x - 4.5 * s, torsoY + 6.0 * s, 2.2 * s, 2.0 * s, skinColor);
 
-    renderer.drawRect(p.x + 3.5*s, torsoY + 1.5*s + armSwingR * 0.4, 2.5*s, 5.5*s, coatColor);
-    renderer.drawRect(p.x + 3.5*s, torsoY + 7*s + armSwingR * 0.4, 2*s, 2*s, skinColor);
+      renderer.drawRect(p.x + 3.3 * s, torsoY + 2.0 * s, 2.2 * s, 4.5 * s, coatColor);
+      renderer.drawRect(p.x + 2.3 * s, torsoY + 6.0 * s, 2.2 * s, 2.0 * s, skinColor);
+    } else {
+      const armSwingL = -swing * 3 * s;
+      const armSwingR = swing * 3 * s;
+      renderer.drawRect(p.x - 6*s, torsoY + 1.5*s + armSwingL * 0.4, 2.5*s, 5.5*s, coatColor);
+      renderer.drawRect(p.x - 5.5*s, torsoY + 7*s + armSwingL * 0.4, 2*s, 2*s, skinColor);
+
+      renderer.drawRect(p.x + 3.5*s, torsoY + 1.5*s + armSwingR * 0.4, 2.5*s, 5.5*s, coatColor);
+      renderer.drawRect(p.x + 3.5*s, torsoY + 7*s + armSwingR * 0.4, 2*s, 2*s, skinColor);
+    }
 
     // 7. Head & Hair
     const headY = torsoY - 6.5*s;
@@ -236,7 +275,13 @@ export class Character {
         renderer.drawRect(p.x - 7.5*s, headY - 1.5*s, 15*s, 2*s, hexToRgba('#F4D06F'));
         renderer.drawRect(p.x - 4*s, headY - 4.5*s, 8*s, 3.5*s, hexToRgba('#D4AC0D'));
       }
-      if (isFacingDown) {
+      if (isSitting) {
+        // Serene curved closed eyes while resting
+        renderer.drawRect(p.x - 2.8 * s, headY + 0.8 * s, 2.0 * s, 0.8 * s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x + 0.8 * s, headY + 0.8 * s, 2.0 * s, 0.8 * s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x - 3.8 * s, headY + 2.2 * s, 1.8 * s, 1.2 * s, hexToRgba('#E74C3C', 0.5));
+        renderer.drawRect(p.x + 2.0 * s, headY + 2.2 * s, 1.8 * s, 1.2 * s, hexToRgba('#E74C3C', 0.5));
+      } else if (isFacingDown) {
         renderer.drawRect(p.x - 2.5*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
         renderer.drawRect(p.x + 1.1*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
         renderer.drawRect(p.x - 3.8*s, headY + 2.2*s, 1.8*s, 1.2*s, hexToRgba('#E74C3C', 0.5));
