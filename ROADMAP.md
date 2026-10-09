@@ -153,5 +153,5 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ---
 
 ## Milestone C8: Easter Eggs and QoL
-- **Step C8.1**: Glitch shaders, meteor showers, dev tools map.
+- [x] **Step C8.1**: Glitch shaders, meteor showers, dev tools map.
 - **Step C8.2**: 2x speed, colourblind icons, No-Combat mode.

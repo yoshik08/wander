@@ -22,6 +22,7 @@ import { PhotoMode } from './ui/photo-mode';
 import { SaveManager } from './systems/save';
 import { NPCManager, Warden, RivalWanderer } from './entities/npc';
 import { ApexMythManager, ApexCreature, RoamingMyth } from './entities/apex-myths';
+import { EasterEggSystem } from './systems/easter-eggs';
 import { SparringSystem, Combatant } from './systems/sparring';
 import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
@@ -67,6 +68,82 @@ const npcManager = new NPCManager(chunkManager.seedRaw);
 npcManager.syncDefeatedBadges(saveManager.state.badges);
 const apexMythManager = new ApexMythManager(chunkManager.seedRaw);
 apexMythManager.syncSavedPuzzles(saveManager.state.clearedObstacles);
+const easterEggs = new EasterEggSystem();
+(window as any).triggerSleepPile = () => easterEggs.onSleepPile?.();
+easterEggs.onMeteorShower = () => {
+  const halfW = (renderer.width / 2) / camera.zoom;
+  const halfH = (renderer.height / 2) / camera.zoom;
+  for (let i = 0; i < 30; i++) {
+    window.setTimeout(() => {
+      particles.spawnShootingStar(camera.pos.x, camera.pos.y, halfW, halfH);
+    }, i * 140);
+  }
+  if (toastBanner && toastTitle && toastDesc && toastCount) {
+    toastTitle.textContent = `🌠 Meteor Shower Awakened!`;
+    toastDesc.textContent = `The celestial meadow answers the ancient code.`;
+    toastCount.textContent = `Konami Code Unlocked`;
+    toastBanner.style.display = 'block';
+    requestAnimationFrame(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '1';
+        toastBanner.style.transform = 'translate(-50%, 0)';
+      }
+    });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '0';
+        toastBanner.style.transform = 'translate(-50%, 10px)';
+        setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+      }
+    }, 5000);
+  }
+};
+easterEggs.onSleepPile = () => {
+  player.action = 'sit';
+  if (toastBanner && toastTitle && toastDesc && toastCount) {
+    toastTitle.textContent = `💤 Sleep Pile`;
+    toastDesc.textContent = `After 10 minutes of stillness, the party rests together.`;
+    toastCount.textContent = `Peaceful Respite`;
+    toastBanner.style.display = 'block';
+    requestAnimationFrame(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '1';
+        toastBanner.style.transform = 'translate(-50%, 0)';
+      }
+    });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '0';
+        toastBanner.style.transform = 'translate(-50%, 10px)';
+        setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+      }
+    }, 5000);
+  }
+};
+easterEggs.onWaterSprite = () => {
+  if (toastBanner && toastTitle && toastDesc && toastCount) {
+    toastTitle.textContent = `🌊 Shy Water Spirit`;
+    toastDesc.textContent = `A tiny water sprite popped up, gave a friendly wave, and splashed away!`;
+    toastCount.textContent = `50 Water Ripples`;
+    toastBanner.style.display = 'block';
+    requestAnimationFrame(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '1';
+        toastBanner.style.transform = 'translate(-50%, 0)';
+      }
+    });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '0';
+        toastBanner.style.transform = 'translate(-50%, 10px)';
+        setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+      }
+    }, 5000);
+  }
+};
 const sparring = new SparringSystem();
 sparring.onYield = (opponent) => {
   if (opponent.badgeReward) {
@@ -258,10 +335,18 @@ if (mapBtn) {
     diegeticMap.toggle();
   });
 }
-canvas.addEventListener('click', () => {
+canvas.addEventListener('click', (e: MouseEvent) => {
   if (diegeticMap.isOpen) {
     diegeticMap.close();
   }
+  const rect = canvas.getBoundingClientRect();
+  const screenX = e.clientX - rect.left;
+  const screenY = e.clientY - rect.top;
+  const cPos = camera.pos;
+  const worldX = cPos.x + (screenX - renderer.width / 2) / camera.zoom;
+  const worldY = cPos.y + (screenY - renderer.height / 2) / camera.zoom;
+  const isWater = chunkManager.isWaterAt(currentLayer, worldX, worldY);
+  easterEggs.handleWaterClick(worldX, worldY, isWater);
 });
 
 // Rest Interaction Prompt Hook
@@ -694,10 +779,21 @@ const loop = new GameLoop({
       }
     }
 
+    // Easter Egg Proximity Check (Creator Camp & Milestone)
+    let nearCreator = false;
+    let nearMilestone = false;
+    if (currentLayer === 0 && !sparring.isActive && !targetApex && !canActivatePedestal && !targetMyth) {
+      if (Math.hypot(player.pos.x - easterEggs.creatorX, player.pos.y - easterEggs.creatorY) < 54) {
+        nearCreator = true;
+      } else if (Math.hypot(player.pos.x - easterEggs.milestoneDist, player.pos.y) < 48) {
+        nearMilestone = true;
+      }
+    }
+
     // Warden & Rival Proximity Check
     let targetWarden: Warden | null = null;
     let targetRival: RivalWanderer | null = null;
-    if (currentLayer === 0 && !sparring.isActive && !targetApex && !canActivatePedestal && !targetMyth) {
+    if (currentLayer === 0 && !sparring.isActive && !targetApex && !canActivatePedestal && !targetMyth && !nearCreator && !nearMilestone) {
       for (const w of npcManager.wardens) {
         if (Math.hypot(player.pos.x - w.x, player.pos.y - w.y) < 48) {
           targetWarden = w;
@@ -711,7 +807,7 @@ const loop = new GameLoop({
 
     // Sparring Proximity Check
     currentSparTarget = null;
-    if (!sparring.isActive && !targetWarden && !targetRival && !targetApex && !targetMyth && !canActivatePedestal) {
+    if (!sparring.isActive && !targetWarden && !targetRival && !targetApex && !targetMyth && !canActivatePedestal && !nearCreator && !nearMilestone) {
       let closestSparDist = 48;
       const wInfo = weather.getInfo();
       const tInfo = timeSystem.getInfo();
@@ -970,6 +1066,62 @@ const loop = new GameLoop({
         sparring.startSpar(playerC, mythC);
         sparringHud.update();
       }
+    } else if (nearCreator) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '⛺';
+        interactLabel.textContent = 'Speak with Yoshik [E]';
+      }
+      if (inputState.interactPressed) {
+        if (toastBanner && toastTitle && toastDesc && toastCount) {
+          toastTitle.textContent = `⛺ Yoshik the Cartographer`;
+          toastDesc.textContent = `"You've wandered all the way out to the edge of the world. Take a seat by the fire, traveler."`;
+          toastCount.textContent = `Secret Outpost (-999, -999)`;
+          toastBanner.style.display = 'block';
+          requestAnimationFrame(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '1';
+              toastBanner.style.transform = 'translate(-50%, 0)';
+            }
+          });
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = window.setTimeout(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '0';
+              toastBanner.style.transform = 'translate(-50%, 10px)';
+              setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+            }
+          }, 5000);
+        }
+      }
+    } else if (nearMilestone) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🪧';
+        interactLabel.textContent = 'Read Milestone [E]';
+      }
+      if (inputState.interactPressed) {
+        if (toastBanner && toastTitle && toastDesc && toastCount) {
+          toastTitle.textContent = `🪧 10,000 Paces Milestone`;
+          toastDesc.textContent = `"Ten thousand paces walked. The horizon remembers every step."`;
+          toastCount.textContent = `Far Traveler Milestone`;
+          toastBanner.style.display = 'block';
+          requestAnimationFrame(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '1';
+              toastBanner.style.transform = 'translate(-50%, 0)';
+            }
+          });
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = window.setTimeout(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '0';
+              toastBanner.style.transform = 'translate(-50%, 10px)';
+              setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+            }
+          }, 5000);
+        }
+      }
     } else if (targetWarden) {
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
@@ -1128,9 +1280,10 @@ const loop = new GameLoop({
       }
     }
 
-    // Update NPCs & Apex Myths
+    // Update NPCs, Apex Myths & Easter Eggs
     npcManager.update(dt);
     apexMythManager.update(dt);
+    easterEggs.update(dt, player.vel.x !== 0 || player.vel.y !== 0);
 
     // Shooting stars at night
     shootingStarTimer -= dt;
@@ -1375,9 +1528,12 @@ const loop = new GameLoop({
       });
     }
 
-    // Elemental Monuments & Apex Shrines
+    // Elemental Monuments & Apex Shrines & Easter Eggs
     npcManager.renderMonuments(renderer, art, currentLayer, camPos);
     apexMythManager.renderShrines(renderer, art, currentLayer, camPos);
+    easterEggs.renderCreatorCamp(renderer, art, currentLayer, camPos, time);
+    easterEggs.renderMilestoneSign(renderer, currentLayer, camPos, p);
+    easterEggs.renderWaterSprite(renderer, time);
 
     // NPCs (Wardens & Rival) in Depth sorting
     for (const npc of npcManager.getRenderableEntities(currentLayer, camPos)) {

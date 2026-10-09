@@ -523,6 +523,16 @@ export class ArtToolkit {
     const cAcc = genome.accentColor;
     const y = baseY - 6 * s + bob;
 
+    // Naming a creature "Null" gives a glitch shader effect
+    const isGlitch = genome.name === 'Null';
+    if (isGlitch) {
+      const jitterX = Math.sin(time * 35) * 4;
+      const jitterY = (Math.sin(time * 25) > 0.6 ? 2.5 : -1);
+      // Chromatic ghosting
+      this.renderer.drawCircle(x - 3 + jitterX, y + jitterY, 9 * s, { r: 1.0, g: 0.1, b: 0.3, a: 0.4 });
+      this.renderer.drawCircle(x + 3 - jitterX, y - jitterY, 9 * s, { r: 0.1, g: 0.9, b: 1.0, a: 0.4 });
+    }
+
     // Base body based on archetype
     if (genome.archetype === 'quadruped') {
       this.renderer.drawRect(x - 6 * s, y - 5 * s, 12 * s, 8 * s, cBase);

@@ -222,11 +222,11 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone C8: Easter Eggs and QoL
-- [ ] Naming a creature "Null" gives a glitch shader
-- [ ] Up Up Down Down Left Right triggers a meteor shower
-- [ ] Sign after walking 10,000 tiles in one direction
-- [ ] DevTools console ASCII map to a hidden treasure
-- [ ] Hidden tent at -999,-999 with a creator NPC called Yoshik
-- [ ] Idle 10 min and your party piles on you to sleep
-- [ ] Clicking the same water spot 50 times makes something wave and vanish
+- [x] Naming a creature "Null" gives a glitch shader
+- [x] Up Up Down Down Left Right triggers a meteor shower
+- [x] Sign after walking 10,000 tiles in one direction
+- [x] DevTools console ASCII map to a hidden treasure
+- [x] Hidden tent at -999,-999 with a creator NPC called Yoshik
+- [x] Idle 10 min and your party piles on you to sleep
+- [x] Clicking the same water spot 50 times makes something wave and vanish
 - [ ] 2x speed toggle, colourblind type icons, a No-Combat mode, seed sharing in the menu
