@@ -1,11 +1,13 @@
 import { IRenderer } from './types';
 import { ColorRGBA, hexToRgba, Vec2, vec2 } from '../core/math';
 import { CreatureGenome } from '../entities/creature';
+import { Season } from '../systems/time';
 
 export class ArtToolkit {
   private renderer: IRenderer;
 
-  // Dynamic sun angle and elevation driven by TimeSystem
+  // Dynamic season and sun angle driven by TimeSystem
+  season: Season = 'spring';
   sunAngle: number = 0.5;
   sunElevation: number = 0.6;
 
@@ -32,6 +34,10 @@ export class ArtToolkit {
   setSun(sunAngle: number, sunElevation: number): void {
     this.sunAngle = sunAngle;
     this.sunElevation = sunElevation;
+  }
+
+  setSeason(season: Season): void {
+    this.season = season;
   }
 
   // A shadow helper for diagonal drop shadows angled dynamically by the sun
@@ -83,20 +89,76 @@ export class ArtToolkit {
     
     // Painterly overlapping blobs
     if (variant === 0) { // Oak style
-      this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 20, 13, hexToRgba('#2D6928'));
-      this.renderer.drawCircle(x + 6 + sway * 0.4, baseY - 20, 13, hexToRgba('#3A7D34'));
-      this.renderer.drawCircle(x + sway * 0.5, baseY - 28, 15, hexToRgba('#4E9A47'));
+      if (this.season === 'autumn') {
+        // Glowing autumn foliage: russet red, burnt orange, golden amber
+        this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 20, 13, hexToRgba('#9C3D18'));
+        this.renderer.drawCircle(x + 6 + sway * 0.4, baseY - 20, 13, hexToRgba('#D35400'));
+        this.renderer.drawCircle(x + sway * 0.5, baseY - 28, 15, hexToRgba('#F39C12'));
+      } else if (this.season === 'winter') {
+        // Winter bare oak with frosted branches and snow caps
+        this.renderer.drawRect(x - 2, baseY - 28, 4, 14, hexToRgba('#3E2723'));
+        this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 22, 10, hexToRgba('#A9CCE3', 0.6));
+        this.renderer.drawCircle(x + 6 + sway * 0.4, baseY - 22, 10, hexToRgba('#D4E6F1', 0.7));
+        this.renderer.drawCircle(x + sway * 0.5, baseY - 28, 11, hexToRgba('#F7F9F9', 0.85));
+      } else if (this.season === 'summer') {
+        // Deep forest summer green
+        this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 20, 13, hexToRgba('#1E561A'));
+        this.renderer.drawCircle(x + 6 + sway * 0.4, baseY - 20, 13, hexToRgba('#2A6826'));
+        this.renderer.drawCircle(x + sway * 0.5, baseY - 28, 15, hexToRgba('#3B8235'));
+      } else {
+        // Fresh spring green
+        this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 20, 13, hexToRgba('#2D6928'));
+        this.renderer.drawCircle(x + 6 + sway * 0.4, baseY - 20, 13, hexToRgba('#3A7D34'));
+        this.renderer.drawCircle(x + sway * 0.5, baseY - 28, 15, hexToRgba('#4E9A47'));
+      }
     } else { // Pine style
-      this.renderer.drawPolygon([
-        vec2(x - 14 + sway * 0.3, baseY - 10),
-        vec2(x + 14 + sway * 0.3, baseY - 10),
-        vec2(x + sway * 0.6, baseY - 28)
-      ], hexToRgba('#1E4223'));
-      this.renderer.drawPolygon([
-        vec2(x - 10 + sway * 0.5, baseY - 22),
-        vec2(x + 10 + sway * 0.5, baseY - 22),
-        vec2(x + sway * 0.8, baseY - 38)
-      ], hexToRgba('#28582E'));
+      if (this.season === 'winter') {
+        // Pine needles topped with white snow caps
+        this.renderer.drawPolygon([
+          vec2(x - 14 + sway * 0.3, baseY - 10),
+          vec2(x + 14 + sway * 0.3, baseY - 10),
+          vec2(x + sway * 0.6, baseY - 28)
+        ], hexToRgba('#1A381E'));
+        this.renderer.drawPolygon([
+          vec2(x - 10 + sway * 0.5, baseY - 22),
+          vec2(x + 10 + sway * 0.5, baseY - 22),
+          vec2(x + sway * 0.8, baseY - 38)
+        ], hexToRgba('#224C27'));
+        // Snowy caps
+        this.renderer.drawPolygon([
+          vec2(x - 8 + sway * 0.4, baseY - 13),
+          vec2(x + 8 + sway * 0.4, baseY - 13),
+          vec2(x + sway * 0.6, baseY - 26)
+        ], hexToRgba('#EBF5FB', 0.95));
+        this.renderer.drawPolygon([
+          vec2(x - 5 + sway * 0.6, baseY - 25),
+          vec2(x + 5 + sway * 0.6, baseY - 25),
+          vec2(x + sway * 0.8, baseY - 37)
+        ], hexToRgba('#FFFFFF', 0.95));
+      } else if (this.season === 'autumn') {
+        // Golden-mossy pine
+        this.renderer.drawPolygon([
+          vec2(x - 14 + sway * 0.3, baseY - 10),
+          vec2(x + 14 + sway * 0.3, baseY - 10),
+          vec2(x + sway * 0.6, baseY - 28)
+        ], hexToRgba('#2B4C1A'));
+        this.renderer.drawPolygon([
+          vec2(x - 10 + sway * 0.5, baseY - 22),
+          vec2(x + 10 + sway * 0.5, baseY - 22),
+          vec2(x + sway * 0.8, baseY - 38)
+        ], hexToRgba('#3F6423'));
+      } else {
+        this.renderer.drawPolygon([
+          vec2(x - 14 + sway * 0.3, baseY - 10),
+          vec2(x + 14 + sway * 0.3, baseY - 10),
+          vec2(x + sway * 0.6, baseY - 28)
+        ], hexToRgba('#1E4223'));
+        this.renderer.drawPolygon([
+          vec2(x - 10 + sway * 0.5, baseY - 22),
+          vec2(x + 10 + sway * 0.5, baseY - 22),
+          vec2(x + sway * 0.8, baseY - 38)
+        ], hexToRgba('#28582E'));
+      }
     }
   }
 
@@ -299,10 +361,22 @@ export class ArtToolkit {
     this.renderer.drawRect(x + 1, baseY - 8, 2, 2, hexToRgba('#2C3E50'));
 
     const sway = Math.sin(time * 2.6 + x * 0.03) * 3.5 + wind.x * 3.0;
-    // Pale golden-green birch leaves
-    this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 12, hexToRgba('#78B833'));
-    this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 12, hexToRgba('#8DC73F'));
-    this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 13, hexToRgba('#A0D048'));
+    if (this.season === 'autumn') {
+      // Golden yellow autumn birch
+      this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 12, hexToRgba('#D4AC0D'));
+      this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 12, hexToRgba('#F4D03F'));
+      this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 13, hexToRgba('#F5B041'));
+    } else if (this.season === 'winter') {
+      // Frosted winter birch
+      this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 9, hexToRgba('#BDC3C7', 0.5));
+      this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 9, hexToRgba('#D5D8DC', 0.6));
+      this.renderer.drawCircle(x + sway * 0.5, baseY - 30, 10, hexToRgba('#EBF5FB', 0.85));
+    } else {
+      // Pale golden-green birch leaves
+      this.renderer.drawCircle(x - 5 + sway * 0.3, baseY - 24, 12, hexToRgba('#78B833'));
+      this.renderer.drawCircle(x + 5 + sway * 0.4, baseY - 24, 12, hexToRgba('#8DC73F'));
+      this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 13, hexToRgba('#A0D048'));
+    }
   }
 
   /**

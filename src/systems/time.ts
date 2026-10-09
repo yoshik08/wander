@@ -2,6 +2,16 @@ import { ColorRGBA, lerp, hexToRgba } from '../core/math';
 import { IRenderer } from '../render/types';
 
 export type TimePhase = 'night' | 'dawn' | 'morning' | 'noon' | 'golden_hour' | 'dusk';
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+
+export interface SeasonInfo {
+  season: Season;
+  name: string;
+  dayInSeason: number;
+  dayTotal: number;
+  seasonProgress: number;
+  ambientTint: ColorRGBA;
+}
 
 export interface TimePhaseInfo {
   phase: TimePhase;
@@ -13,6 +23,7 @@ export interface TimePhaseInfo {
   sunAngle: number;     // radians direction of sun cast
   ambientColor: ColorRGBA;
   isNight: boolean;
+  season: SeasonInfo;
 }
 
 export class TimeSystem {
@@ -22,6 +33,7 @@ export class TimeSystem {
   // Current in-game time in hours [0, 24)
   // Default spawn at 8:00 AM (sunny morning meadow)
   currentHour: number = 8.0;
+  totalDays: number = 0;
   timeSpeed: number = 1.0;
 
   // Scratch ColorRGBA for zero-allocation rendering
@@ -35,7 +47,42 @@ export class TimeSystem {
   update(dt: number): void {
     // 24 hours per dayDurationSeconds
     const hoursPerSecond = 24.0 / this.dayDurationSeconds;
-    this.currentHour = (this.currentHour + dt * hoursPerSecond * this.timeSpeed) % 24.0;
+    const deltaHours = dt * hoursPerSecond * this.timeSpeed;
+    this.totalDays += deltaHours / 24.0;
+    this.currentHour = (this.currentHour + deltaHours) % 24.0;
+  }
+
+  getSeasonInfo(): SeasonInfo {
+    const totalElapsedDays = this.totalDays + (this.currentHour / 24.0);
+    // 4 seasons, 2 in-game days each = 8 days per full seasonal year
+    const yearDay = totalElapsedDays % 8.0;
+    const seasonIndex = Math.floor(yearDay / 2.0);
+    const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter'];
+    const seasonNames = ['Spring', 'Summer', 'Autumn', 'Winter'];
+    const season = seasons[seasonIndex % 4];
+    const name = seasonNames[seasonIndex % 4];
+    const dayInSeason = Math.floor(yearDay % 2.0) + 1;
+    const seasonProgress = (yearDay % 2.0) / 2.0;
+
+    let ambientTint: ColorRGBA;
+    if (season === 'autumn') {
+      ambientTint = { r: 0.95, g: 0.60, b: 0.25, a: 0.08 };
+    } else if (season === 'winter') {
+      ambientTint = { r: 0.75, g: 0.88, b: 1.0, a: 0.10 };
+    } else if (season === 'summer') {
+      ambientTint = { r: 1.0, g: 0.95, b: 0.70, a: 0.04 };
+    } else {
+      ambientTint = { r: 0.85, g: 1.0, b: 0.85, a: 0.02 };
+    }
+
+    return {
+      season,
+      name,
+      dayInSeason,
+      dayTotal: Math.floor(totalElapsedDays) + 1,
+      seasonProgress,
+      ambientTint
+    };
   }
 
   getInfo(): TimePhaseInfo {
@@ -139,6 +186,8 @@ export class TimeSystem {
       c.a = lerp(0.28, 0.58, t);
     }
 
+    const season = this.getSeasonInfo();
+
     return {
       phase,
       name,
@@ -148,7 +197,8 @@ export class TimeSystem {
       sunElevation,
       sunAngle,
       ambientColor: c,
-      isNight
+      isNight,
+      season
     };
   }
 
@@ -170,20 +220,31 @@ export class TimeSystem {
     // In underworld caves, it is permanently pitch black
     if (layer < 0) {
       overlayColor = hexToRgba('#020204', 0.98);
-    } else if (info.ambientColor.a < 0.005) {
-      return;
     }
 
     const halfW = (viewWidth / 2) / zoom;
     const halfH = (viewHeight / 2) / zoom;
     const margin = 20;
 
-    renderer.drawRect(
-      camX - halfW - margin,
-      camY - halfH - margin,
-      halfW * 2 + margin * 2,
-      halfH * 2 + margin * 2,
-      overlayColor
-    );
+    if (overlayColor.a >= 0.005) {
+      renderer.drawRect(
+        camX - halfW - margin,
+        camY - halfH - margin,
+        halfW * 2 + margin * 2,
+        halfH * 2 + margin * 2,
+        overlayColor
+      );
+    }
+
+    // Seasonal subtle ambient tint in overworld
+    if (layer >= 0 && info.season.ambientTint.a > 0.01) {
+      renderer.drawRect(
+        camX - halfW - margin,
+        camY - halfH - margin,
+        halfW * 2 + margin * 2,
+        halfH * 2 + margin * 2,
+        info.season.ambientTint
+      );
+    }
   }
 }

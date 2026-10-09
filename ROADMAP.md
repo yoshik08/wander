@@ -5,12 +5,11 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 6: Seasons & Smooth Weather (Remaining)
 **Focus**: Finishing seasonal transitions and atmospheric details.
 
-### Step 6.3: Four Advancing Seasons
+### Step 6.3: Four Advancing Seasons [x]
 - **Action**: Add a season tracker to `TimeSystem` that cycles every 2 in-game days. Update `biomes.ts` palettes and `art.ts` vegetation variants based on the current season (e.g., bare trees in winter, orange leaves in autumn).
 - **Files**: `src/systems/time.ts`, `src/world/biomes.ts`, `src/render/art.ts`, `src/main.ts`
 - **Reuse**: existing color structs.
 - **Done When**: The world visually transitions between spring, summer, autumn, and winter over time.
-- **Risk**: *Medium*. Interpolating entire palettes could be heavy.
 
 ### Step 6.4: Post-rain Daylight Rainbow
 - **Action**: Add a screen-space rainbow overlay that fades in for 1 in-game minute after rain ends if the time is dawn, morning, or late afternoon.

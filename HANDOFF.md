@@ -33,10 +33,11 @@
   - Milestone C7 (Step C7.2): Shooting stars at night, auroras in snow biomes, and weather/time-locked creature spawns.
   - Milestone C8 (Step C8.1): Easter Eggs & Secret Systems (Null chromatic glitch shader, Konami code meteor shower, DevTools console ASCII map, 10,000 paces milestone signpost, Yoshik creator outpost at -999,-999, 10-minute idle sleep pile, 50 water clicks waving sprite).
   - Milestone C8 (Step C8.2): QoL Features & World Settings (2x exploration speed toggle with 'T' hotkey, colourblind geometric type glyphs ▲ ● ◆ ■ ⬡, No-Combat peaceful mode, world seed display & URL share link generator with custom seed loading).
+  - Milestone 6 (Step 6.3): Four Advancing Seasons (2-in-game-day cycles of Spring, Summer, Autumn, and Winter; seasonal foliage in ArtToolkit: autumn amber/russet oaks and golden birch, winter bare oaks and snow-capped pine tiers, seasonal atmospheric overlay tints).
 - **Completed in this step**:
-  - Milestone C8 (Step C8.2): QoL Features & World Settings.
+  - Milestone 6 (Step 6.3): Four Advancing Seasons.
 - **Next Item in ROADMAP.md**:
-  - Milestone 6 (Step 6.3): Four Seasons (spring, summer, autumn, winter cycling palette shifts & tree variants).
+  - Milestone 6 (Step 6.4): Post-rain Daylight Rainbow (screen-space rainbow arc overlay fading in post-rain at dawn/morning/afternoon).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

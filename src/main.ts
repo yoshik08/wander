@@ -1514,6 +1514,7 @@ const loop = new GameLoop({
     const timeInfo = timeSystem.getInfo();
     const curBiome = chunkManager.getBiomeAt(currentLayer, p.x, p.y);
     art.setSun(timeInfo.sunAngle, timeInfo.sunElevation);
+    art.setSeason(timeInfo.season.season);
 
     // Props from visible chunks
     for (const chunk of visibleChunks) {
@@ -1811,7 +1812,7 @@ const loop = new GameLoop({
         debugOverlay.innerHTML = `
           <div style="font-weight: 700; color: #38BDF8; margin-bottom: 4px;">MEADOW [F3 DEBUG]</div>
           <div>FPS: <span style="color: #4ADE80; font-weight: 600;">${loop.fps}</span> (${loop.frameTimeMs.toFixed(1)} ms)</div>
-          <div>Time: <span style="color: #FBBF24; font-weight: 600;">${timeInfo.timeString}</span> (${timeInfo.name})</div>
+          <div>Time: <span style="color: #FBBF24; font-weight: 600;">${timeInfo.timeString}</span> (${timeInfo.name}) | Season: <span style="color: #F472B6; font-weight: 600;">${timeInfo.season.name}</span> (Day ${timeInfo.season.dayInSeason}/2)</div>
           <div>Weather: <span style="color: #67E8F9; font-weight: 600;">${weatherInfo.name}</span> (wind: ${weatherInfo.windMultiplier.toFixed(1)}x, wetness: ${(weatherInfo.wetness * 100).toFixed(0)}%)</div>
           <div>Sim: 120Hz fixed (interp: ${alpha.toFixed(2)})</div>
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
