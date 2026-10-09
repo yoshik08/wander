@@ -19,7 +19,11 @@ export type StructureType =
   | 'sanctuary_crystal'
   | 'resting_crystal'
   | 'nomad_camp'
-  | 'waystone';
+  | 'waystone'
+  | 'brambles'
+  | 'boulder'
+  | 'gap'
+  | 'cave_entrance';
 
 export interface StructureInstance {
   id: string;
@@ -187,6 +191,77 @@ export function generateChunkStructures(
       return structures;
     }
   }
+
+  // Obstacles (Brambles, Boulders)
+  if (!isWater) {
+    if (bType === BiomeType.PineForest || bType === BiomeType.AutumnMaple || bType === BiomeType.BirchGrove) {
+      if (chunkRng.next() < 0.2) {
+        structures.push({
+          id: `brambles-${chunkX}-${chunkY}`,
+          type: 'brambles',
+          x: structWorldX,
+          y: structWorldY,
+          baseY: structWorldY + 12,
+          width: 32,
+          height: 32,
+          variant: chunkRng.rangeInt(0, 2),
+          solidTiles: [{ dx: 0, dy: 0 }]
+        });
+        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+        return structures;
+      }
+    } else if (bType === BiomeType.RockyCliffs || bType === BiomeType.MistyHighlands) {
+      if (chunkRng.next() < 0.2) {
+        structures.push({
+          id: `boulder-${chunkX}-${chunkY}`,
+          type: 'boulder',
+          x: structWorldX,
+          y: structWorldY,
+          baseY: structWorldY + 16,
+          width: 36,
+          height: 36,
+          variant: chunkRng.rangeInt(0, 2),
+          solidTiles: [{ dx: 0, dy: 0 }]
+        });
+        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+        return structures;
+      }
+    } else if (bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) {
+      if (chunkRng.next() < 0.2) {
+        structures.push({
+          id: `gap-${chunkX}-${chunkY}`,
+          type: 'gap',
+          x: structWorldX,
+          y: structWorldY,
+          baseY: structWorldY + 16,
+          width: 36,
+          height: 36,
+          variant: chunkRng.rangeInt(0, 2),
+          solidTiles: [{ dx: 0, dy: 0 }]
+        });
+        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+        return structures;
+      }
+    }
+  }
+
+  if ((bType === BiomeType.RockyCliffs || bType === BiomeType.MistyHighlands) && !isWater) {
+    if (chunkRng.next() < 0.2) {
+      structures.push({
+        id: `cave-${chunkX}-${chunkY}`,
+        type: 'cave_entrance',
+        x: structWorldX,
+          y: structWorldY,
+          baseY: structWorldY + 12,
+          width: 48,
+          height: 48,
+          variant: chunkRng.rangeInt(0, 1),
+          solidTiles: [{ dx: 0, dy: 0 }]
+        });
+        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+        return structures;
+      }
+    }
 
   // Tiny Abandoned Cottage in Birch Grove, Meadow, or Autumn Woods
   if ((bType === BiomeType.BirchGrove || bType === BiomeType.Meadow || bType === BiomeType.AutumnMaple) && !isWater) {
@@ -471,6 +546,60 @@ export function renderStructure(
       ], hexToRgba('#E6B0AA'));
       renderer.drawLine(x + 9, baseY - 12, x + 9, baseY - 10, 2, hexToRgba('#5C381E'));
 
+      break;
+    }
+
+    case 'brambles': {
+      // Thorny bush
+      renderer.drawCircle(x, baseY, 16, hexToRgba('#1B2631', 0.4));
+      renderer.drawCircle(x - 4, baseY - 4, 12, hexToRgba('#1E8449', 0.9));
+      renderer.drawCircle(x + 6, baseY - 6, 14, hexToRgba('#229954', 0.9));
+      renderer.drawCircle(x - 2, baseY - 14, 10, hexToRgba('#145A32', 0.9));
+      
+      // Thorns
+      renderer.drawLine(x - 8, baseY - 8, x - 14, baseY - 12, 2, hexToRgba('#784212'));
+      renderer.drawLine(x + 4, baseY - 10, x + 10, baseY - 18, 2, hexToRgba('#784212'));
+      renderer.drawLine(x + 8, baseY - 2, x + 16, baseY - 4, 2, hexToRgba('#784212'));
+      break;
+    }
+
+    case 'boulder': {
+      // Big rock
+      renderer.drawCircle(x, baseY, 18, hexToRgba('#1B2631', 0.5));
+      renderer.drawPolygon([
+        vec2(x - 14, baseY + 4),
+        vec2(x + 16, baseY + 2),
+        vec2(x + 10, baseY - 16),
+        vec2(x - 4, baseY - 20),
+        vec2(x - 16, baseY - 8)
+      ], hexToRgba('#7F8C8D'));
+      
+      renderer.drawPolygon([
+        vec2(x - 4, baseY - 20),
+        vec2(x + 4, baseY - 12),
+        vec2(x - 12, baseY - 6)
+      ], hexToRgba('#95A5A6'));
+      break;
+    }
+
+    case 'gap': {
+      // Dark crevasse
+      renderer.drawCircle(x, baseY, 20, hexToRgba('#111111', 0.8));
+      renderer.drawLine(x - 18, baseY, x + 18, baseY, 4, hexToRgba('#050505'));
+      break;
+    }
+
+    case 'cave_entrance': {
+      // Big rock arch / hole in the ground
+      renderer.drawCircle(x, baseY, 28, hexToRgba('#1B2631', 0.6));
+      renderer.drawPolygon([
+        vec2(x - 24, baseY + 8),
+        vec2(x + 24, baseY + 8),
+        vec2(x + 16, baseY - 24),
+        vec2(x - 16, baseY - 24)
+      ], hexToRgba('#5D6D7E'));
+      // The dark maw
+      renderer.drawCircle(x, baseY - 4, 14, hexToRgba('#0A0A0A', 0.95));
       break;
     }
 

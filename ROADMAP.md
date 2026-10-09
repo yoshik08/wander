@@ -131,7 +131,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 
 ## Milestone C4: World POIs
 - [x] **Step C4.1**: Resting Crystals and Nomad Camps generation.
-- **Step C4.2**: Waystones and Fast Travel system.
+- [x] **Step C4.2**: Waystones and Fast Travel system.
 
 ---
 

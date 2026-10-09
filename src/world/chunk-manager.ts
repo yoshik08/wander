@@ -15,6 +15,7 @@ export class ChunkManager {
   private nextWorkerIdx: number = 0;
   readonly collectedKeepsakes: Set<string> = new Set();
   readonly exploredChunks: Set<string> = new Set();
+  readonly clearedObstacles: Set<string> = new Set();
   onChunkUnloaded?: (chunk: Chunk) => void;
 
   collectKeepsake(id: string): boolean {
@@ -25,6 +26,29 @@ export class ChunkManager {
 
   isKeepsakeCollected(id: string): boolean {
     return this.collectedKeepsakes.has(id);
+  }
+
+  clearObstacle(id: string): void {
+    this.clearedObstacles.add(id);
+    // Iterate over loaded chunks and remove it from structures & collision
+    for (const chunk of this.chunks.values()) {
+      const idx = chunk.data.structures.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        const s = chunk.data.structures[idx];
+        const localX = s.x - chunk.chunkX * CHUNK_PIXEL_SIZE;
+        const localY = s.y - chunk.chunkY * CHUNK_PIXEL_SIZE;
+        const tx = Math.floor(localX / TILE_SIZE);
+        const ty = Math.floor(localY / TILE_SIZE);
+        for (const st of s.solidTiles) {
+           const cx = tx + st.dx;
+           const cy = ty + st.dy;
+           if (cx >= 0 && cx < CHUNK_TILES && cy >= 0 && cy < CHUNK_TILES) {
+             chunk.data.collision[cy * CHUNK_TILES + cx] = 0;
+           }
+        }
+        chunk.data.structures.splice(idx, 1);
+      }
+    }
   }
 
   markExplored(chunkX: number, chunkY: number): void {
@@ -84,10 +108,33 @@ export class ChunkManager {
     }
   }
 
+  private processChunkData(data: ChunkBufferData): void {
+    const chunkX = data.chunkX;
+    const chunkY = data.chunkY;
+    data.structures = data.structures.filter(s => {
+      if (this.clearedObstacles.has(s.id)) {
+        const localX = s.x - chunkX * CHUNK_PIXEL_SIZE;
+        const localY = s.y - chunkY * CHUNK_PIXEL_SIZE;
+        const tx = Math.floor(localX / TILE_SIZE);
+        const ty = Math.floor(localY / TILE_SIZE);
+        for (const st of s.solidTiles) {
+           const cx = tx + st.dx;
+           const cy = ty + st.dy;
+           if (cx >= 0 && cx < CHUNK_TILES && cy >= 0 && cy < CHUNK_TILES) {
+             data.collision[cy * CHUNK_TILES + cx] = 0;
+           }
+        }
+        return false;
+      }
+      return true;
+    });
+  }
+
   private handleWorkerMessage(e: MessageEvent<ChunkBufferData>): void {
     const data = e.data;
     const key = `${data.chunkX},${data.chunkY}`;
     this.pendingRequests.delete(key);
+    this.processChunkData(data);
     this.chunks.set(key, new Chunk(data.chunkX, data.chunkY, data));
   }
 
@@ -97,6 +144,7 @@ export class ChunkManager {
     if (!chunk) {
       // Synchronous fallback ensures zero missing terrain frames
       const data = generateChunkData(chunkX, chunkY, this.seed);
+      this.processChunkData(data);
       chunk = new Chunk(chunkX, chunkY, data);
       this.chunks.set(key, chunk);
       this.pendingRequests.delete(key);
@@ -160,7 +208,7 @@ export class ChunkManager {
     return visible;
   }
 
-  isTraversable(worldX: number, worldY: number): boolean {
+  isTraversable(worldX: number, worldY: number, canTraverseWater: boolean = false): boolean {
     const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
     const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
     const chunk = this.getChunk(chunkX, chunkY);
@@ -172,6 +220,13 @@ export class ChunkManager {
 
     if (tileX < 0 || tileX >= CHUNK_TILES || tileY < 0 || tileY >= CHUNK_TILES) {
       return true;
+    }
+    
+    if (canTraverseWater) {
+      const idx = tileY * CHUNK_TILES + tileX;
+      if (chunk.data.tileFlags[idx] === TILE_FLAG_WATER) {
+        return true;
+      }
     }
     return !chunk.isSolid(tileX, tileY);
   }

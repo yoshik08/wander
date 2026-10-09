@@ -25,6 +25,7 @@ export interface SaveState {
   inventory: Record<string, number>;
   badges: string[];
   waystones: { id: string; name: string; x: number; y: number }[];
+  clearedObstacles: string[];
 }
 
 export class SaveManager {
@@ -50,7 +51,8 @@ export class SaveManager {
       sanctuary: [],
       inventory: {},
       badges: [],
-      waystones: []
+      waystones: [],
+      clearedObstacles: []
     };
   }
 

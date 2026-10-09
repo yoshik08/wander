@@ -59,6 +59,7 @@ const photoMode = new PhotoMode();
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
+saveManager.state.clearedObstacles.forEach(o => chunkManager.clearedObstacles.add(o));
 const sparring = new SparringSystem();
 const sparringHud = new SparringHUD(sparring);
 let partyLeader: PartyLeader | null = null;
@@ -370,23 +371,23 @@ const loop = new GameLoop({
 
     player.update(inputState.move, inputState.isRunning, globalWind, dt);
 
-    // Collision check: separate X and Y for smooth wall sliding
+    const canTraverseWater = partyLeader?.genome.type === 'Aqua';
     const padding = 5.0; // Collision radius around feet
     if (
-      !chunkManager.isTraversable(player.pos.x - padding, oldY) ||
-      !chunkManager.isTraversable(player.pos.x + padding, oldY) ||
-      !chunkManager.isTraversable(player.pos.x, oldY - padding) ||
-      !chunkManager.isTraversable(player.pos.x, oldY + padding)
+      !chunkManager.isTraversable(player.pos.x - padding, oldY, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x + padding, oldY, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x, oldY - padding, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x, oldY + padding, canTraverseWater)
     ) {
       player.pos.x = oldX;
       player.vel.x = 0;
     }
 
     if (
-      !chunkManager.isTraversable(player.pos.x - padding, player.pos.y) ||
-      !chunkManager.isTraversable(player.pos.x + padding, player.pos.y) ||
-      !chunkManager.isTraversable(player.pos.x, player.pos.y - padding) ||
-      !chunkManager.isTraversable(player.pos.x, player.pos.y + padding)
+      !chunkManager.isTraversable(player.pos.x - padding, player.pos.y, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x + padding, player.pos.y, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x, player.pos.y - padding, canTraverseWater) ||
+      !chunkManager.isTraversable(player.pos.x, player.pos.y + padding, canTraverseWater)
     ) {
       player.pos.y = oldY;
       player.vel.y = 0;
@@ -494,6 +495,10 @@ const loop = new GameLoop({
     currentRestSpot = null;
     let canInteractSanctuary = false;
     let canInteractWaystone: { id: string, name: string, x: number, y: number } | null = null;
+    let canClearBrambles: { id: string, x: number, y: number } | null = null;
+    let canPushBoulder: { id: string, x: number, y: number } | null = null;
+    let canHopGap: { id: string, x: number, y: number } | null = null;
+    let canEnterCave = false;
     let closestRestDist = 32;
 
     for (const chunk of chunksNearPlayer) {
@@ -509,6 +514,30 @@ const loop = new GameLoop({
           if (d < 40) {
             canInteractWaystone = { id: s.id, name: `Waystone of ${chunk.data.biome[0] === 0 ? 'Meadow' : 'Fields'}`, x: s.x, y: s.y + 16 };
           }
+          continue;
+        }
+
+        if (s.type === 'brambles') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 35) canClearBrambles = { id: s.id, x: s.x, y: s.y };
+          continue;
+        }
+
+        if (s.type === 'boulder') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 35) canPushBoulder = { id: s.id, x: s.x, y: s.y };
+          continue;
+        }
+
+        if (s.type === 'gap') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 35) canHopGap = { id: s.id, x: s.x, y: s.y };
+          continue;
+        }
+
+        if (s.type === 'cave_entrance') {
+          const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+          if (d < 45) canEnterCave = true;
           continue;
         }
 
@@ -606,6 +635,94 @@ const loop = new GameLoop({
           }
         }
         waystoneUI.open();
+      }
+    } else if (canClearBrambles) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🌿';
+        if (partyLeader?.genome.type === 'Flora') {
+          interactLabel.textContent = `Clear Brambles with ${partyLeader.genome.name} [E]`;
+        } else {
+          interactLabel.textContent = `Blocked by brambles. (Requires Flora)`;
+        }
+      }
+      if (inputState.interactPressed && partyLeader?.genome.type === 'Flora') {
+        saveManager.state.clearedObstacles.push(canClearBrambles.id);
+        saveManager.saveToLocalStorage();
+        chunkManager.clearObstacle(canClearBrambles.id);
+        for (let i = 0; i < 15; i++) {
+          particles.spawnFootstepDust(canClearBrambles.x + (Math.random() - 0.5) * 32, canClearBrambles.y + (Math.random() - 0.5) * 32, Math.random() * Math.PI * 2);
+        }
+      }
+    } else if (canPushBoulder) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🪨';
+        if (partyLeader?.genome.type === 'Terra') {
+          interactLabel.textContent = `Push Boulder with ${partyLeader.genome.name} [E]`;
+        } else {
+          interactLabel.textContent = `Blocked by boulder. (Requires Terra)`;
+        }
+      }
+      if (inputState.interactPressed && partyLeader?.genome.type === 'Terra') {
+        saveManager.state.clearedObstacles.push(canPushBoulder.id);
+        saveManager.saveToLocalStorage();
+        chunkManager.clearObstacle(canPushBoulder.id);
+        for (let i = 0; i < 15; i++) {
+          particles.spawnFootstepDust(canPushBoulder.x + (Math.random() - 0.5) * 32, canPushBoulder.y + (Math.random() - 0.5) * 32, Math.random() * Math.PI * 2);
+        }
+      }
+    } else if (canHopGap) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🌪️';
+        if (partyLeader?.genome.type === 'Aero') {
+          interactLabel.textContent = `Hop Gap with ${partyLeader.genome.name} [E]`;
+        } else {
+          interactLabel.textContent = `Too wide to jump. (Requires Aero)`;
+        }
+      }
+      if (inputState.interactPressed && partyLeader?.genome.type === 'Aero') {
+        // Aero jumps over the gap: set player position across the gap based on current facing direction.
+        // Or simply remove the gap from collision like other obstacles? Removing the gap represents having crossed it permanently.
+        // Actually, if we "clear" the gap, it means we built a bridge over it using Aero. That works fine for game logic.
+        saveManager.state.clearedObstacles.push(canHopGap.id);
+        saveManager.saveToLocalStorage();
+        chunkManager.clearObstacle(canHopGap.id);
+        for (let i = 0; i < 15; i++) {
+          particles.spawnFootstepDust(canHopGap.x + (Math.random() - 0.5) * 32, canHopGap.y + (Math.random() - 0.5) * 32, Math.random() * Math.PI * 2);
+        }
+      }
+    } else if (canEnterCave) {
+      if (interactPrompt && interactLabel && interactIcon) {
+        interactPrompt.style.display = 'flex';
+        interactIcon.textContent = '🕳️';
+        if (partyLeader?.genome.type === 'Ignis') {
+          interactLabel.textContent = `Enter Cave [E] (C6 WIP)`;
+        } else {
+          interactLabel.textContent = `Too dark to enter. (Requires Ignis)`;
+        }
+      }
+      if (inputState.interactPressed && partyLeader?.genome.type === 'Ignis') {
+        if (toastBanner && toastTitle && toastDesc && toastCount) {
+          toastTitle.textContent = `🕳️ Underground Cave`;
+          toastDesc.textContent = `This area is under construction (Milestone C6).`;
+          toastCount.textContent = `Coming soon!`;
+          toastBanner.style.display = 'block';
+          requestAnimationFrame(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '1';
+              toastBanner.style.transform = 'translate(-50%, 0)';
+            }
+          });
+          setTimeout(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '0';
+              toastBanner.style.transform = 'translate(-50%, 10px)';
+              setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+            }
+          }, 4000);
+        }
       }
     } else if (canInteractSanctuary) {
       if (interactPrompt && interactLabel && interactIcon) {

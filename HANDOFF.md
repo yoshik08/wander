@@ -25,10 +25,11 @@
   - Milestone C3 (Step C3.1): Party leader trailing path and petting interactions.
   - Milestone C3 (Step C3.2): Sanctuary at world 0,0 and UI to swap creatures.
   - Milestone C4 (Step C4.1): Resting Crystals and Nomad Camps generation.
+  - Milestone C4 (Step C4.2): Waystones and Fast Travel system.
 - **In progress**:
-  - Milestone C4 (Step C4.2): Waystones and Fast Travel system.
+  - Milestone C5 (Step C5.1): Traversal Abilities.
 - **Next Item in ROADMAP.md**:
-  - Milestone C4 (Step C4.2): Waystones and Fast Travel system.
+  - Milestone C5 (Step C5.1): Traversal Abilities.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
