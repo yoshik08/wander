@@ -484,6 +484,10 @@ export class JournalUI {
                     <div style="font-size: 11px; color: #7F8C8D;">Waystones Attuned</div>
                     <div style="font-size: 18px; font-weight: 700; color: #16A085;">${this.saveManager.state.waystones.length}</div>
                   </div>
+                  <div style="background: #F9F5EC; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: #7F8C8D;">Hidden Landmarks</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #E67E22;">${(this.saveManager.state.landmarks || []).length} / 20</div>
+                  </div>
                 </div>
               </div>
 

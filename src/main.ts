@@ -30,6 +30,7 @@ import { SanctuaryUI } from './ui/sanctuary-ui';
 import { WaystoneUI } from './ui/waystone-ui';
 import { SettingsModal } from './ui/settings-modal';
 import { JournalUI } from './ui/journal';
+import { LandmarkManager } from './world/landmarks';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -108,6 +109,68 @@ const npcManager = new NPCManager(chunkManager.seedRaw);
 npcManager.syncDefeatedBadges(saveManager.state.badges);
 const apexMythManager = new ApexMythManager(chunkManager.seedRaw);
 apexMythManager.syncSavedPuzzles(saveManager.state.clearedObstacles);
+
+const landmarkManager = new LandmarkManager(chunkManager.seedRaw);
+landmarkManager.syncSavedLandmarks(saveManager.state.landmarks);
+
+const regionCard = document.getElementById('region-card');
+const regionName = document.getElementById('region-name');
+const regionSubtitle = document.getElementById('region-subtitle');
+let regionCardTimer: number | null = null;
+
+landmarkManager.onRegionEnter = (name, subtitle) => {
+  if (!regionCard || !regionName || !regionSubtitle) return;
+  regionName.textContent = `✦ ${name} ✦`;
+  regionSubtitle.textContent = subtitle;
+  regionCard.style.display = 'block';
+  requestAnimationFrame(() => {
+    if (regionCard) {
+      regionCard.style.opacity = '1';
+      regionCard.style.transform = 'translate(-50%, 0)';
+    }
+  });
+  if (regionCardTimer) clearTimeout(regionCardTimer);
+  regionCardTimer = window.setTimeout(() => {
+    if (regionCard) {
+      regionCard.style.opacity = '0';
+      regionCard.style.transform = 'translate(-50%, -12px)';
+      setTimeout(() => {
+        if (regionCard) regionCard.style.display = 'none';
+      }, 600);
+    }
+  }, 3800);
+};
+
+landmarkManager.onLandmarkDiscovered = (landmark) => {
+  if (!saveManager.state.landmarks.includes(landmark.id)) {
+    saveManager.state.landmarks.push(landmark.id);
+    saveManager.saveToLocalStorage();
+  }
+  for (let i = 0; i < 18; i++) {
+    particles.spawnFootstepDust(landmark.x + (Math.random() - 0.5) * 40, landmark.y + (Math.random() - 0.5) * 40, Math.random() * Math.PI * 2);
+  }
+  if (toastBanner && toastTitle && toastDesc && toastCount) {
+    toastTitle.textContent = `${landmark.icon} Landmark: ${landmark.name}`;
+    toastDesc.textContent = `"${landmark.desc}"`;
+    toastCount.textContent = `${landmark.title} • ${landmarkManager.getDiscoveredCount()} / 20 Discovered`;
+    toastBanner.style.display = 'block';
+    requestAnimationFrame(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '1';
+        toastBanner.style.transform = 'translate(-50%, 0)';
+      }
+    });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '0';
+        toastBanner.style.transform = 'translate(-50%, 10px)';
+        setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+      }
+    }, 5000);
+  }
+};
+
 const easterEggs = new EasterEggSystem();
 (window as any).triggerSleepPile = () => easterEggs.onSleepPile?.();
 easterEggs.onMeteorShower = () => {
@@ -784,6 +847,9 @@ const loop = new GameLoop({
         }
       }
     }
+
+    // Update landmarks and region detection
+    landmarkManager.update(player.pos, currentBiome);
 
     // Update wild creatures roaming in nearby chunks
     wildCreatures.syncWithChunks(chunksNearPlayer, chunkManager.seedRaw);
@@ -1684,9 +1750,10 @@ const loop = new GameLoop({
       });
     }
 
-    // Elemental Monuments & Apex Shrines & Easter Eggs
+    // Elemental Monuments & Apex Shrines & Easter Eggs & Landmarks
     npcManager.renderMonuments(renderer, art, currentLayer, camPos);
     apexMythManager.renderShrines(renderer, art, currentLayer, camPos);
+    landmarkManager.render(renderer, art, currentLayer, camPos, time);
     easterEggs.renderCreatorCamp(renderer, art, currentLayer, camPos, time);
     easterEggs.renderMilestoneSign(renderer, currentLayer, camPos, p);
     easterEggs.renderWaterSprite(renderer, time);

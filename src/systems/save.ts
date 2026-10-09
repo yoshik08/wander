@@ -34,6 +34,7 @@ export interface SaveState {
   waystones: { id: string; name: string; x: number; y: number }[];
   clearedObstacles: string[];
   settings: GameSettings;
+  landmarks: string[];
 }
 
 export class SaveManager {
@@ -62,6 +63,7 @@ export class SaveManager {
       badges: [],
       waystones: [],
       clearedObstacles: [],
+      landmarks: [],
       settings: {
         speed2x: false,
         colourblindMode: false,
