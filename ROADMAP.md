@@ -66,13 +66,13 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 10: Web Audio & Generative Music
 **Focus**: Procedural Sound.
 
-### Step 10.1: Synthesized Engine & Spatial Ambience
+### Step 10.1: Synthesized Engine & Spatial Ambience [x]
 - **Action**: Build `AudioSystem` using Web Audio API for spatialized wind, water, and bird calls.
 - **Files**: `src/audio/engine.ts` (new)
 - **Risk**: *High*. Audio contexts require user interaction to unlock.
 - **Done When**: Binaural wind and river sounds adjust based on proximity and weather.
 
-### Step 10.2: Generative Music & Micro-sounds
+### Step 10.2: Generative Music & Micro-sounds [x]
 - **Action**: Synthesize pentatonic pads and bells tuned to time of day. Add UI sound effects.
 - **Files**: `src/audio/engine.ts`
 - **Done When**: Ethereal music plays dynamically based on time of day.

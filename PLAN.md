@@ -116,11 +116,11 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ---
 
 ## Milestone 10: Web Audio Synthesis & Generative Music
-- [ ] 100% synthesized audio engine using Web Audio API (zero external audio files)
-- [ ] Spatialized biome environmental soundscapes (running stream, rustling wind, distant birds)
-- [ ] Generative music system: pentatonic pads, plucked bells, FM tones tuned to time of day & weather
-- [ ] Delightful micro-sounds for all player actions, steps, and pickups
-- [ ] Volume sliders (master, music, ambience) with iOS user-interaction audio unlock
+- [x] 100% synthesized audio engine using Web Audio API (zero external audio files)
+- [x] Spatialized biome environmental soundscapes (running stream, rustling wind, distant birds)
+- [x] Generative music system: pentatonic pads, plucked bells, FM tones tuned to time of day & weather
+- [x] Delightful micro-sounds for all player actions, steps, and pickups
+- [x] Volume sliders (master, music, ambience) with iOS user-interaction audio unlock
 
 ---
 
