@@ -28,6 +28,7 @@ import { SparringHUD } from './ui/sparring-hud';
 import { PartyLeader } from './entities/party-leader';
 import { SanctuaryUI } from './ui/sanctuary-ui';
 import { WaystoneUI } from './ui/waystone-ui';
+import { SettingsModal } from './ui/settings-modal';
 
 // Add saveManager to window for global access/debug
 declare global {
@@ -63,6 +64,36 @@ const photoMode = new PhotoMode();
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 window.saveManager = saveManager;
+player.speedMultiplier = saveManager.state.settings?.speed2x ? 2.0 : 1.0;
+const settingsModal = new SettingsModal(saveManager, chunkManager.seedRaw);
+settingsModal.onSpeedChange = (speed2x) => {
+  player.speedMultiplier = speed2x ? 2.0 : 1.0;
+};
+settingsModal.onColourblindChange = (cb) => {
+  sparringHud.colourblindMode = cb;
+};
+settingsModal.onToast = (title, desc) => {
+  if (toastBanner && toastTitle && toastDesc && toastCount) {
+    toastTitle.textContent = title;
+    toastDesc.textContent = desc;
+    toastCount.textContent = 'Settings Updated';
+    toastBanner.style.display = 'block';
+    requestAnimationFrame(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '1';
+        toastBanner.style.transform = 'translate(-50%, 0)';
+      }
+    });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      if (toastBanner) {
+        toastBanner.style.opacity = '0';
+        toastBanner.style.transform = 'translate(-50%, 10px)';
+        setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+      }
+    }, 3500);
+  }
+};
 saveManager.state.clearedObstacles.forEach(o => chunkManager.clearedObstacles.add(o));
 const npcManager = new NPCManager(chunkManager.seedRaw);
 npcManager.syncDefeatedBadges(saveManager.state.badges);
@@ -197,6 +228,7 @@ sparring.onYield = (opponent) => {
   }
 };
 const sparringHud = new SparringHUD(sparring);
+sparringHud.colourblindMode = !!saveManager.state.settings?.colourblindMode;
 
 function getPlayerMaxLevel(): number {
   if (saveManager.state.party.length > 0) {
@@ -327,7 +359,46 @@ window.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
-// Map UI button hook
+// Settings & Map UI button hooks
+const settingsBtn = document.getElementById('settings-btn');
+if (settingsBtn) {
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsModal.toggle();
+  });
+}
+
+// 2x Speed hotkey [T]
+window.addEventListener('keydown', (e) => {
+  if (e.key === 't' || e.key === 'T') {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    const s = saveManager.state.settings;
+    s.speed2x = !s.speed2x;
+    saveManager.saveToLocalStorage();
+    player.speedMultiplier = s.speed2x ? 2.0 : 1.0;
+    if (toastBanner && toastTitle && toastDesc && toastCount) {
+      toastTitle.textContent = s.speed2x ? '⚡ 2.0x Speed Enabled' : '🚶 Normal 1.0x Speed';
+      toastDesc.textContent = 'Exploration pace toggled [T]';
+      toastCount.textContent = 'QoL Feature';
+      toastBanner.style.display = 'block';
+      requestAnimationFrame(() => {
+        if (toastBanner) {
+          toastBanner.style.opacity = '1';
+          toastBanner.style.transform = 'translate(-50%, 0)';
+        }
+      });
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        if (toastBanner) {
+          toastBanner.style.opacity = '0';
+          toastBanner.style.transform = 'translate(-50%, 10px)';
+          setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+        }
+      }, 2500);
+    }
+  }
+});
+
 const mapBtn = document.getElementById('map-btn');
 if (mapBtn) {
   mapBtn.addEventListener('click', (e) => {
@@ -363,20 +434,47 @@ if (interactPrompt) {
       player.action = 'idle';
       camera.targetZoom = 1.0;
     } else if (currentSparTarget && !sparring.isActive) {
-      // Start Sparring!
-      camera.targetZoom = 2.0; // Ease closer
-      const playerC = getPlayerCombatant();
-      const wildC: Combatant = {
-        genome: currentSparTarget.genome,
-        level: 3,
-        currentResolve: currentSparTarget.genome.stats.vigor,
-        maxResolve: currentSparTarget.genome.stats.vigor,
-        status: 'None',
-        statusTurns: 0
-      };
-      
-      sparring.startSpar(playerC, wildC);
-      sparringHud.update();
+      if (saveManager.state.settings?.peacefulMode) {
+        // Peaceful Observe
+        for (let i = 0; i < 8; i++) {
+          particles.spawnRipple(currentSparTarget.pos.x + (Math.random() - 0.5) * 16, currentSparTarget.pos.y + (Math.random() - 0.5) * 16, 12);
+        }
+        if (toastBanner && toastTitle && toastDesc && toastCount) {
+          toastTitle.textContent = `🕊️ Peaceful Harmony`;
+          toastDesc.textContent = `You sat quietly with ${currentSparTarget.genome.name} (${currentSparTarget.genome.type}).`;
+          toastCount.textContent = `No-Combat Mode`;
+          toastBanner.style.display = 'block';
+          requestAnimationFrame(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '1';
+              toastBanner.style.transform = 'translate(-50%, 0)';
+            }
+          });
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = window.setTimeout(() => {
+            if (toastBanner) {
+              toastBanner.style.opacity = '0';
+              toastBanner.style.transform = 'translate(-50%, 10px)';
+              setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+            }
+          }, 4000);
+        }
+      } else {
+        // Start Sparring!
+        camera.targetZoom = 2.0; // Ease closer
+        const playerC = getPlayerCombatant();
+        const wildC: Combatant = {
+          genome: currentSparTarget.genome,
+          level: 3,
+          currentResolve: currentSparTarget.genome.stats.vigor,
+          maxResolve: currentSparTarget.genome.stats.vigor,
+          status: 'None',
+          statusTurns: 0
+        };
+        
+        sparring.startSpar(playerC, wildC);
+        sparringHud.update();
+      }
     } else if (currentRestSpot) {
       player.action = 'sit';
       player.pos.x = currentRestSpot.x;
@@ -1225,25 +1323,54 @@ const loop = new GameLoop({
         }
       }
     } else if (currentSparTarget) {
+      const isPeaceful = !!saveManager.state.settings?.peacefulMode;
       if (interactPrompt && interactLabel && interactIcon) {
         interactPrompt.style.display = 'flex';
-        interactIcon.textContent = '⚔️';
-        interactLabel.textContent = `Spar with ${currentSparTarget.genome.name} [E]`;
+        interactIcon.textContent = isPeaceful ? '🕊️' : '⚔️';
+        interactLabel.textContent = isPeaceful
+          ? `Observe ${currentSparTarget.genome.name} [E]`
+          : `Spar with ${currentSparTarget.genome.name} [E]`;
       }
       if (inputState.interactPressed) {
-        camera.targetZoom = 2.0;
-        const playerC = getPlayerCombatant();
-        const wildC: Combatant = {
-          id: currentSparTarget.id,
-          genome: currentSparTarget.genome,
-          level: 3,
-          currentResolve: currentSparTarget.genome.stats.vigor,
-          maxResolve: currentSparTarget.genome.stats.vigor,
-          status: 'None',
-          statusTurns: 0
-        };
-        sparring.startSpar(playerC, wildC);
-        sparringHud.update();
+        if (isPeaceful) {
+          for (let i = 0; i < 8; i++) {
+            particles.spawnRipple(currentSparTarget.pos.x + (Math.random() - 0.5) * 16, currentSparTarget.pos.y + (Math.random() - 0.5) * 16, 12);
+          }
+          if (toastBanner && toastTitle && toastDesc && toastCount) {
+            toastTitle.textContent = `🕊️ Peaceful Harmony`;
+            toastDesc.textContent = `You sat quietly with ${currentSparTarget.genome.name} (${currentSparTarget.genome.type}).`;
+            toastCount.textContent = `No-Combat Mode`;
+            toastBanner.style.display = 'block';
+            requestAnimationFrame(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '1';
+                toastBanner.style.transform = 'translate(-50%, 0)';
+              }
+            });
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+              if (toastBanner) {
+                toastBanner.style.opacity = '0';
+                toastBanner.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => { if (toastBanner) toastBanner.style.display = 'none'; }, 400);
+              }
+            }, 4000);
+          }
+        } else {
+          camera.targetZoom = 2.0;
+          const playerC = getPlayerCombatant();
+          const wildC: Combatant = {
+            id: currentSparTarget.id,
+            genome: currentSparTarget.genome,
+            level: 3,
+            currentResolve: currentSparTarget.genome.stats.vigor,
+            maxResolve: currentSparTarget.genome.stats.vigor,
+            status: 'None',
+            statusTurns: 0
+          };
+          sparring.startSpar(playerC, wildC);
+          sparringHud.update();
+        }
       }
     } else if (currentRestSpot) {
       if (interactPrompt && interactLabel && interactIcon) {
@@ -1694,6 +1821,7 @@ const loop = new GameLoop({
           <div>Keepsakes: ${chunkManager.collectedKeepsakes.size} collected</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
           <div>Particles: ${particles.getActiveCount()} active</div>
+          <div>Speed: <span style="color: #FBBF24;">${player.speedMultiplier.toFixed(1)}x</span> | Mode: <span style="color: #4ADE80;">${saveManager.state.settings?.peacefulMode ? 'Peaceful' : 'Sparring'}</span></div>
           <div>Seed: "${chunkManager.seedRaw}"</div>
         `;
       } else {

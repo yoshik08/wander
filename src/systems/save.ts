@@ -12,6 +12,12 @@ export interface FolioEntry {
   befriended: boolean;
 }
 
+export interface GameSettings {
+  speed2x: boolean;
+  colourblindMode: boolean;
+  peacefulMode: boolean;
+}
+
 export interface SaveState {
   version: number;
   seed: string;
@@ -27,6 +33,7 @@ export interface SaveState {
   badges: string[];
   waystones: { id: string; name: string; x: number; y: number }[];
   clearedObstacles: string[];
+  settings: GameSettings;
 }
 
 export class SaveManager {
@@ -54,7 +61,12 @@ export class SaveManager {
       inventory: {},
       badges: [],
       waystones: [],
-      clearedObstacles: []
+      clearedObstacles: [],
+      settings: {
+        speed2x: false,
+        colourblindMode: false,
+        peacefulMode: false
+      }
     };
   }
 
@@ -69,7 +81,14 @@ export class SaveManager {
         return false;
       }
 
-      this.state = { ...this.getDefaultState(), ...data };
+      this.state = {
+        ...this.getDefaultState(),
+        ...data,
+        settings: {
+          ...this.getDefaultState().settings,
+          ...(data.settings || {})
+        }
+      };
       console.log('[SaveManager] Loaded game state from localStorage');
       return true;
     } catch (e) {

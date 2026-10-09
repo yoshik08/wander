@@ -59,6 +59,7 @@ export class Character {
   readonly runSpeed: number = 210;
   readonly accel: number = 1400;
   readonly friction: number = 0.84;
+  speedMultiplier: number = 1.0;
 
   constructor(startX: number = 0, startY: number = 0) {
     this.pos = vec2(startX, startY);
@@ -71,7 +72,7 @@ export class Character {
     this.prevPos.y = this.pos.y;
 
     const hasInput = Math.hypot(inputMove.x, inputMove.y) > 0.05;
-    const targetSpeed = isRunningInput ? this.runSpeed : this.walkSpeed;
+    const targetSpeed = (isRunningInput ? this.runSpeed : this.walkSpeed) * this.speedMultiplier;
 
     if (this.action === 'sit') {
       if (hasInput) {
@@ -93,8 +94,8 @@ export class Character {
     }
 
     if (hasInput) {
-      this.vel.x += inputMove.x * this.accel * dt;
-      this.vel.y += inputMove.y * this.accel * dt;
+      this.vel.x += inputMove.x * (this.accel * this.speedMultiplier) * dt;
+      this.vel.y += inputMove.y * (this.accel * this.speedMultiplier) * dt;
 
       const currentSpeed = Math.hypot(this.vel.x, this.vel.y);
       if (currentSpeed > targetSpeed) {

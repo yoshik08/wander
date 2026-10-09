@@ -1,9 +1,10 @@
 import { SparringSystem, Combatant, MOVES, Move } from '../systems/sparring';
-import { CreatureType } from '../entities/creature';
+import { CreatureType, getTypeBadge } from '../entities/creature';
 
 export class SparringHUD {
   private container: HTMLDivElement;
   private sys: SparringSystem;
+  public colourblindMode: boolean = false;
 
   private pName: HTMLDivElement;
   private pResolve: HTMLDivElement;
@@ -109,10 +110,12 @@ export class SparringHUD {
     }
 
     if (this.sys.playerCreature && this.sys.wildCreature) {
-      this.pName.textContent = `Lv.${this.sys.playerCreature.level} ${this.sys.playerCreature.genome.name}`;
+      const pBadge = getTypeBadge(this.sys.playerCreature.genome.type, this.colourblindMode);
+      const wBadge = getTypeBadge(this.sys.wildCreature.genome.type, this.colourblindMode);
+      this.pName.textContent = `Lv.${this.sys.playerCreature.level} ${this.sys.playerCreature.genome.name} [${pBadge}]`;
       this.pResolve.textContent = `Resolve: ${this.sys.playerCreature.currentResolve}/${this.sys.playerCreature.maxResolve}`;
       
-      this.wName.textContent = `Lv.${this.sys.wildCreature.level} ${this.sys.wildCreature.genome.name}`;
+      this.wName.textContent = `Lv.${this.sys.wildCreature.level} ${this.sys.wildCreature.genome.name} [${wBadge}]`;
       this.wResolve.textContent = `Resolve: ${this.sys.wildCreature.currentResolve}/${this.sys.wildCreature.maxResolve}`;
     }
 
@@ -165,7 +168,8 @@ export class SparringHUD {
       const move = MOVES[m];
       if (!move) return;
       const btn = document.createElement('button');
-      btn.textContent = move.name;
+      const mBadge = getTypeBadge(move.type, this.colourblindMode);
+      btn.textContent = `${move.name} [${mBadge}]`;
       btn.style.cssText = this.btnStyle(this.getTypeColor(move.type));
       btn.onclick = () => {
         this.sys.executeTurn(move);

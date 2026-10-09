@@ -129,3 +129,31 @@ export function generateCreatureGenome(globalSeed: string | number, speciesId: n
     moves: moves.slice(0, 4) // Ensure 4 moves
   };
 }
+
+export interface TypeBadgeInfo {
+  icon: string;
+  shape: string;
+  color: string;
+  name: CreatureType;
+  symbol: string;
+}
+
+export const TYPE_BADGE_INFO: Record<CreatureType, TypeBadgeInfo> = {
+  Flora: { icon: '🌿', shape: 'Triangle', color: '#2ECC71', name: 'Flora', symbol: '▲' },
+  Aqua:  { icon: '💧', shape: 'Circle',   color: '#3498DB', name: 'Aqua',  symbol: '●' },
+  Ignis: { icon: '🔥', shape: 'Diamond',  color: '#E74C3C', name: 'Ignis', symbol: '◆' },
+  Terra: { icon: '🪨', shape: 'Square',   color: '#8D6E63', name: 'Terra', symbol: '■' },
+  Aero:  { icon: '🌪️', shape: 'Hexagon',  color: '#95A5A6', name: 'Aero',  symbol: '⬡' }
+};
+
+export function getTypeBadge(type: CreatureType | 'Neutral', colourblindMode: boolean = false): string {
+  if (type === 'Neutral') {
+    return colourblindMode ? '⚪ ⚬ Neutral' : '⚪ Neutral';
+  }
+  const info = TYPE_BADGE_INFO[type];
+  if (!info) return type;
+  if (colourblindMode) {
+    return `${info.icon} ${info.symbol} ${type}`;
+  }
+  return `${info.icon} ${type}`;
+}

@@ -229,4 +229,4 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] Hidden tent at -999,-999 with a creator NPC called Yoshik
 - [x] Idle 10 min and your party piles on you to sleep
 - [x] Clicking the same water spot 50 times makes something wave and vanish
-- [ ] 2x speed toggle, colourblind type icons, a No-Combat mode, seed sharing in the menu
+- [x] 2x speed toggle, colourblind type icons, a No-Combat mode, seed sharing in the menu
