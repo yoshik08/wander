@@ -51,7 +51,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 
 ## Milestone 3.5: Art Direction Polish (Ghibli Style)
 - [x] Terrain shader core: domain-warped edges, macro colour noise, new palette
-- [ ] Smooth marching-squares shorelines, continuous rivers, water shader with foam/caustics
+- [x] Smooth marching-squares shorelines, continuous rivers, water shader with foam/caustics
 - [ ] Reusable art toolkit: painted tree/rock/flower/grass, shared wind uniform, soft drop shadows
 - [ ] Character and tree redesign: 48px/64px scale, painterly no-outline style
 - [ ] Visual critique in NOTES.md

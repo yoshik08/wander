@@ -100,61 +100,72 @@ uniform float u_time;
 
 out vec4 fragColor;
 
+vec2 random2(vec2 p) {
+    return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+}
+
+float voronoi(vec2 x) {
+    vec2 n = floor(x);
+    vec2 f = fract(x);
+    float res = 8.0;
+    for(int j=-1; j<=1; j++)
+    for(int i=-1; i<=1; i++) {
+        vec2 b = vec2(float(i), float(j));
+        vec2 r = b - f + random2(n + b);
+        res = min(res, dot(r, r));
+    }
+    return sqrt(res);
+}
+
 void main() {
   float depth = v_props.x;
   int foamMask = int(v_props.y);
   float isWaterfall = v_props.z;
 
-  // 1. Base Depth Color Gradient (Deep river teal to shallow turquoise)
-  vec4 deepCol = vec4(0.42, 0.61, 0.71, 0.94);    // #6B9CB5
-  vec4 shallowCol = vec4(0.57, 0.76, 0.85, 0.88); // #92C1D9
+  // 1. Base Depth Color Gradient
+  vec4 deepCol = vec4(0.42, 0.61, 0.71, 0.94);
+  vec4 shallowCol = vec4(0.57, 0.76, 0.85, 0.88);
   vec4 baseCol = mix(shallowCol, deepCol, clamp(depth, 0.0, 1.0));
 
-  // 2. Flow Mapping (Advected dual wave layers along flow vector)
+  // 2. Smooth Marching Squares Edge & Foam
+  bool n = (foamMask & 1) != 0;
+  bool s = (foamMask & 2) != 0;
+  bool e = (foamMask & 4) != 0;
+  bool w = (foamMask & 8) != 0;
+  
+  float distToLand = 1.0;
+  if (n) distToLand = min(distToLand, v_uv.y);
+  if (s) distToLand = min(distToLand, 1.0 - v_uv.y);
+  if (e) distToLand = min(distToLand, 1.0 - v_uv.x);
+  if (w) distToLand = min(distToLand, v_uv.x);
+  if (n && e) distToLand = min(distToLand, length(vec2(1.0 - v_uv.x, v_uv.y)));
+  if (n && w) distToLand = min(distToLand, length(vec2(v_uv.x, v_uv.y)));
+  if (s && e) distToLand = min(distToLand, length(vec2(1.0 - v_uv.x, 1.0 - v_uv.y)));
+  if (s && w) distToLand = min(distToLand, length(vec2(v_uv.x, 1.0 - v_uv.y)));
+  
+  float waveOffset = sin(v_worldPos.x * 0.1 + u_time * 2.0) * 0.03 + 0.02;
+  float actualEdge = distToLand - waveOffset;
+  
+  if (actualEdge < 0.0 && foamMask != 0) {
+      discard; // Transparent pixel (shows ground underneath)
+  }
+  
+  float foam = 0.0;
+  if (actualEdge < 0.08 && foamMask != 0) {
+      foam = 1.0;
+  }
+
+  // 3. Voronoi Caustics
   vec2 fDir = normalize(v_flow);
   if (length(v_flow) < 0.05) fDir = vec2(0.8, 0.3);
+  
+  float vNoise = voronoi(v_worldPos * 0.05 + fDir * (u_time * 0.8));
+  float caustics = smoothstep(0.05, 0.1, vNoise) - smoothstep(0.1, 0.15, vNoise);
+  vec4 causticsCol = vec4(1.0, 1.0, 1.0, 0.4);
 
-  vec2 flowUV1 = v_worldPos * 0.04 + fDir * (u_time * 0.35);
-  vec2 flowUV2 = v_worldPos * 0.04 + fDir * (u_time * 0.35 + 0.5) + vec2(0.37, 0.81);
+  vec4 foamCol = vec4(1.0, 1.0, 1.0, 0.5);
 
-  float wave1 = sin(flowUV1.x * 6.28 + flowUV1.y * 3.14 + u_time * 1.8);
-  float wave2 = cos(flowUV2.x * 5.0 - flowUV2.y * 4.2 + u_time * 1.4);
-  float flowNoise = (wave1 + wave2) * 0.5;
-
-  // 3. Shimmer Highlights (Sun glints on surface)
-  float shimmer = smoothstep(0.65, 0.98, flowNoise);
-  vec4 shimmerCol = vec4(1.0, 1.0, 1.0, 0.65);
-
-  // 4. Shoreline Foam (Undulating foam where water meets land edges)
-  float foam = 0.0;
-  // Bit 0: North
-  if ((foamMask & 1) != 0 && v_uv.y < 0.22) {
-    float edgeDist = v_uv.y / 0.22;
-    float ripple = sin(v_worldPos.x * 0.5 + u_time * 3.0) * 0.2;
-    if (edgeDist < (0.8 + ripple)) foam = max(foam, 1.0 - edgeDist);
-  }
-  // Bit 1: South
-  if ((foamMask & 2) != 0 && v_uv.y > 0.78) {
-    float edgeDist = (1.0 - v_uv.y) / 0.22;
-    float ripple = cos(v_worldPos.x * 0.5 + u_time * 3.0) * 0.2;
-    if (edgeDist < (0.8 + ripple)) foam = max(foam, 1.0 - edgeDist);
-  }
-  // Bit 2: East
-  if ((foamMask & 4) != 0 && v_uv.x > 0.78) {
-    float edgeDist = (1.0 - v_uv.x) / 0.22;
-    float ripple = sin(v_worldPos.y * 0.5 + u_time * 3.0) * 0.2;
-    if (edgeDist < (0.8 + ripple)) foam = max(foam, 1.0 - edgeDist);
-  }
-  // Bit 3: West
-  if ((foamMask & 8) != 0 && v_uv.x < 0.22) {
-    float edgeDist = v_uv.x / 0.22;
-    float ripple = cos(v_worldPos.y * 0.5 + u_time * 3.0) * 0.2;
-    if (edgeDist < (0.8 + ripple)) foam = max(foam, 1.0 - edgeDist);
-  }
-
-  vec4 foamCol = vec4(0.92, 0.98, 1.0, 0.85);
-
-  // 5. Waterfall Froth & Spray
+  // 4. Waterfall Froth & Spray
   if (isWaterfall > 0.5) {
     float fallSpeed = u_time * 14.0;
     float cascade = sin(v_worldPos.y * 0.6 - fallSpeed) * cos(v_worldPos.x * 0.8);
@@ -163,8 +174,11 @@ void main() {
     }
   }
 
-  vec4 finalCol = mix(baseCol, shimmerCol, shimmer * 0.4);
-  finalCol = mix(finalCol, foamCol, clamp(foam, 0.0, 1.0));
+  vec4 finalCol = baseCol;
+  finalCol = mix(finalCol, causticsCol, caustics * 0.7);
+  if (foam > 0.0) {
+      finalCol = mix(finalCol, foamCol, foam); // 50% opacity foam
+  }
 
   fragColor = finalCol;
 }
