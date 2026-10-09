@@ -148,10 +148,11 @@ export class SparringHUD {
       return;
     }
 
-    // Basic 4 moves for now
-    const moveNames = ['Dash', 'Bramble Lash', 'Aqua Burst', 'Cinder Spark'];
+    // Basic 4 moves from genome
+    const moveNames = this.sys.playerCreature.genome.moves || ['Dash'];
     moveNames.forEach(m => {
       const move = MOVES[m];
+      if (!move) return;
       const btn = document.createElement('button');
       btn.textContent = move.name;
       btn.style.cssText = this.btnStyle(this.getTypeColor(move.type));

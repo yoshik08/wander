@@ -112,7 +112,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone C2: Sparring
 
 ### Step C2.1: In-World Sparring State Machine
-- **Action**: Implement turn-based spar flow. No screen change; camera eases closer. Replace HP with "Resolve"; at 0 the creature yields and sits. 5 elemental types with effectiveness loop.
+- [x] **Action**: Implement turn-based spar flow. No screen change; camera eases closer. Replace HP with "Resolve"; at 0 the creature yields and sits. 5 elemental types with effectiveness loop.
 - **Files**: `src/systems/sparring.ts` (new), `src/main.ts`
 - **Done When**: Player can engage a wild creature, ease camera in, and take turns resolving attacks until one yields.
 

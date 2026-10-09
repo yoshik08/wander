@@ -19,11 +19,12 @@
   - Milestone 9 (Step 9.1): Resting on Benches & Logs (calm sit pose, peaceful breathing, eased 0.82 camera pull-back panorama, cat sleeping curl-up, interact prompt).
   - Milestone C1 (Step C1.2): Procedural Creature Generation (Archetypes, appendages, patterns, 150 species, types).
   - Milestone C1 (Step C1.3): Creature Overworld Spawning (Biome partitioning, roaming AI, depth-sorted rendering).
+  - Milestone C1 (Step C1.1): Save State Architecture.
   - Milestone C2 (Step C2.1): Sparring State Machine (Resolve, elements, effectiveness loop).
 - **In progress**:
-  - Milestone C1 (Step C1.1): Save State Architecture.
+  - Milestone C2 (Step C2.2): Stats & Moves (Individual creature movesets, species stats).
 - **Next Item in ROADMAP.md**:
-  - Milestone C1 (Step C1.1): Save State Architecture.
+  - Milestone C2 (Step C2.2): Stats & Moves.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

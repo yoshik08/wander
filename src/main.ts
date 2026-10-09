@@ -516,7 +516,7 @@ const loop = new GameLoop({
       if (inputState.interactPressed) {
         camera.targetZoom = 2.0;
         const playerC: Combatant = {
-          genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped' } as any,
+          genome: { id: 'player', name: 'Wanderer', type: 'Neutral', stats: { vigor: 20, strike: 10, guard: 10, haste: 10 }, archetype: 'Biped', moves: ['Dash', 'Bramble Lash', 'Aqua Burst', 'Cinder Spark'] } as any,
           level: 5,
           currentResolve: 20,
           maxResolve: 20,

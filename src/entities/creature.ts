@@ -28,6 +28,7 @@ export interface CreatureGenome {
     guard: number;
     haste: number;
   };
+  moves: string[];
 }
 
 const SYLLABLES_START = ['Bram', 'Lum', 'Peb', 'Flar', 'Gliss', 'Twi', 'Vex', 'Oru', 'Nim', 'Crys'];
@@ -100,6 +101,16 @@ export function generateCreatureGenome(globalSeed: string | number, speciesId: n
   const guard = Math.floor(rng.range(10, 25) * statMult);
   const haste = Math.floor(rng.range(10, 25) * statMult);
 
+  let moves: string[] = ['Dash']; // Base physical
+  
+  if (type === 'Flora') moves.push('Bramble Lash', 'Spores');
+  else if (type === 'Aqua') moves.push('Aqua Burst', 'Intimidate');
+  else if (type === 'Ignis') moves.push('Cinder Spark', 'Intimidate');
+  else if (type === 'Terra') moves.push('Pebble Toss', 'Dash'); // Fallback
+  else if (type === 'Aero') moves.push('Breeze Strike', 'Spores');
+  
+  moves.push('Intimidate'); // Default 4th move for now
+
   return {
     speciesId,
     seedNum,
@@ -114,6 +125,7 @@ export function generateCreatureGenome(globalSeed: string | number, speciesId: n
     accentColor,
     scale: rng.range(0.8, 1.2) * (complexity === 2.0 ? 1.4 : 1.0),
     complexity,
-    stats: { vigor, strike, guard, haste }
+    stats: { vigor, strike, guard, haste },
+    moves: moves.slice(0, 4) // Ensure 4 moves
   };
 }
