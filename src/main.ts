@@ -6,6 +6,7 @@ import { Character } from './entities/character';
 import { generateCreatureGenome } from './entities/creature';
 import { ChunkManager } from './world/chunk-manager';
 import { CHUNK_PIXEL_SIZE, CHUNK_TILES, TILE_SIZE, TILE_FLAG_PATH, TILE_FLAG_WATER } from './world/chunk';
+import { BiomeType } from './world/biomes';
 import { renderStructure } from './world/structures';
 import { hexToRgba, vec2, Vec2 } from './core/math';
 import { ArtToolkit } from './render/art';
@@ -173,6 +174,7 @@ const waystoneUI = new WaystoneUI(saveManager, (tx, ty) => {
 
 // Current world layer (0 = overworld, -1 = underground)
 let currentLayer = saveManager.state.layer || 0;
+let shootingStarTimer = 3.0;
 
 // Photo Mode Hooks
 const photoBtn = document.getElementById('photo-btn');
@@ -711,7 +713,11 @@ const loop = new GameLoop({
     currentSparTarget = null;
     if (!sparring.isActive && !targetWarden && !targetRival && !targetApex && !targetMyth && !canActivatePedestal) {
       let closestSparDist = 48;
-      for (const c of wildCreatures.getActiveCreatures()) {
+      const wInfo = weather.getInfo();
+      const tInfo = timeSystem.getInfo();
+      const isCold = chunkManager.getBiomeAt(currentLayer, player.pos.x, player.pos.y) === BiomeType.SnowyPeaks;
+      const conditionFilter = { wetness: wInfo.wetness, isSnowing: isCold, phase: tInfo.phase };
+      for (const c of wildCreatures.getActiveCreatures(conditionFilter)) {
         const d = Math.hypot(player.pos.x - c.pos.x, player.pos.y - c.pos.y);
         if (d < closestSparDist) {
           closestSparDist = d;
@@ -1126,6 +1132,17 @@ const loop = new GameLoop({
     npcManager.update(dt);
     apexMythManager.update(dt);
 
+    // Shooting stars at night
+    shootingStarTimer -= dt;
+    if (shootingStarTimer <= 0) {
+      shootingStarTimer = 4.0 + Math.random() * 5.0;
+      if (timeSystem.getInfo().isNight) {
+        const halfW = (renderer.width / 2) / camera.zoom;
+        const halfH = (renderer.height / 2) / camera.zoom;
+        particles.spawnShootingStar(camera.pos.x, camera.pos.y, halfW, halfH);
+      }
+    }
+
     // Advance 24-minute Day/Night Cycle
     timeSystem.update(dt);
   },
@@ -1215,6 +1232,7 @@ const loop = new GameLoop({
     depthItems.length = 0;
     const p = player.getInterpolatedPos(alpha);
     const timeInfo = timeSystem.getInfo();
+    const curBiome = chunkManager.getBiomeAt(currentLayer, p.x, p.y);
     art.setSun(timeInfo.sunAngle, timeInfo.sunElevation);
 
     // Props from visible chunks
@@ -1347,7 +1365,9 @@ const loop = new GameLoop({
     }
 
     // Wild creatures in Depth sorting
-    for (const creature of wildCreatures.getActiveCreatures()) {
+    const isCold = curBiome === BiomeType.SnowyPeaks;
+    const condFilter = { wetness: weather.getInfo().wetness, isSnowing: isCold, phase: timeInfo.phase };
+    for (const creature of wildCreatures.getActiveCreatures(condFilter)) {
       const crPos = creature.getInterpolatedPos(alpha);
       depthItems.push({
         baseY: crPos.y,
@@ -1399,8 +1419,20 @@ const loop = new GameLoop({
     // ==========================================
     // LAYER 7: Canopy God Rays
     // ==========================================
-    const curBiome = chunkManager.getBiomeAt(currentLayer, p.x, p.y);
     lighting.renderGodRays(
+      renderer,
+      camPos.x,
+      camPos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom,
+      timeInfo,
+      curBiome,
+      time
+    );
+
+    // Celestial Aurora in High Cold Biomes
+    lighting.renderAurora(
       renderer,
       camPos.x,
       camPos.y,

@@ -30,10 +30,11 @@
   - Milestone C6 (Step C6.1): Underground noise map for caves with light radius mechanics.
   - Milestone C6 (Step C6.2): 8 Wardens beside elemental monuments and Rival Wanderer encounters with badges and scaling resolve spar.
   - Milestone C7 (Step C7.1): 4 Cardinal Apex creatures behind resonance shrine puzzles and real-time roaming myth Lunaris.
+  - Milestone C7 (Step C7.2): Shooting stars at night, auroras in snow biomes, and weather/time-locked creature spawns.
 - **Completed in this step**:
-  - Milestone C7 (Step C7.1): 4 Apex creatures and time-based roaming myths.
-- **Next Item in ROADMAP.md**:
   - Milestone C7 (Step C7.2): Shooting stars, auroras, and weather-locked spawns.
+- **Next Item in ROADMAP.md**:
+  - Milestone C8 (Step C8.1): Easter eggs (Null glitch shader, meteor shower code, dev tools map, -999,-999 creator tent).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

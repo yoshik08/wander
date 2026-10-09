@@ -129,4 +129,10 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Diegetic Environmental Puzzles**: Interacting with both shrine plinths shatters the barrier dome with a burst of stardust light, awakening the massive Apex entity (scale 2.2x, level 45, majestic radiant auras).
 - **The Real-Time Celestial Myth Lunaris**: Lunaris the Star-Walker traces an ethereal orbital path across the meadow synchronized to real-world local time (`new Date()`), radiating shifting prismatic colors and trailing celestial dust.
 
+## Step C7.2 (Rare Atmosphere, Shooting Stars, Auroras & Weather-Locked Spawns) Critique
+- **Nighttime Shooting Stars**: High-velocity luminous diagonal shooting stars streak across the upper atmosphere at night with elongated sparkling tails, bringing quiet wonder to nocturnal exploration.
+- **Undulating Nordic Auroras**: Dual emerald and violet waving aurora curtains shimmer softly in the upper atmosphere when exploring Snowy Peaks and mountain heights at night, dusk, or dawn.
+- **Weather and Time Locked Creature Spawns**: Species now possess environmental affinity requirements: marsh amphibian and aqua species only emerge in rain/drizzle, alpine frost species emerge in snowy peaks, and glowing hollow spirits wander exclusively under starlit night skies.
+
+
 

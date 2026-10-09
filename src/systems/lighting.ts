@@ -186,4 +186,63 @@ export class LightingSystem {
       }
     }
   }
+
+  /**
+   * Renders undulating celestial auroras in high snow and misty mountain biomes at night/twilight.
+   */
+  renderAurora(
+    renderer: IRenderer,
+    camX: number,
+    camY: number,
+    viewWidth: number,
+    viewHeight: number,
+    zoom: number,
+    timeInfo: TimePhaseInfo,
+    biome: BiomeType,
+    time: number
+  ): void {
+    const isNightOrTwilight = timeInfo.phase === 'night' || timeInfo.phase === 'dusk' || timeInfo.phase === 'dawn';
+    const isColdBiome = biome === BiomeType.SnowyPeaks || biome === BiomeType.MistyHighlands;
+    if (!isNightOrTwilight || !isColdBiome) return;
+
+    const halfW = (viewWidth / 2) / zoom;
+    const halfH = (viewHeight / 2) / zoom;
+    const topY = camY - halfH;
+    const ribbonWidth = halfW * 2.2;
+    const segments = 16;
+    const segW = ribbonWidth / segments;
+    const startX = camX - halfW * 1.1;
+
+    // 2 aurora curtain bands: emerald green and celestial violet
+    const bands = [
+      { color: { r: 0.25, g: 0.92, b: 0.65, a: 0.20 }, baseY: topY + 45, amp: 26, speed: 0.5 },
+      { color: { r: 0.62, g: 0.55, b: 0.98, a: 0.16 }, baseY: topY + 70, amp: 32, speed: 0.35 }
+    ];
+
+    for (const band of bands) {
+      for (let s = 0; s < segments; s++) {
+        const x0 = startX + s * segW;
+        const x1 = x0 + segW;
+
+        const wave0 = Math.sin(time * band.speed + s * 0.45) * band.amp + Math.cos(time * 0.3 + s * 0.2) * (band.amp * 0.4);
+        const wave1 = Math.sin(time * band.speed + (s + 1) * 0.45) * band.amp + Math.cos(time * 0.3 + (s + 1) * 0.2) * (band.amp * 0.4);
+
+        const y0_top = topY;
+        const y0_bot = band.baseY + wave0;
+        const y1_top = topY;
+        const y1_bot = band.baseY + wave1;
+
+        this.scratchQuad[0].x = x0;
+        this.scratchQuad[0].y = y0_top;
+        this.scratchQuad[1].x = x1;
+        this.scratchQuad[1].y = y1_top;
+        this.scratchQuad[2].x = x1;
+        this.scratchQuad[2].y = y1_bot;
+        this.scratchQuad[3].x = x0;
+        this.scratchQuad[3].y = y0_bot;
+
+        renderer.drawPolygon(this.scratchQuad, band.color);
+      }
+    }
+  }
 }

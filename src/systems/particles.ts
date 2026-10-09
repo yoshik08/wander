@@ -3,7 +3,7 @@ import { IRenderer } from '../render/types';
 import { BiomeType } from '../world/biomes';
 import { PRNG } from '../core/prng';
 
-export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly' | 'ripple' | 'rain';
+export type ParticleType = 'pollen' | 'petal' | 'leaf' | 'spore' | 'dust' | 'firefly' | 'ripple' | 'rain' | 'shooting_star';
 
 export interface Particle {
   active: boolean;
@@ -175,6 +175,38 @@ export class ParticleSystem {
     p.oscSpeed = 0;
     p.oscAmpX = 0;
     p.oscAmpY = 0;
+  }
+
+  /**
+   * Spawns a luminous diagonal shooting star across the night sky.
+   */
+  spawnShootingStar(camX: number, camY: number, halfW: number, halfH: number): void {
+    const p = this.allocateParticle();
+    if (!p) return;
+
+    p.active = true;
+    p.type = 'shooting_star';
+    p.x = camX - halfW * 0.8 + this.prng.next() * halfW * 1.6;
+    p.y = camY - halfH * 0.95 + this.prng.next() * (halfH * 0.45);
+    const speed = 460 + this.prng.next() * 220;
+    const angle = Math.PI * 0.28 + (this.prng.next() - 0.5) * 0.25; // Diagonal streak
+    p.vx = Math.cos(angle) * speed;
+    p.vy = Math.sin(angle) * speed;
+    p.size = 3.5;
+    p.maxLife = 0.85 + this.prng.next() * 0.35;
+    p.life = p.maxLife;
+
+    p.r = 1.0;
+    p.g = 0.96;
+    p.b = 0.82;
+    p.baseAlpha = 0.95;
+
+    p.oscOffset = 0;
+    p.oscSpeed = 0;
+    p.oscAmpX = 0;
+    p.oscAmpY = 0;
+    p.angle = 0;
+    p.angularVel = 0;
   }
 
   private initAmbientParticle(p: Particle, spawnX: number, spawnY: number, biome: BiomeType): void {
@@ -598,6 +630,22 @@ export class ParticleSystem {
         this.scratchQuad[3].y = p.y - hw * sin + hh * cos;
 
         renderer.drawPolygon(this.scratchQuad, this.scratchColor);
+      } else if (p.type === 'shooting_star') {
+        // Glowing head
+        renderer.drawCircle(p.x, p.y, p.size, this.scratchColor);
+        renderer.drawCircle(p.x, p.y, p.size * 0.5, { r: 1, g: 1, b: 1, a: alpha });
+        // Long fading streak tail opposite to motion
+        const speed = Math.hypot(p.vx, p.vy);
+        if (speed > 0.01) {
+          const trailLength = 70;
+          const inv = trailLength / speed;
+          const tailX = p.x - p.vx * inv;
+          const tailY = p.y - p.vy * inv;
+          this.scratchColor.a = alpha * 0.75;
+          renderer.drawLine(p.x, p.y, tailX, tailY, 2.0, this.scratchColor);
+          this.scratchColor.a = alpha * 0.35;
+          renderer.drawLine(p.x, p.y, tailX - p.vx * (inv * 0.4), tailY - p.vy * (inv * 0.4), 1.0, this.scratchColor);
+        }
       }
     }
   }

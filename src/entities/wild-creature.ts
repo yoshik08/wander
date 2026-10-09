@@ -12,6 +12,7 @@ export class WildCreature {
   readonly chunkY: number;
   readonly genome: CreatureGenome;
   readonly level: number;
+  readonly spawnCondition: 'all' | 'rain' | 'night' | 'snow';
 
   maxResolve: number;
   resolve: number;
@@ -50,12 +51,31 @@ export class WildCreature {
     this.maxResolve = Math.floor(this.genome.stats.vigor * 2 + this.level * 4);
     this.resolve = this.maxResolve;
 
+    // Weather and time-locked spawn classification
+    if ((this.speciesId >= 91 && this.speciesId <= 105) || (this.genome.type === 'Aqua' && this.speciesId % 4 === 0)) {
+      this.spawnCondition = 'rain';
+    } else if (this.speciesId >= 146 && this.speciesId <= 148) {
+      this.spawnCondition = 'snow';
+    } else if ((this.speciesId >= 149 && this.speciesId <= 150) || this.speciesId % 6 === 0) {
+      this.spawnCondition = 'night';
+    } else {
+      this.spawnCondition = 'all';
+    }
+
     this.rng = new PRNG(this.genome.seedNum ^ (chunkX * 7919) ^ (chunkY * 6571));
     this.facingLeft = this.rng.range(0, 1) < 0.5;
     this.state = this.rng.range(0, 1) < 0.3 ? 'sit' : 'idle';
     this.timer = this.rng.range(1.5, 4.0);
     this.blinkTimer = this.rng.range(2.0, 5.0);
     this.walkSpeed = 14 + (this.genome.stats.haste * 0.3);
+  }
+
+  isConditionSatisfied(weatherWetness: number, isSnowing: boolean, timePhase: string): boolean {
+    if (this.spawnCondition === 'all') return true;
+    if (this.spawnCondition === 'rain') return weatherWetness > 0.25;
+    if (this.spawnCondition === 'snow') return isSnowing;
+    if (this.spawnCondition === 'night') return timePhase === 'night';
+    return true;
   }
 
   update(dt: number, time: number, isTraversable: (x: number, y: number) => boolean, playerPos?: Vec2): void {
@@ -206,8 +226,10 @@ export class WildCreatureManager {
     }
   }
 
-  getActiveCreatures(): WildCreature[] {
-    return Array.from(this.creatures.values());
+  getActiveCreatures(conditionFilter?: { wetness: number; isSnowing?: boolean; phase?: string }): WildCreature[] {
+    const all = Array.from(this.creatures.values());
+    if (!conditionFilter) return all;
+    return all.filter(c => c.isConditionSatisfied(conditionFilter.wetness, conditionFilter.isSnowing ?? false, conditionFilter.phase ?? 'noon'));
   }
 
   getCreatureNear(worldX: number, worldY: number, radius: number): WildCreature | null {
