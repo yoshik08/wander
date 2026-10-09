@@ -18,6 +18,7 @@ import {
 import { renderStructure } from './world/structures';
 import { WaterTileRenderData } from './render/types';
 import { hexToRgba, vec2, Vec2 } from './core/math';
+import { ArtToolkit } from './render/art';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -26,6 +27,7 @@ if (!canvas) {
 }
 
 const renderer: IRenderer = createRenderer(canvas);
+const art = new ArtToolkit(renderer);
 const camera = new Camera(0, 0);
 const player = new Character(CHUNK_PIXEL_SIZE / 2, CHUNK_PIXEL_SIZE / 2); // Center of spawn chunk
 camera.snapTo(player.pos.x, player.pos.y);
@@ -215,8 +217,7 @@ const loop = new GameLoop({
 
             // Swaying grass blades on grassy biomes
             if (tileHash > 0.72 && elev > -0.1) {
-              const windSway = Math.sin(time * 3 + wx * 0.04 + wy * 0.04) * 2;
-              renderer.drawLine(wx + 8, wy + 16, wx + 8 + windSway, wy + 9, 1.5, biomeDef.palette.foliageSecondary);
+              art.drawGrassBlade(wx + 8, wy + 16, time, globalWind);
             }
           }
         }
@@ -300,44 +301,17 @@ const loop = new GameLoop({
         if (prop.type === 'oak_tree') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => {
-              renderer.drawCircle(px, prop.baseY, 14, hexToRgba('#1B3317', 0.28));
-              renderer.drawRect(px - 3.5, py - 16, 7, 18, hexToRgba('#6E2C00'));
-              const windSway = Math.sin(time * 2.5 + px * 0.03) * 3 + globalWind.x * 2;
-              renderer.drawCircle(px - 6 + windSway * 0.3, py - 20, 13, hexToRgba('#2D6928'));
-              renderer.drawCircle(px + 6 + windSway * 0.4, py - 20, 13, hexToRgba('#3A7D34'));
-              renderer.drawCircle(px + windSway * 0.5, py - 28, 15, hexToRgba('#4E9A47'));
-            }
+            draw: () => art.drawPaintedTree(px, prop.baseY, time, globalWind, 0)
           });
         } else if (prop.type === 'pine_tree') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => {
-              renderer.drawCircle(px, prop.baseY, 12, hexToRgba('#112211', 0.3));
-              renderer.drawRect(px - 2.5, py - 18, 5, 20, hexToRgba('#4A2E16'));
-              const windSway = Math.sin(time * 2.5 + px * 0.03) * 2;
-              renderer.drawPolygon([
-                vec2(px - 14 + windSway * 0.3, py - 10),
-                vec2(px + 14 + windSway * 0.3, py - 10),
-                vec2(px + windSway * 0.6, py - 28)
-              ], hexToRgba('#1E4223'));
-              renderer.drawPolygon([
-                vec2(px - 10 + windSway * 0.5, py - 22),
-                vec2(px + 10 + windSway * 0.5, py - 22),
-                vec2(px + windSway * 0.8, py - 38)
-              ], hexToRgba('#28582E'));
-            }
+            draw: () => art.drawPaintedTree(px, prop.baseY, time, globalWind, 1)
           });
         } else if (prop.type === 'flower') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => {
-              const petalColors = ['#FFFFFF', '#E74C3C', '#F39C12', '#9B59B6', '#F1948A'];
-              const pColor = hexToRgba(petalColors[prop.variant % petalColors.length]);
-              renderer.drawLine(px, py, px, py - 6, 1.5, hexToRgba('#3B7B34'));
-              renderer.drawCircle(px, py - 6, 3.2, pColor);
-              renderer.drawCircle(px, py - 6, 1.2, hexToRgba('#F4D03F'));
-            }
+            draw: () => art.drawPaintedFlower(px, prop.baseY, time, globalWind, prop.variant)
           });
         } else if (prop.type === 'lily_pad') {
           depthItems.push({
@@ -351,11 +325,7 @@ const loop = new GameLoop({
         } else if (prop.type === 'rock') {
           depthItems.push({
             baseY: prop.baseY,
-            draw: () => {
-              renderer.drawCircle(px, prop.baseY, 6, hexToRgba('#222222', 0.2));
-              renderer.drawCircle(px, py, 5, hexToRgba('#7F8C8D'));
-              renderer.drawCircle(px - 1, py - 1, 3, hexToRgba('#95A5A6'));
-            }
+            draw: () => art.drawPaintedRock(px, prop.baseY, prop.variant)
           });
         } else if (prop.type === 'log') {
           depthItems.push({

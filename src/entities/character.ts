@@ -1,6 +1,7 @@
 import { Vec2, vec2, ColorRGBA, hexToRgba, lerpAngle, lerp } from '../core/math';
 import { VerletRope } from './verlet';
 import { IRenderer } from '../render/types';
+import { ArtToolkit } from '../render/art';
 
 export type CharacterAction = 'idle' | 'walk' | 'run' | 'sit' | 'wade';
 
@@ -48,8 +49,9 @@ export class Character {
   // Turning lean angle
   turnLean: number = 0;
 
-  // Footsteps trail
+  // Footsteps trail and dust
   footsteps: Footstep[] = [];
+  dustParticles: { pos: Vec2, life: number, maxLife: number }[] = [];
   private stepTimer: number = 0;
 
   // Movement tuning
@@ -91,7 +93,7 @@ export class Character {
       const strideFreq = this.action === 'run' ? 16 : 10;
       this.walkCycle += dt * strideFreq;
 
-      // Spawn footsteps
+      // Spawn footsteps & dust
       this.stepTimer += dt * strideFreq;
       if (this.stepTimer >= Math.PI) {
         this.stepTimer -= Math.PI;
@@ -101,6 +103,15 @@ export class Character {
           life: 1.0
         });
         if (this.footsteps.length > 24) this.footsteps.shift();
+        
+        // Spawn dust when running
+        if (currentSpeed > this.walkSpeed) {
+          this.dustParticles.push({
+            pos: vec2(this.pos.x + (Math.random() - 0.5) * 10, this.pos.y + 2),
+            life: 0.6 + Math.random() * 0.4,
+            maxLife: 1.0
+          });
+        }
       }
     } else {
       this.vel.x *= Math.pow(this.friction, dt * 60);
@@ -117,11 +128,18 @@ export class Character {
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;
 
-    // Decay footsteps
+    // Decay footsteps & dust
     for (let i = this.footsteps.length - 1; i >= 0; i--) {
       this.footsteps[i].life -= dt * 0.35;
       if (this.footsteps[i].life <= 0) {
         this.footsteps.splice(i, 1);
+      }
+    }
+    for (let i = this.dustParticles.length - 1; i >= 0; i--) {
+      this.dustParticles[i].life -= dt;
+      this.dustParticles[i].pos.y -= dt * 10.0; // drift up
+      if (this.dustParticles[i].life <= 0) {
+        this.dustParticles.splice(i, 1);
       }
     }
 
@@ -152,24 +170,32 @@ export class Character {
     const bootColor = hexToRgba('#4A3728');
     const skinColor = hexToRgba('#FAD7A0');
     const hairColor = hexToRgba('#3B2F2F');
-    const shadowColor = hexToRgba('#1B3317', 0.28);
+    const art = new ArtToolkit(renderer);
+
+    const isMobile = window.innerWidth <= 600;
+    const s = isMobile ? 2.5 : 2.0;
 
     // 1. Draw footstep impressions
     for (const step of this.footsteps) {
       const stepAlpha = step.life * 0.35;
-      renderer.drawRect(step.pos.x - 2, step.pos.y - 1, 4, 2, hexToRgba('#2A4D24', stepAlpha));
+      renderer.drawRect(step.pos.x - 2 * s, step.pos.y - 1 * s, 4 * s, 2 * s, hexToRgba('#2A4D24', stepAlpha));
     }
 
-    // 2. Drop Shadow under character
-    renderer.drawCircle(p.x, p.y, 6.5, shadowColor);
+    // 1b. Dust Particles
+    for (const dust of this.dustParticles) {
+      const dAlpha = (dust.life / dust.maxLife) * 0.4;
+      renderer.drawCircle(dust.pos.x, dust.pos.y, 2 * s, hexToRgba('#D0D3D4', dAlpha));
+    }
+
+    // 2. Drop Shadow under character (soft dark-green blob shadow)
+    art.drawBlobShadow(p.x, p.y, 6.5 * s);
 
     // 3. Animation Swings
     const swing = this.action === 'idle' ? 0 : Math.sin(this.walkCycle);
     const bob = this.action === 'idle'
-      ? Math.sin(this.walkCycle) * 0.6
-      : Math.abs(Math.sin(this.walkCycle)) * -1.8;
+      ? Math.sin(this.walkCycle) * 0.6 * s
+      : Math.abs(Math.sin(this.walkCycle)) * -1.8 * s;
 
-    // Determine 8-way facing category
     let ang = this.facingAngle;
     while (ang > Math.PI) ang -= Math.PI * 2;
     while (ang < -Math.PI) ang += Math.PI * 2;
@@ -179,91 +205,85 @@ export class Character {
     const isFacingRight = Math.abs(ang) <= Math.PI * 0.25;
     const isFacingLeft = Math.abs(ang) >= Math.PI * 0.75;
 
-    // 4. Legs & Boots (ground contact y: p.y - 5 to p.y)
-    const legL_X = p.x - 2.5;
-    const legR_X = p.x + 1.5;
-    const legSwingOffset = swing * 2.5;
+    // 4. Legs & Boots
+    const legL_X = p.x - 2.5 * s;
+    const legR_X = p.x + 1.5 * s;
+    const legSwingOffset = swing * 2.5 * s;
 
-    renderer.drawRect(legL_X, p.y - 6 + bob + legSwingOffset * 0.5, 2.5, 4.5, pantsColor);
-    renderer.drawRect(legL_X - 0.5, p.y - 2 + legSwingOffset * 0.5, 3.5, 2.5, bootColor);
+    renderer.drawRect(legL_X, p.y - 6*s + bob + legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
+    renderer.drawRect(legL_X - 0.5*s, p.y - 2*s + legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
 
-    renderer.drawRect(legR_X, p.y - 6 + bob - legSwingOffset * 0.5, 2.5, 4.5, pantsColor);
-    renderer.drawRect(legR_X - 0.5, p.y - 2 - legSwingOffset * 0.5, 3.5, 2.5, bootColor);
+    renderer.drawRect(legR_X, p.y - 6*s + bob - legSwingOffset * 0.5, 2.5*s, 4.5*s, pantsColor);
+    renderer.drawRect(legR_X - 0.5*s, p.y - 2*s - legSwingOffset * 0.5, 3.5*s, 2.5*s, bootColor);
 
-    // 5. Backpack (behind body if facing down/sides, on back if facing up)
-    const torsoY = p.y - 14 + bob;
+    // 5. Backpack
+    const torsoY = p.y - 14*s + bob;
     if (isFacingUp) {
-      renderer.drawRect(p.x - 4, torsoY + 1, 8, 7, hexToRgba('#6E2C00'));
-      renderer.drawRect(p.x - 3, torsoY + 2, 6, 4, hexToRgba('#873600'));
+      renderer.drawRect(p.x - 4*s, torsoY + 1*s, 8*s, 7*s, hexToRgba('#6E2C00'));
+      renderer.drawRect(p.x - 3*s, torsoY + 2*s, 6*s, 4*s, hexToRgba('#873600'));
     } else if (isFacingRight) {
-      renderer.drawRect(p.x - 5.5, torsoY + 1.5, 3.5, 6, hexToRgba('#6E2C00'));
+      renderer.drawRect(p.x - 5.5*s, torsoY + 1.5*s, 3.5*s, 6*s, hexToRgba('#6E2C00'));
     } else if (isFacingLeft) {
-      renderer.drawRect(p.x + 2, torsoY + 1.5, 3.5, 6, hexToRgba('#6E2C00'));
+      renderer.drawRect(p.x + 2*s, torsoY + 1.5*s, 3.5*s, 6*s, hexToRgba('#6E2C00'));
     }
 
     // 6. Torso & Coat
-    renderer.drawRect(p.x - 4.5, torsoY, 9, 8, coatColor);
-    // Coat trim / highlight
-    renderer.drawRect(p.x - 4.5, torsoY, 9, 2, hexToRgba('#FFFFFF', 0.2));
+    renderer.drawRect(p.x - 4.5*s, torsoY, 9*s, 8*s, coatColor);
+    renderer.drawRect(p.x - 4.5*s, torsoY, 9*s, 2*s, hexToRgba('#FFFFFF', 0.2));
 
     // Arms
-    const armSwingL = -swing * 3;
-    const armSwingR = swing * 3;
-    renderer.drawRect(p.x - 6, torsoY + 1.5 + armSwingL * 0.4, 2.5, 5.5, coatColor);
-    renderer.drawRect(p.x - 5.5, torsoY + 7 + armSwingL * 0.4, 2, 2, skinColor);
+    const armSwingL = -swing * 3 * s;
+    const armSwingR = swing * 3 * s;
+    renderer.drawRect(p.x - 6*s, torsoY + 1.5*s + armSwingL * 0.4, 2.5*s, 5.5*s, coatColor);
+    renderer.drawRect(p.x - 5.5*s, torsoY + 7*s + armSwingL * 0.4, 2*s, 2*s, skinColor);
 
-    renderer.drawRect(p.x + 3.5, torsoY + 1.5 + armSwingR * 0.4, 2.5, 5.5, coatColor);
-    renderer.drawRect(p.x + 3.5, torsoY + 7 + armSwingR * 0.4, 2, 2, skinColor);
+    renderer.drawRect(p.x + 3.5*s, torsoY + 1.5*s + armSwingR * 0.4, 2.5*s, 5.5*s, coatColor);
+    renderer.drawRect(p.x + 3.5*s, torsoY + 7*s + armSwingR * 0.4, 2*s, 2*s, skinColor);
 
     // 7. Head & Hair
-    const headY = torsoY - 6.5;
-    renderer.drawCircle(p.x, headY, 4.8, skinColor);
+    const headY = torsoY - 6.5*s;
+    renderer.drawCircle(p.x, headY, 4.8*s, skinColor);
+    renderer.drawCircle(p.x, headY - 1*s, 4.8*s, hairColor);
 
-    // Hair / Cap
-    renderer.drawCircle(p.x, headY - 1, 4.8, hairColor);
-
-    // Face details
     if (!isFacingUp) {
-      // Skin showing
-      renderer.drawCircle(p.x, headY + 1, 4.0, skinColor);
-
-      // Hat
+      renderer.drawCircle(p.x, headY + 1*s, 4.0*s, skinColor);
       if (this.customization.hatIndex === 0) {
-        // Traveler Beanie
-        renderer.drawRect(p.x - 5, headY - 4.5, 10, 4.5, hexToRgba('#2C3E50'));
-        renderer.drawRect(p.x - 4.5, headY - 1, 9, 1.8, hexToRgba('#1A252F'));
+        renderer.drawRect(p.x - 5*s, headY - 4.5*s, 10*s, 4.5*s, hexToRgba('#2C3E50'));
+        renderer.drawRect(p.x - 4.5*s, headY - 1*s, 9*s, 1.8*s, hexToRgba('#1A252F'));
       } else if (this.customization.hatIndex === 1) {
-        // Straw Sunhat
-        renderer.drawRect(p.x - 7.5, headY - 1.5, 15, 2, hexToRgba('#F4D06F'));
-        renderer.drawRect(p.x - 4, headY - 4.5, 8, 3.5, hexToRgba('#D4AC0D'));
+        renderer.drawRect(p.x - 7.5*s, headY - 1.5*s, 15*s, 2*s, hexToRgba('#F4D06F'));
+        renderer.drawRect(p.x - 4*s, headY - 4.5*s, 8*s, 3.5*s, hexToRgba('#D4AC0D'));
       }
-
-      // Eyes & Rosy cheeks
       if (isFacingDown) {
-        renderer.drawRect(p.x - 2.5, headY, 1.4, 1.8, hexToRgba('#1B2631'));
-        renderer.drawRect(p.x + 1.1, headY, 1.4, 1.8, hexToRgba('#1B2631'));
-        // Cheeks
-        renderer.drawRect(p.x - 3.8, headY + 2.2, 1.8, 1.2, hexToRgba('#E74C3C', 0.5));
-        renderer.drawRect(p.x + 2.0, headY + 2.2, 1.8, 1.2, hexToRgba('#E74C3C', 0.5));
+        renderer.drawRect(p.x - 2.5*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x + 1.1*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x - 3.8*s, headY + 2.2*s, 1.8*s, 1.2*s, hexToRgba('#E74C3C', 0.5));
+        renderer.drawRect(p.x + 2.0*s, headY + 2.2*s, 1.8*s, 1.2*s, hexToRgba('#E74C3C', 0.5));
       } else if (isFacingRight) {
-        renderer.drawRect(p.x + 2, headY, 1.4, 1.8, hexToRgba('#1B2631'));
-        renderer.drawRect(p.x + 1.5, headY + 2.2, 1.8, 1.2, hexToRgba('#E74C3C', 0.5));
+        renderer.drawRect(p.x + 2*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x + 1.5*s, headY + 2.2*s, 1.8*s, 1.2*s, hexToRgba('#E74C3C', 0.5));
       } else if (isFacingLeft) {
-        renderer.drawRect(p.x - 3.4, headY, 1.4, 1.8, hexToRgba('#1B2631'));
-        renderer.drawRect(p.x - 3.3, headY + 2.2, 1.8, 1.2, hexToRgba('#E74C3C', 0.5));
+        renderer.drawRect(p.x - 3.4*s, headY, 1.4*s, 1.8*s, hexToRgba('#1B2631'));
+        renderer.drawRect(p.x - 3.3*s, headY + 2.2*s, 1.8*s, 1.2*s, hexToRgba('#E74C3C', 0.5));
       }
     }
 
-    // 8. Scarf Collar around neck
-    renderer.drawRect(p.x - 4.5, torsoY - 1.5, 9, 3.2, scarfColor);
+    // 8. Scarf Collar
+    renderer.drawRect(p.x - 4.5*s, torsoY - 1.5*s, 9*s, 3.2*s, scarfColor);
 
     // 9. Verlet Scarf Tails
     const nodes = this.scarfRope.nodes;
     for (let i = 0; i < nodes.length - 1; i++) {
       const n1 = nodes[i];
       const n2 = nodes[i + 1];
-      const thickness = Math.max(1.8, 3.5 - i * 0.4);
-      renderer.drawLine(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y, thickness, scarfColor);
+      const thickness = Math.max(1.8*s, 3.5*s - i * 0.4*s);
+      
+      const nx1 = p.x + (n1.pos.x - p.x) * s;
+      const ny1 = p.y - 14*s + (n1.pos.y - (p.y - 14)) * s;
+      const nx2 = p.x + (n2.pos.x - p.x) * s;
+      const ny2 = p.y - 14*s + (n2.pos.y - (p.y - 14)) * s;
+      
+      renderer.drawLine(nx1, ny1, nx2, ny2, thickness, scarfColor);
     }
   }
 
