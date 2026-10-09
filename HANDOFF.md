@@ -1,7 +1,7 @@
 # MEADOW — Project Handoff
 
 ## Current Status
-- **Current Milestone**: Milestone 7 (Procedural Wildlife & The Cat).
+- **Current Milestone**: Milestone 8 (Keepsakes, Journal & Map).
 - **Completed**:
   - Milestone 0: Clean slate Vite + TS setup.
   - Milestone 1: Custom WebGL2 batched renderer with Canvas 2D fallback, 120Hz loop, character rig.
@@ -13,10 +13,11 @@
   - Milestone 6 (Step 6.1): Weather State Machine (Clear, Breezy, Overcast, Drizzle, Thunderstorm, Fog states with organic crossfade, lightning, and wind modulation).
   - Milestone 6 (Step 6.2): Rain & Puddles (high-velocity rain streaks, impact ripple splashes, organic path puddles, damp footstep splashes).
   - Milestone 7 (Step 7.1): Flocking Birds & Butterflies (Boids steering flocks, flap/glide cycles, sun-offset shadows, perched & fluttering species-patterned butterflies).
+  - Milestone 7 (Step 7.2): The Cat Companion (feline companion with follow, sit, curled sleep states, Verlet rope tail, ear twitches, blinks, and trot physics).
 - **In progress**:
-  - Milestone 7 (Step 7.2): The Cat Companion.
+  - Milestone 8 (Step 8.1): Collectible Keepsakes.
 - **Next Item in ROADMAP.md**:
-  - Milestone 7 (Step 7.2): The Cat Companion.
+  - Milestone 8 (Step 8.1): Collectible Keepsakes.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

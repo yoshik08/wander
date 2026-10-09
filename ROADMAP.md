@@ -69,7 +69,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/entities/boids.ts` (new), `src/main.ts`, `src/render/art.ts`
 - **Done When**: Small flocks of birds circle overhead; butterflies flutter near flowers.
 
-### Step 7.2: The Cat Companion
+### [x] Step 7.2: The Cat Companion
 - **Action**: Create a `Cat` entity with follow and sleep states. Uses the same physics/Verlet rig approach as `Character`.
 - **Files**: `src/entities/cat.ts` (new), `src/main.ts`
 - **Done When**: A cat spawns, follows the player, and curls into a ball when the player is idle.

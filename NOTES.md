@@ -80,3 +80,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Boids Flight & Flocking**: Coordinated songbird flocks circle smoothly overhead with Reynolds separation, alignment, and cohesion, alternating between rhythmic wing flapping and graceful outstretched glides.
 - **Ground Grounding**: Birds cast soft sun-offset shadow silhouettes across the terrain, establishing true visual height above the trees and character.
 - **Micro-Fauna Charm**: Butterflies (yellow Brimstones, Common Blues, Monarch ambers, and pink Peonies) flutter near flower patches, resting with gentle wing folds and startling when approached by the wanderer.
+
+## Step 7.2 (The Cat Companion) Critique
+- **Companion Physics & Personality**: The procedural cat companion seamlessly transitions between following at matched paces, sitting with alert ear twitches and blinking eyes, and curling into a snug sleeping ball when the wanderer pauses.
+- **Organic Tail Simulation**: Verlet rope simulation gives the tail natural inertia and wind responsiveness, swishing during sits and wrapping around the body during sleep.
+- **Depth & Placement**: Y-sorting and dynamic drop shadows place the cat cleanly into the 2.5D meadow plane without z-fighting or clipping.

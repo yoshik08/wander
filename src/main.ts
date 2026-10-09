@@ -13,6 +13,7 @@ import { TimeSystem } from './systems/time';
 import { LightingSystem } from './systems/lighting';
 import { WeatherSystem } from './systems/weather';
 import { WildlifeSystem } from './entities/boids';
+import { Cat } from './entities/cat';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -34,6 +35,7 @@ const lighting = new LightingSystem();
 const weather = new WeatherSystem(chunkManager.seed);
 const wildlife = new WildlifeSystem(chunkManager.seed);
 wildlife.spawnCreaturesAround(player.pos.x, player.pos.y);
+const cat = new Cat(player.pos.x + 24, player.pos.y + 12, 0);
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
@@ -162,6 +164,9 @@ const loop = new GameLoop({
       camera.zoom,
       globalWind
     );
+
+    // Update cat companion
+    cat.update(dt, time, player.pos, player.vel, globalWind);
 
     // Ambient gentle water ripples (fish / breeze surface disturbances)
     if (Math.sin(time * 1.8) > 0.96) {
@@ -357,6 +362,13 @@ const loop = new GameLoop({
       draw: () => player.render(renderer, alpha)
     });
 
+    // Cat companion in Depth sorting
+    const cp = cat.getInterpolatedPos(alpha);
+    depthItems.push({
+      baseY: cp.y,
+      draw: () => cat.render(renderer, art, alpha, time)
+    });
+
     // Sort and Draw
     depthItems.sort((a, b) => a.baseY - b.baseY);
     for (const item of depthItems) {
@@ -452,6 +464,7 @@ const loop = new GameLoop({
           <div>Sim: 120Hz fixed (interp: ${alpha.toFixed(2)})</div>
           <div>Backend: ${stats.backend.toUpperCase()} (draw calls: ${stats.drawCalls})</div>
           <div>Player: X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}</div>
+          <div>Companion: Cat (${cat.state})</div>
           <div>Chunks: ${chunkManager.getActiveChunkCount()} (${visibleChunks.length} visible)</div>
           <div>Particles: ${particles.getActiveCount()} active</div>
           <div>Seed: "${chunkManager.seedRaw}"</div>

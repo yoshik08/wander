@@ -91,7 +91,7 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 ## Milestone 7: Procedural Wildlife & The Cat
 - [x] Steering behaviors (flocking, fleeing, wandering, approach)
 - [ ] Wildlife species: butterflies, bees, flocking birds, pond ducks, jumping fish, night frogs, deer, rabbits, fox, owls, seagulls, fireflies
-- [ ] The Cat companion: approach slowly 3 times to befriend, follows player, naps when player sits
+- [x] The Cat companion: approach slowly 3 times to befriend, follows player, naps when player sits
 
 ---
 
