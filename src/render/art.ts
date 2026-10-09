@@ -21,6 +21,8 @@ export class ArtToolkit {
   private scratchHighlightColor: ColorRGBA = { r: 0.95, g: 0.98, b: 1.0, a: 0.4 };
   private scratchPuddleOuter: Vec2[] = Array.from({ length: 8 }, () => ({ x: 0, y: 0 }));
   private scratchPuddleInner: Vec2[] = Array.from({ length: 8 }, () => ({ x: 0, y: 0 }));
+  private scratchBirdWingL: [Vec2, Vec2, Vec2] = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+  private scratchBirdWingR: [Vec2, Vec2, Vec2] = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
 
   constructor(renderer: IRenderer) {
     this.renderer = renderer;
@@ -372,5 +374,79 @@ export class ArtToolkit {
       const y1 = y + Math.sin(a1) * (radius * 0.55);
       this.renderer.drawLine(x0, y0, x1, y1, 1.2, this.scratchHighlightColor);
     }
+  }
+
+  /**
+   * Draws a flying songbird with flapping or outstretched gliding wings.
+   */
+  drawBird(x: number, y: number, angle: number, wingPhase: number, isGliding: boolean, variant: number): void {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const perpX = -sin;
+    const perpY = cos;
+
+    const flap = isGliding ? 0.25 : Math.sin(wingPhase);
+    const wingSpan = 7.5;
+    const wingTipX = -cos * 2.0;
+    const wingTipY = -sin * 2.0;
+
+    // Left Wing Triangle
+    this.scratchBirdWingL[0].x = x + cos * 1.5;
+    this.scratchBirdWingL[0].y = y + sin * 1.5;
+    this.scratchBirdWingL[1].x = x - cos * 2.5;
+    this.scratchBirdWingL[1].y = y - sin * 2.5;
+    this.scratchBirdWingL[2].x = x + wingTipX + perpX * wingSpan;
+    this.scratchBirdWingL[2].y = y + wingTipY + perpY * wingSpan - flap * 3.5;
+
+    // Right Wing Triangle
+    this.scratchBirdWingR[0].x = x + cos * 1.5;
+    this.scratchBirdWingR[0].y = y + sin * 1.5;
+    this.scratchBirdWingR[1].x = x - cos * 2.5;
+    this.scratchBirdWingR[1].y = y - sin * 2.5;
+    this.scratchBirdWingR[2].x = x + wingTipX - perpX * wingSpan;
+    this.scratchBirdWingR[2].y = y + wingTipY - perpY * wingSpan - flap * 3.5;
+
+    const wingColor = variant === 0 ? hexToRgba('#22384D') : hexToRgba('#4A3525');
+    this.renderer.drawPolygon(this.scratchBirdWingL, wingColor);
+    this.renderer.drawPolygon(this.scratchBirdWingR, wingColor);
+
+    // Tapered body line
+    const bodyColor = variant === 0 ? hexToRgba('#34495E') : hexToRgba('#6D4C41');
+    this.renderer.drawLine(x - cos * 4, y - sin * 4, x + cos * 3.5, y + sin * 3.5, 2.0, bodyColor);
+
+    // Pale chest accent
+    const chestColor = variant === 0 ? hexToRgba('#EAECEE') : hexToRgba('#FADBD8');
+    this.renderer.drawCircle(x + cos * 0.5, y + sin * 0.5, 1.2, chestColor);
+  }
+
+  /**
+   * Draws a fluttering butterfly with foreshortened wing flaps and species patterns.
+   */
+  drawButterfly(x: number, y: number, angle: number, wingPhase: number, variant: number, isPerched: boolean): void {
+    const flap = isPerched ? (0.4 + 0.3 * Math.sin(wingPhase)) : Math.abs(Math.cos(wingPhase));
+    const span = 4.2 * flap + 0.6;
+
+    const species = [
+      ['#F4D03F', '#D4AC0D'], // 0: Brimstone Yellow
+      ['#5DADE2', '#2874A6'], // 1: Common Blue
+      ['#EB984E', '#BA4A00'], // 2: Monarch Amber
+      ['#FADBD8', '#E74C3C']  // 3: Peony Pink
+    ];
+    const pal = species[variant % species.length];
+    const mainColor = hexToRgba(pal[0], 0.90);
+    const innerColor = hexToRgba(pal[1], 0.85);
+
+    // Dark slender body
+    this.renderer.drawLine(x, y - 2.5, x, y + 2.5, 1.0, hexToRgba('#1C2833'));
+
+    // Forewings & Hindwings (Left)
+    this.renderer.drawCircle(x - span * 0.65, y - 1.2, 2.8 * flap + 0.6, mainColor);
+    this.renderer.drawCircle(x - span * 0.65, y - 1.2, 1.3 * flap + 0.3, innerColor);
+    this.renderer.drawCircle(x - span * 0.50, y + 1.2, 2.1 * flap + 0.5, mainColor);
+
+    // Forewings & Hindwings (Right)
+    this.renderer.drawCircle(x + span * 0.65, y - 1.2, 2.8 * flap + 0.6, mainColor);
+    this.renderer.drawCircle(x + span * 0.65, y - 1.2, 1.3 * flap + 0.3, innerColor);
+    this.renderer.drawCircle(x + span * 0.50, y + 1.2, 2.1 * flap + 0.5, mainColor);
   }
 }

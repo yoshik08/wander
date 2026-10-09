@@ -75,3 +75,8 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Rain Streak Dynamics**: Rain streaks fall rapidly at an angle matched to the active wind vector, creating a tactile sense of precipitation during drizzle and thunderstorms.
 - **Ground Impact Ripples & Puddles**: When rain drops reach the ground, they trigger delicate expanding elliptical ripple splashes. Organic, translucent wet puddles form along paths and depressions as ground wetness builds up.
 - **Interactive Splash**: Walking through wet terrain now produces responsive water ripple rings and damp footsteps, enriching player interaction without adding per-frame garbage.
+
+## Step 7.1 (Flocking Birds & Butterflies) Critique
+- **Boids Flight & Flocking**: Coordinated songbird flocks circle smoothly overhead with Reynolds separation, alignment, and cohesion, alternating between rhythmic wing flapping and graceful outstretched glides.
+- **Ground Grounding**: Birds cast soft sun-offset shadow silhouettes across the terrain, establishing true visual height above the trees and character.
+- **Micro-Fauna Charm**: Butterflies (yellow Brimstones, Common Blues, Monarch ambers, and pink Peonies) flutter near flower patches, resting with gentle wing folds and startling when approached by the wanderer.

@@ -64,7 +64,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone 7: Procedural Wildlife & The Cat
 **Focus**: Ambient life.
 
-### Step 7.1: Flocking Birds & Butterflies
+### [x] Step 7.1: Flocking Birds & Butterflies
 - **Action**: Implement a simple Boids/Steering behavior system for small creatures. Draw them using `ArtToolkit`.
 - **Files**: `src/entities/boids.ts` (new), `src/main.ts`, `src/render/art.ts`
 - **Done When**: Small flocks of birds circle overhead; butterflies flutter near flowers.

@@ -12,6 +12,7 @@ import { ParticleSystem } from './systems/particles';
 import { TimeSystem } from './systems/time';
 import { LightingSystem } from './systems/lighting';
 import { WeatherSystem } from './systems/weather';
+import { WildlifeSystem } from './entities/boids';
 
 // 1. Initialize Canvas & Renderer
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -31,6 +32,8 @@ const particles = new ParticleSystem(chunkManager.seed);
 const timeSystem = new TimeSystem(8.0); // Spawn at 8:00 AM sunny morning
 const lighting = new LightingSystem();
 const weather = new WeatherSystem(chunkManager.seed);
+const wildlife = new WildlifeSystem(chunkManager.seed);
+wildlife.spawnCreaturesAround(player.pos.x, player.pos.y);
 
 // Dust puffs & water ripples from character footsteps
 player.onStep = (pos, angle, isRunning) => {
@@ -147,6 +150,19 @@ const loop = new GameLoop({
       weatherInfo.isStormy
     );
 
+    // Update flocking birds and butterflies
+    wildlife.update(
+      dt,
+      time,
+      player.pos,
+      camera.pos.x,
+      camera.pos.y,
+      renderer.width,
+      renderer.height,
+      camera.zoom,
+      globalWind
+    );
+
     // Ambient gentle water ripples (fish / breeze surface disturbances)
     if (Math.sin(time * 1.8) > 0.96) {
       const rx = camera.pos.x + Math.sin(time * 3.1) * 200;
@@ -232,6 +248,11 @@ const loop = new GameLoop({
     // LAYER 4: Water Reflections
     // ==========================================
     player.renderReflection(renderer, alpha);
+
+    // ==========================================
+    // LAYER 4.5: Bird Shadows on Ground
+    // ==========================================
+    wildlife.renderGroundShadows(renderer, art, alpha);
 
     // ==========================================
     // LAYER 5: Y-Sorted Props, Structures & Entities
@@ -343,6 +364,11 @@ const loop = new GameLoop({
     }
 
     // ==========================================
+    // LAYER 5a: Fluttering Meadow Butterflies
+    // ==========================================
+    wildlife.renderButterflies(renderer, art, alpha);
+
+    // ==========================================
     // LAYER 5b: Point Light Bloom Halos (Campfires, Lanterns)
     // ==========================================
     lighting.renderPointLights(renderer, visibleChunks, time, timeInfo);
@@ -351,6 +377,11 @@ const loop = new GameLoop({
     // LAYER 6: Atmospheric Particles (Pollen, Petals, Leaves, Dust, Spores)
     // ==========================================
     particles.render(renderer, time);
+
+    // ==========================================
+    // LAYER 6.5: Sky Flocking Birds
+    // ==========================================
+    wildlife.renderSkyCreatures(renderer, art, alpha);
 
     // ==========================================
     // LAYER 7: Canopy God Rays
