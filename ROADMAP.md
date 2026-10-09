@@ -56,7 +56,7 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 - **Files**: `src/main.ts`, `src/ui/photo-mode.ts`
 - **Done When**: Pressing 'P' successfully pauses/alters the game view into a cinematic framer with working filters.
 
-### Step 9.3: Activities (Skipping & Fishing)
+### Step 9.3: Activities (Skipping & Fishing) [x]
 - **Action**: Implement stone skipping with bouncing physics on water bodies. Add timing-free fishing at docks/shores.
 - **Files**: `src/entities/character.ts`, `src/main.ts`
 - **Done When**: The player can skip stones and sit with a fishing rod.

@@ -107,8 +107,8 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 
 ## Milestone 9: Calm Activities & Modes
 - [x] Resting on benches and logs with eased camera pull-back
-- [ ] Stone skipping on lakes with bouncing physics
-- [ ] Timing-free relaxing fishing mini-activity
+- [x] Stone skipping on lakes with bouncing physics
+- [x] Timing-free relaxing fishing mini-activity
 - [ ] Wind chime interactions and campfire lighting / sleeping till morning
 - [x] Photo mode (P) with postcard filters (film, watercolour, polaroid, dusk)
 - [x] Calm mode (toggle to hide all UI and let the world play autonomously)

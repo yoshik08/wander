@@ -38,12 +38,12 @@
   - Milestone 7 (Step 7.3): Ground Wildlife Species (deer grazing/fleeing AI, rabbits hopping cycles, foxes trotting/running, marsh frogs hopping, and nocturnal glowing fireflies integrated into depth-sorted layer 5 and atmosphere).
   - Milestone 8 (Step 8.3): Interactive Journal ('J' toggle, HUD button, parchment album, watercolor keepsake stamps, completion tracker bar, and expedition folio stats logbook).
   - Milestone 8 (Step 8.4): Landmarks & Place Names (poetic region name generator "Apricot Hollow", region boundary title cards, 20 deterministic hidden landmarks, and postcard notifications).
-  - Milestone 8 (Step 8.5): Garden Plot (specialized 4-bed tilled soil plot near spawn at (448, 432), seed planting from inventory/keepsakes, rain and interactive watering, progressive growth stages: sprout -> growing -> blooming, and persistent save state).
   - Milestone 9 (Step 9.2): Photo Mode & Calm Mode (wired PhotoMode with letterbox frame, 5 postcard filters [Normal, Vintage Film, Watercolor Wash, Polaroid Instant, Golden Dusk], zoom [0.6x to 2.2x], shutter flash + PNG export, dedicated HUD controls, and Calm Mode toggling [C key / button] that hides all UI and engages gentle auto-wandering on idle).
+  - Milestone 9 (Step 9.3): Activities: Stone Skipping & Relaxing Fishing (ActivityManager with water proximity detection, parabolic stone skipping physics with concentric impacts & sinking plop, timing-free relaxing fishing state machine with rod/float/line rendering, 8-species catch catalogue, and Journal folio tracking).
 - **Completed in this step**:
-  - Milestone 9 (Step 9.2): Photo Mode & Calm Mode.
+  - Milestone 9 (Step 9.3): Activities (Stone Skipping & Relaxing Fishing).
 - **Next Item in ROADMAP.md**:
-  - Milestone 9 (Step 9.3): Activities (Stone skipping on water with bouncing physics, and timing-free fishing at docks/shores).
+  - Milestone 10 (Step 10.1 & Step 10.2): Web Audio Synthesis & Generative Music (100% procedural Web Audio engine for wind, water streams, procedural bird calls, and pentatonic generative pads tuned to time of day).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
