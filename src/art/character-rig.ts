@@ -6,10 +6,11 @@ export interface CharacterParams {
   scale: number; // scale factor for the character
   color: string; // main color of the character
   scarfColor: string; // color of the scarf
+  wind?: { dx: number; dy: number }; // wind vector at character's position
 }
 
 export function drawCharacter(ctx: CanvasRenderingContext2D, params: CharacterParams) {
-  const { position, direction, animation, frame, scale, color, scarfColor } = params;
+  const { position, direction, animation, frame, scale, color, scarfColor, wind } = params;
 
   // Save context
   ctx.save();
@@ -44,6 +45,7 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, params: CharacterPa
   let legSwing = 0;
   let headBob = 0;
   let scarfOffset = 0;
+  let scarfWindSway = 0; // additional sway from wind
 
   switch (animation) {
     case 'idle':
@@ -70,12 +72,19 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, params: CharacterPa
       break;
   }
 
+  // Add wind sway to scarf
+  if (wind) {
+    const windAngle = Math.atan2(wind.dy, wind.dx);
+    // Scarf sways in the wind direction
+    scarfWindSway = Math.sin(performance.now() * 0.005) * 0.3 * Math.abs(wind.dx + wind.dy); // simple
+  }
+
   // Draw scarf (trailing from the neck)
   ctx.beginPath();
   ctx.moveTo(0, -headRadius - 2); // base of the scarf at the neck
-  // Control points for a curved scarf
+  // Control points for a curved scarf, with wind sway
   const scarfLength = 10;
-  const scarfWave = scarfOffset;
+  const scarfWave = scarfOffset + scarfWindSway;
   ctx.bezierCurveTo(
     -2, -headRadius - 2 - scarfLength * 0.3 + scarfWave,
     2, -headRadius - 2 - scarfLength * 0.6 + scarfWave * 0.5,
