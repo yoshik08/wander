@@ -5,7 +5,18 @@ import { Camera } from './core/camera';
 import { Character } from './entities/character';
 import { ChunkManager } from './world/chunk-manager';
 import { BIOMES, BiomeType } from './world/biomes';
-import { CHUNK_TILES, TILE_SIZE, CHUNK_PIXEL_SIZE } from './world/chunk';
+import {
+  CHUNK_TILES,
+  TILE_SIZE,
+  CHUNK_PIXEL_SIZE,
+  TILE_FLAG_WATER,
+  TILE_FLAG_PATH,
+  TILE_FLAG_BRIDGE,
+  TILE_FLAG_WATERFALL,
+  TILE_FLAG_STEPPING_STONE
+} from './world/chunk';
+import { renderStructure } from './world/structures';
+import { WaterTileRenderData } from './render/types';
 import { hexToRgba, vec2, Vec2 } from './core/math';
 
 // 1. Initialize Canvas & Renderer
@@ -103,8 +114,21 @@ const loop = new GameLoop({
       camera.zoom
     );
 
+    const waterTiles: WaterTileRenderData[] = [];
+    interface BridgeTile {
+      wx: number;
+      wy: number;
+      isHorizontal: boolean;
+    }
+    const bridgeTiles: BridgeTile[] = [];
+    interface SteppingStoneTile {
+      wx: number;
+      wy: number;
+    }
+    const steppingStones: SteppingStoneTile[] = [];
+
     // ==========================================
-    // LAYER 1: Multi-Biome Procedural Ground
+    // LAYER 1: Ground & Terrain Passes
     // ==========================================
     for (const chunk of visibleChunks) {
       const { chunkX, chunkY, data } = chunk;
@@ -120,20 +144,67 @@ const loop = new GameLoop({
           const bType = data.biome[idx] as BiomeType;
           const biomeDef = BIOMES[bType] || BIOMES[BiomeType.Meadow];
           const elev = data.elevation[idx];
+          const flag = data.tileFlags[idx];
 
-          if (elev < -0.35) {
-            // Water tile (shimmering with flow direction)
-            const fx = data.flowDirX[idx];
-            const fy = data.flowDirY[idx];
-            const wave = Math.sin(time * 3 + (wx * fx + wy * fy) * 0.05) * 0.5 + 0.5;
+          if (flag === TILE_FLAG_WATER || flag === TILE_FLAG_WATERFALL) {
+            // Queue for specialized water shader batch
+            waterTiles.push({
+              x: wx,
+              y: wy,
+              w: TILE_SIZE,
+              h: TILE_SIZE,
+              flowX: data.flowDirX[idx],
+              flowY: data.flowDirY[idx],
+              depth: elev < -0.45 ? 1.0 : 0.4,
+              foamMask: data.foamMask[idx],
+              isWaterfall: flag === TILE_FLAG_WATERFALL
+            });
+          } else if (flag === TILE_FLAG_BRIDGE) {
+            // Stream flows under the bridge
+            waterTiles.push({
+              x: wx,
+              y: wy,
+              w: TILE_SIZE,
+              h: TILE_SIZE,
+              flowX: data.flowDirX[idx],
+              flowY: data.flowDirY[idx],
+              depth: 0.7,
+              foamMask: 0,
+              isWaterfall: false
+            });
+            bridgeTiles.push({
+              wx,
+              wy,
+              isHorizontal: Math.abs(data.flowDirX[idx]) <= Math.abs(data.flowDirY[idx])
+            });
+          } else if (flag === TILE_FLAG_STEPPING_STONE) {
+            // Stream flows around stepping stone
+            waterTiles.push({
+              x: wx,
+              y: wy,
+              w: TILE_SIZE,
+              h: TILE_SIZE,
+              flowX: data.flowDirX[idx],
+              flowY: data.flowDirY[idx],
+              depth: 0.3,
+              foamMask: data.foamMask[idx],
+              isWaterfall: false
+            });
+            steppingStones.push({ wx, wy });
+          } else if (flag === TILE_FLAG_PATH) {
+            // Winding dirt path
+            const pathHash = Math.abs(Math.sin(wx * 11.3 + wy * 67.1));
+            const pathColor = pathHash > 0.5 ? hexToRgba('#93704C') : hexToRgba('#A1805B');
+            renderer.drawRect(wx, wy, TILE_SIZE, TILE_SIZE, pathColor);
 
-            renderer.drawRect(wx, wy, TILE_SIZE, TILE_SIZE, biomeDef.palette.waterTint);
-            if (wave > 0.6) {
-              renderer.drawRect(wx + 2, wy + 8, TILE_SIZE - 4, 2, hexToRgba('#FFFFFF', 0.22));
+            // Small trail pebbles
+            if (pathHash > 0.75) {
+              renderer.drawCircle(wx + 8, wy + 14, 2, hexToRgba('#755635', 0.8));
+              renderer.drawCircle(wx + 16, wy + 8, 1.5, hexToRgba('#B3926B', 0.8));
             }
           } else {
-            // Land tile (varied shades per tile)
-            const tileHash = Math.abs(Math.sin((wx) * 12.9898 + (wy) * 78.233) * 43758.5453);
+            // Natural land tile
+            const tileHash = Math.abs(Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453);
             const groundColor = tileHash > 0.55
               ? biomeDef.palette.groundPrimary
               : tileHash > 0.25
@@ -142,7 +213,7 @@ const loop = new GameLoop({
 
             renderer.drawRect(wx, wy, TILE_SIZE, TILE_SIZE, groundColor);
 
-            // Subtle grass blade details on grassy biomes
+            // Swaying grass blades on grassy biomes
             if (tileHash > 0.72 && elev > -0.1) {
               const windSway = Math.sin(time * 3 + wx * 0.04 + wy * 0.04) * 2;
               renderer.drawLine(wx + 8, wy + 16, wx + 8 + windSway, wy + 9, 1.5, biomeDef.palette.foliageSecondary);
@@ -153,7 +224,62 @@ const loop = new GameLoop({
     }
 
     // ==========================================
-    // LAYER 2: Y-Sorted Props & Entities
+    // LAYER 2: Water Shader Batch
+    // ==========================================
+    renderer.drawWaterBatch(waterTiles, time);
+
+    // ==========================================
+    // LAYER 3: Stepping Stones & Bridges over Water
+    // ==========================================
+    for (const stone of steppingStones) {
+      renderer.drawCircle(stone.wx + 12, stone.wy + 13, 7, hexToRgba('#1B2631', 0.35)); // shadow
+      renderer.drawCircle(stone.wx + 12, stone.wy + 11, 6.5, hexToRgba('#7F8C8D'));
+      renderer.drawCircle(stone.wx + 10, stone.wy + 9, 4, hexToRgba('#95A5A6')); // highlight
+      renderer.drawCircle(stone.wx + 14, stone.wy + 12, 2.5, hexToRgba('#27AE60', 0.7)); // moss
+    }
+
+    for (const b of bridgeTiles) {
+      renderer.drawRect(b.wx, b.wy, TILE_SIZE, TILE_SIZE, hexToRgba('#3E2723'));
+
+      if (b.isHorizontal) {
+        // Horizontal bridge (East-West path)
+        for (let pIdx = 0; pIdx < 3; pIdx++) {
+          const px = b.wx + pIdx * 8;
+          renderer.drawRect(px + 1, b.wy + 2, 6, TILE_SIZE - 4, hexToRgba('#6D4C41'));
+          renderer.drawRect(px + 1, b.wy + 2, 2, TILE_SIZE - 4, hexToRgba('#8D6E63'));
+        }
+        // Top and bottom railings
+        renderer.drawRect(b.wx, b.wy, TILE_SIZE, 2.5, hexToRgba('#4A2E16'));
+        renderer.drawRect(b.wx, b.wy + TILE_SIZE - 2.5, TILE_SIZE, 2.5, hexToRgba('#4A2E16'));
+        renderer.drawCircle(b.wx + 2, b.wy + 1, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + TILE_SIZE - 2, b.wy + 1, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + 2, b.wy + TILE_SIZE - 1, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + TILE_SIZE - 2, b.wy + TILE_SIZE - 1, 2, hexToRgba('#2C180E'));
+      } else {
+        // Vertical bridge (North-South path)
+        for (let pIdx = 0; pIdx < 3; pIdx++) {
+          const py = b.wy + pIdx * 8;
+          renderer.drawRect(b.wx + 2, py + 1, TILE_SIZE - 4, 6, hexToRgba('#6D4C41'));
+          renderer.drawRect(b.wx + 2, py + 1, TILE_SIZE - 4, 2, hexToRgba('#8D6E63'));
+        }
+        // Left and right railings
+        renderer.drawRect(b.wx, b.wy, 2.5, TILE_SIZE, hexToRgba('#4A2E16'));
+        renderer.drawRect(b.wx + TILE_SIZE - 2.5, b.wy, 2.5, TILE_SIZE, hexToRgba('#4A2E16'));
+        renderer.drawCircle(b.wx + 1, b.wy + 2, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + 1, b.wy + TILE_SIZE - 2, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + TILE_SIZE - 1, b.wy + 2, 2, hexToRgba('#2C180E'));
+        renderer.drawCircle(b.wx + TILE_SIZE - 1, b.wy + TILE_SIZE - 2, 2, hexToRgba('#2C180E'));
+      }
+    }
+
+    // ==========================================
+    // LAYER 4: Water Reflections
+    // ==========================================
+    // Player reflection on water
+    player.renderReflection(renderer, alpha);
+
+    // ==========================================
+    // LAYER 5: Y-Sorted Props, Structures & Entities
     // ==========================================
     interface DepthItem {
       baseY: number;
@@ -175,11 +301,8 @@ const loop = new GameLoop({
           depthItems.push({
             baseY: prop.baseY,
             draw: () => {
-              // Shadow
               renderer.drawCircle(px, prop.baseY, 14, hexToRgba('#1B3317', 0.28));
-              // Trunk
               renderer.drawRect(px - 3.5, py - 16, 7, 18, hexToRgba('#6E2C00'));
-              // Foliage layers
               const windSway = Math.sin(time * 2.5 + px * 0.03) * 3 + globalWind.x * 2;
               renderer.drawCircle(px - 6 + windSway * 0.3, py - 20, 13, hexToRgba('#2D6928'));
               renderer.drawCircle(px + 6 + windSway * 0.4, py - 20, 13, hexToRgba('#3A7D34'));
@@ -244,6 +367,14 @@ const loop = new GameLoop({
           });
         }
       }
+
+      // Structures from visible chunks
+      for (const struct of data.structures) {
+        depthItems.push({
+          baseY: struct.baseY,
+          draw: () => renderStructure(renderer, struct, time, globalWind)
+        });
+      }
     }
 
     // Player in Depth sorting
@@ -260,7 +391,7 @@ const loop = new GameLoop({
     }
 
     // ==========================================
-    // LAYER 3: Touch Virtual Joystick UI
+    // LAYER 6: Touch Virtual Joystick UI
     // ==========================================
     const joy = input.getTouchJoystickDisplay();
     if (joy && joy.active) {
@@ -272,14 +403,13 @@ const loop = new GameLoop({
     }
 
     // ==========================================
-    // LAYER 4: Debug Overlay (F3)
+    // LAYER 7: Debug Overlay (F3)
     // ==========================================
     if (showDebug) {
       const stats = renderer.getStats();
       const dbgOrigin = renderer.screenToWorld(16, 16);
 
       renderer.drawRect(dbgOrigin.x, dbgOrigin.y, 240, 180, hexToRgba('#000000', 0.82));
-      // Debug indicator quad
       renderer.drawRect(dbgOrigin.x + 8, dbgOrigin.y + 8, 12, 12, hexToRgba('#48CAE4'));
     }
 

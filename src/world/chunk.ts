@@ -1,10 +1,18 @@
 import { BiomeType, classifyBiome } from './biomes';
 import { SimplexNoise } from './noise';
 import { PRNG, hashSeed } from '../core/prng';
+import { generateChunkStructures, StructureInstance } from './structures';
 
 export const CHUNK_TILES = 32;
 export const TILE_SIZE = 24; // 24x24 pixels per tile
 export const CHUNK_PIXEL_SIZE = CHUNK_TILES * TILE_SIZE; // 768 pixels
+
+export const TILE_FLAG_LAND = 0;
+export const TILE_FLAG_WATER = 1;
+export const TILE_FLAG_PATH = 2;
+export const TILE_FLAG_BRIDGE = 4;
+export const TILE_FLAG_WATERFALL = 8;
+export const TILE_FLAG_STEPPING_STONE = 16;
 
 export interface ChunkProp {
   type: string;
@@ -23,8 +31,11 @@ export interface ChunkBufferData {
   biome: Uint8Array;       // 1024 bytes
   flowDirX: Float32Array;  // 1024 floats (river flow vector X)
   flowDirY: Float32Array;  // 1024 floats (river flow vector Y)
+  tileFlags: Uint8Array;   // 1024 bytes (flags for path, water, bridge, etc.)
+  foamMask: Uint8Array;    // 1024 bytes (shoreline edges bitmask)
   collision: Uint8Array;   // 1024 bytes (0 = walkable, 1 = solid)
   props: ChunkProp[];
+  structures: StructureInstance[];
 }
 
 export class Chunk {
@@ -59,6 +70,7 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
   const tempNoise = new SimplexNoise(seedNum ^ 0x7a8b9c);
   const erosionNoise = new SimplexNoise(seedNum ^ 0x9e8d7c);
   const warpNoise = new SimplexNoise(seedNum ^ 0x3f2e1d);
+  const pathNoise = new SimplexNoise(seedNum ^ 0x5a6b7c);
 
   const totalTiles = CHUNK_TILES * CHUNK_TILES;
   const elevation = new Float32Array(totalTiles);
@@ -67,11 +79,27 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
   const biome = new Uint8Array(totalTiles);
   const flowDirX = new Float32Array(totalTiles);
   const flowDirY = new Float32Array(totalTiles);
+  const tileFlags = new Uint8Array(totalTiles);
+  const foamMask = new Uint8Array(totalTiles);
   const collision = new Uint8Array(totalTiles);
   const props: ChunkProp[] = [];
 
   const macroScale = 0.0007; // Broad biomes across hundreds of tiles
   const riverScale = 0.0022; // Winding rivers and valleys
+  const pathScale = 0.0016;  // Winding dirt trails
+
+  // Helper to sample base elevation and water status at any world coord (for seamless borders)
+  const sampleWaterStatus = (wx: number, wy: number) => {
+    const wX = warpNoise.noise2D(wx * 0.0012, wy * 0.0012) * 80.0;
+    const wY = warpNoise.noise2D((wx + 31.4) * 0.0012, (wy + 17.8) * 0.0012) * 80.0;
+    const pX = wx + wX;
+    const pY = wy + wY;
+    const baseElev = elevNoise.fbm2D(pX * macroScale, pY * macroScale, 4, 2.0, 0.5);
+    const rVal = Math.abs(elevNoise.noise2D(pX * riverScale, pY * riverScale));
+    const distSpawn = Math.hypot(wx, wy);
+    if (distSpawn < 120) return false; // Spawn clearing is land
+    return (rVal < 0.046 && baseElev > -0.32) || baseElev < -0.35;
+  };
 
   for (let ty = 0; ty < CHUNK_TILES; ty++) {
     for (let tx = 0; tx < CHUNK_TILES; tx++) {
@@ -93,33 +121,95 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
       const temp = tempNoise.fbm2D((px + 1200) * macroScale, (py + 1200) * macroScale, 3, 2.0, 0.5) * 0.5 + 0.5;
       const erosion = erosionNoise.fbm2D(px * macroScale * 1.5, py * macroScale * 1.5, 3) * 0.5 + 0.5;
 
-      // 3. Hydrology: Downhill Rivers & Stream Carver
-      // Distance to river spine
+      // 3. Hydrology: Downhill Rivers & Water Bodies
       const riverVal = Math.abs(elevNoise.noise2D(px * riverScale, py * riverScale));
-      const isRiver = riverVal < 0.045 && elev > -0.3;
+      // Organic meandering riverbanks with subtle edge jitter
+      const bankJitter = warpNoise.noise2D(px * 0.008, py * 0.008) * 0.008;
+      const effectiveThreshold = 0.042 + bankJitter;
+      let isRiver = riverVal < effectiveThreshold && elev > -0.32;
 
-      // Calculate downhill slope gradient for flow vectors
+      // Downhill slope gradient for flow vectors
       const eps = 4.0;
       const hL = elevNoise.noise2D((px - eps) * riverScale, py * riverScale);
       const hR = elevNoise.noise2D((px + eps) * riverScale, py * riverScale);
       const hU = elevNoise.noise2D(px * riverScale, (py - eps) * riverScale);
       const hD = elevNoise.noise2D(px * riverScale, (py + eps) * riverScale);
 
-      // Downhill gradient (negative slope)
       let fx = -(hR - hL);
       let fy = -(hD - hU);
       const fLen = Math.hypot(fx, fy) || 0.001;
       fx /= fLen;
       fy /= fLen;
 
-      if (isRiver) {
+      // Smoothly blend spawn clearing (0, 0) into gentle meadow
+      const distFromOrigin = Math.hypot(worldX, worldY);
+      if (distFromOrigin < 150) {
+        const blend = Math.max(0, 1.0 - distFromOrigin / 150);
+        elev = elev * (1.0 - blend) + 0.28 * blend;
+        if (distFromOrigin < 90) {
+          isRiver = false;
+        }
+      } else if (isRiver) {
         elev = -0.42; // Riverbed water level
       }
 
-      // Guarantee open clearing around spawn (0, 0)
-      const distFromOrigin = Math.hypot(worldX, worldY);
-      if (distFromOrigin < 120) {
-        elev = 0.25; // Gentle meadow
+      let isWater = isRiver || elev < -0.35;
+
+      // 4. Procedural Winding Dirt Paths
+      const pathVal = Math.abs(pathNoise.noise2D(px * pathScale, py * pathScale));
+      let isPath = pathVal < 0.024;
+
+      // Connect spawn clearing to path network
+      if (distFromOrigin < 160) {
+        const spawnPathDist = Math.abs(worldY - Math.sin(worldX * 0.02) * 18 - 24);
+        if (spawnPathDist < 16) {
+          isPath = true;
+        }
+      }
+
+      // Check for waterfall: water dropping across elevation drop
+      let isWaterfall = false;
+      if (isWater && elev < -0.35) {
+        const hDownstream = elevNoise.noise2D(px + fx * 16, py + fy * 16);
+        if (hDownstream < -0.15 && erosion > 0.45) {
+          isWaterfall = true;
+        }
+      }
+
+      // Tile Flag & Collision determination
+      let flag = TILE_FLAG_LAND;
+      let isSolid = 0;
+
+      if (isWater) {
+        if (isPath) {
+          // Wooden bridge over water! Always walkable!
+          flag = TILE_FLAG_BRIDGE;
+          isSolid = 0; // Walkable!
+        } else if (isRiver && riverVal > 0.038) {
+          // Stepping stone near shallow stream border
+          const stoneHash = Math.abs(Math.sin(worldTileX * 45.1 + worldTileY * 91.7));
+          if (stoneHash < 0.18) {
+            flag = TILE_FLAG_STEPPING_STONE;
+            isSolid = 0; // Walkable!
+          } else {
+            flag = TILE_FLAG_WATER;
+            isSolid = 1;
+          }
+        } else if (isWaterfall) {
+          flag = TILE_FLAG_WATERFALL;
+          isSolid = 1;
+        } else {
+          flag = TILE_FLAG_WATER;
+          isSolid = 1;
+        }
+      } else {
+        if (isPath) {
+          flag = TILE_FLAG_PATH;
+          isSolid = 0;
+        } else {
+          flag = TILE_FLAG_LAND;
+          isSolid = (elev > 0.82) ? 1 : 0; // High sheer cliffs are solid
+        }
       }
 
       elevation[idx] = elev;
@@ -127,45 +217,79 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
       temperature[idx] = temp;
       flowDirX[idx] = fx;
       flowDirY[idx] = fy;
+      tileFlags[idx] = flag;
+      collision[idx] = isSolid;
 
       // Classify Biome
       let bType = isRiver ? BiomeType.LakesRivers : classifyBiome(elev, moist, temp, erosion);
-      // Spawn is always guaranteed to be Sunny Meadow
-      if (distFromOrigin < 400 && !isRiver) {
+      if (distFromOrigin < 400 && !isRiver && !isWater) {
         bType = BiomeType.Meadow;
       }
       biome[idx] = bType;
+    }
+  }
 
-      // Collision: Deep water and shear cliffs are impassable by default
-      if (elev < -0.35 || elev > 0.82) {
-        collision[idx] = 1; // Solid / Water barrier
-      } else {
-        collision[idx] = 0; // Walkable
+  // 5. Shoreline Foam Bitmask (Edge detection between water and land)
+  for (let ty = 0; ty < CHUNK_TILES; ty++) {
+    for (let tx = 0; tx < CHUNK_TILES; tx++) {
+      const idx = ty * CHUNK_TILES + tx;
+      const flag = tileFlags[idx];
+      const isWater = (flag === TILE_FLAG_WATER || flag === TILE_FLAG_WATERFALL);
+
+      if (isWater) {
+        const worldTileX = chunkX * CHUNK_TILES + tx;
+        const worldTileY = chunkY * CHUNK_TILES + ty;
+
+        // Check N, S, E, W neighbor tiles
+        const nIsLand = (ty > 0) ? (tileFlags[(ty - 1) * CHUNK_TILES + tx] !== TILE_FLAG_WATER) : !sampleWaterStatus(worldTileX * TILE_SIZE, (worldTileY - 1) * TILE_SIZE);
+        const sIsLand = (ty < CHUNK_TILES - 1) ? (tileFlags[(ty + 1) * CHUNK_TILES + tx] !== TILE_FLAG_WATER) : !sampleWaterStatus(worldTileX * TILE_SIZE, (worldTileY + 1) * TILE_SIZE);
+        const eIsLand = (tx < CHUNK_TILES - 1) ? (tileFlags[ty * CHUNK_TILES + (tx + 1)] !== TILE_FLAG_WATER) : !sampleWaterStatus((worldTileX + 1) * TILE_SIZE, worldTileY * TILE_SIZE);
+        const wIsLand = (tx > 0) ? (tileFlags[ty * CHUNK_TILES + (tx - 1)] !== TILE_FLAG_WATER) : !sampleWaterStatus((worldTileX - 1) * TILE_SIZE, worldTileY * TILE_SIZE);
+
+        let mask = 0;
+        if (nIsLand) mask |= 1;
+        if (sIsLand) mask |= 2;
+        if (eIsLand) mask |= 4;
+        if (wIsLand) mask |= 8;
+        foamMask[idx] = mask;
       }
     }
   }
 
-  // 4. Procedural Props with Traversability Preservation
+  // 6. Generate Sparse Structures
+  const structures = generateChunkStructures(
+    chunkX,
+    chunkY,
+    seedNum,
+    elevation,
+    biome,
+    tileFlags,
+    collision
+  );
+
+  // 7. Procedural Vegetation & Props
   const propRng = new PRNG(seedNum ^ (chunkX * 73856093) ^ (chunkY * 19349663));
 
   for (let ty = 1; ty < CHUNK_TILES - 1; ty += 2) {
     for (let tx = 1; tx < CHUNK_TILES - 1; tx += 2) {
       const idx = ty * CHUNK_TILES + tx;
       const bType = biome[idx] as BiomeType;
-      const elev = elevation[idx];
-      const isWater = elev < -0.35;
+      const flag = tileFlags[idx];
+      const isWater = (flag === TILE_FLAG_WATER || flag === TILE_FLAG_WATERFALL);
+      const isPath = (flag === TILE_FLAG_PATH || flag === TILE_FLAG_BRIDGE);
+
+      // Never place blocking props directly on paths or bridges
+      if (isPath) continue;
 
       const worldX = (chunkX * CHUNK_TILES + tx) * TILE_SIZE + 12;
       const worldY = (chunkY * CHUNK_TILES + ty) * TILE_SIZE + 12;
       const distFromSpawn = Math.hypot(worldX, worldY);
 
-      // Do not place solid props inside spawn clearing
       if (distFromSpawn < 60) continue;
 
       const chance = propRng.next();
 
       if (isWater) {
-        // Water props (floating lilies, reeds near banks)
         if (chance < 0.08) {
           props.push({
             type: 'lily_pad',
@@ -177,7 +301,6 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
         }
       } else if (bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) {
         if (chance < 0.06 && distFromSpawn > 70) {
-          // Tree (Solid trunk)
           props.push({
             type: 'oak_tree',
             x: tx * TILE_SIZE + 12,
@@ -185,9 +308,8 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             baseY: worldY + 12,
             variant: propRng.rangeInt(0, 2)
           });
-          collision[idx] = 1; // Block trunk tile
+          collision[idx] = 1;
         } else if (chance < 0.32) {
-          // Flowers (Non-solid, pickable)
           props.push({
             type: 'flower',
             x: tx * TILE_SIZE + propRng.range(4, 18),
@@ -196,7 +318,6 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: propRng.rangeInt(0, 4)
           });
         } else if (chance < 0.36) {
-          // Log to sit on
           props.push({
             type: 'log',
             x: tx * TILE_SIZE + 12,
@@ -205,7 +326,6 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
             variant: 0
           });
         } else if (chance < 0.40) {
-          // River pebble / smooth rock
           props.push({
             type: 'rock',
             x: tx * TILE_SIZE + 12,
@@ -248,9 +368,8 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     }
   }
 
-  // 5. Traversability Guarantee (Flood Fill check & Bridge Fix)
-  // Ensure that every chunk maintains a walkable path connecting its 4 boundary edges
-  ensureChunkTraversability(collision);
+  // 8. Traversability Guarantee (Flood Fill corridor check & bridge safeguard)
+  ensureChunkTraversability(collision, tileFlags);
 
   return {
     chunkX,
@@ -261,21 +380,31 @@ export function generateChunkData(chunkX: number, chunkY: number, rawSeed: numbe
     biome,
     flowDirX,
     flowDirY,
+    tileFlags,
+    foamMask,
     collision,
-    props
+    props,
+    structures
   };
 }
 
 /**
  * Ensures a traversable corridor exists across the chunk so the player is never trapped.
+ * If water crosses the guaranteed corridor, automatically convert it to a bridge!
  */
-function ensureChunkTraversability(collision: Uint8Array): void {
-  // Carve a guaranteed 2-tile walkable cross through center of chunk
+function ensureChunkTraversability(collision: Uint8Array, tileFlags: Uint8Array): void {
   const mid = Math.floor(CHUNK_TILES / 2);
   for (let i = 0; i < CHUNK_TILES; i++) {
-    collision[mid * CHUNK_TILES + i] = 0;
-    collision[(mid + 1) * CHUNK_TILES + i] = 0;
-    collision[i * CHUNK_TILES + mid] = 0;
-    collision[i * CHUNK_TILES + (mid + 1)] = 0;
+    const idxH1 = mid * CHUNK_TILES + i;
+    const idxH2 = (mid + 1) * CHUNK_TILES + i;
+    const idxV1 = i * CHUNK_TILES + mid;
+    const idxV2 = i * CHUNK_TILES + (mid + 1);
+
+    for (const idx of [idxH1, idxH2, idxV1, idxV2]) {
+      collision[idx] = 0; // Ensure walkable
+      if (tileFlags[idx] === TILE_FLAG_WATER || tileFlags[idx] === TILE_FLAG_WATERFALL) {
+        tileFlags[idx] = TILE_FLAG_BRIDGE; // Bridges span water corridors!
+      }
+    }
   }
 }

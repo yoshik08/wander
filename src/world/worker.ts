@@ -13,6 +13,8 @@ self.onmessage = (e: MessageEvent<{ chunkX: number; chunkY: number; seed: string
     chunkData.biome.buffer,
     chunkData.flowDirX.buffer,
     chunkData.flowDirY.buffer,
+    chunkData.tileFlags.buffer,
+    chunkData.foamMask.buffer,
     chunkData.collision.buffer
   ];
 

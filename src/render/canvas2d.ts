@@ -1,5 +1,5 @@
 import { ColorRGBA, rgbaToCss, Vec2, vec2 } from '../core/math';
-import { IRenderer, RenderStats } from './types';
+import { IRenderer, RenderStats, WaterTileRenderData } from './types';
 
 export class Canvas2DRenderer implements IRenderer {
   readonly backend = 'canvas2d' as const;
@@ -131,6 +131,58 @@ export class Canvas2DRenderer implements IRenderer {
     this.ctx.closePath();
     this.ctx.fill();
     this.drawCalls++;
+  }
+
+  drawWaterBatch(tiles: WaterTileRenderData[], time: number): void {
+    const ctx = this.ctx;
+    for (const tile of tiles) {
+      // 1. Base depth color
+      ctx.fillStyle = tile.depth > 0.5 ? '#175276' : '#2980B9';
+      ctx.fillRect(tile.x, tile.y, tile.w, tile.h);
+
+      // 2. Flow animated wave shimmer
+      const fx = Math.abs(tile.flowX) > 0.01 ? tile.flowX : 0.8;
+      const fy = Math.abs(tile.flowY) > 0.01 ? tile.flowY : 0.3;
+      const wavePhase = (time * 2.0 + (tile.x * fx + tile.y * fy) * 0.05) % 1.0;
+      const waveX = tile.x + 2 + (tile.w - 8) * (wavePhase < 0 ? wavePhase + 1 : wavePhase);
+      const waveY = tile.y + 4 + Math.sin(time * 3 + tile.x * 0.1) * 3;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.fillRect(waveX, waveY, 5, 2);
+
+      // 3. Shoreline foam along masked borders
+      if (tile.foamMask > 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+        const foamWidth = 2.5;
+        // North (bit 0)
+        if (tile.foamMask & 1) {
+          ctx.fillRect(tile.x, tile.y, tile.w, foamWidth);
+        }
+        // South (bit 1)
+        if (tile.foamMask & 2) {
+          ctx.fillRect(tile.x, tile.y + tile.h - foamWidth, tile.w, foamWidth);
+        }
+        // East (bit 2)
+        if (tile.foamMask & 4) {
+          ctx.fillRect(tile.x + tile.w - foamWidth, tile.y, foamWidth, tile.h);
+        }
+        // West (bit 3)
+        if (tile.foamMask & 8) {
+          ctx.fillRect(tile.x, tile.y, foamWidth, tile.h);
+        }
+      }
+
+      // 4. Waterfall cascades
+      if (tile.isWaterfall) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        for (let i = 0; i < 3; i++) {
+          const fallY = tile.y + ((time * 25 + i * 8) % tile.h);
+          ctx.fillRect(tile.x + i * 7 + 2, fallY, 4, 6);
+        }
+      }
+
+      this.drawCalls++;
+    }
   }
 
   endFrame(): void {

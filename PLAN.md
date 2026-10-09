@@ -49,6 +49,15 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 
 ---
 
+## Milestone 3.5: Art Direction Polish (Ghibli Style)
+- [ ] Terrain shader core: domain-warped edges, macro colour noise, new palette
+- [ ] Smooth marching-squares shorelines, continuous rivers, water shader with foam/caustics
+- [ ] Reusable art toolkit: painted tree/rock/flower/grass, shared wind uniform, soft drop shadows
+- [ ] Character and tree redesign: 48px/64px scale, painterly no-outline style
+- [ ] Visual critique in NOTES.md
+
+---
+
 ## Milestone 4: Procedural Art, Wind Field & Particles
 - [ ] 13 unique biomes with handcrafted procedural color palettes and ground textures
   - Meadow, wildflower fields, birch grove, deep pine forest, cherry blossom valley,

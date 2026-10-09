@@ -39,6 +39,21 @@ export interface IRenderer {
     textureId?: number
   ): void;
 
+  // Water Shader & Surface Batch
+  drawWaterBatch(tiles: WaterTileRenderData[], time: number): void;
+
   endFrame(): void;
   getStats(): RenderStats;
+}
+
+export interface WaterTileRenderData {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  flowX: number;
+  flowY: number;
+  depth: number;
+  foamMask: number;
+  isWaterfall: boolean;
 }

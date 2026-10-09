@@ -266,4 +266,19 @@ export class Character {
       renderer.drawLine(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y, thickness, scarfColor);
     }
   }
+
+  /**
+   * Renders a soft inverted reflection in nearby water bodies.
+   */
+  renderReflection(renderer: IRenderer, alpha: number): void {
+    const p = this.getInterpolatedPos(alpha);
+    const colorway = COLORWAYS[this.customization.colorwayIndex] || COLORWAYS[0];
+    const coatColor = hexToRgba(colorway.coat, 0.22);
+    const scarfColor = hexToRgba(colorway.scarf, 0.25);
+
+    // Mirrored body reflection
+    renderer.drawCircle(p.x, p.y + 7, 5.5, coatColor);
+    renderer.drawCircle(p.x, p.y + 14, 4.5, coatColor);
+    renderer.drawRect(p.x - 3, p.y + 4, 6, 2, scarfColor);
+  }
 }

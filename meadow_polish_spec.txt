@@ -1,0 +1,31 @@
+# MEADOW — Art direction polish pass (run after the build finishes)
+Read PLAN.md, HANDOFF.md and NOTES.md first. Keep the existing custom WebGL2 renderer; do NOT switch to PixiJS or TWGL. Do not remove existing features unless listed below.
+
+## Goal: "living watercolor", not a tile map
+1. No visible grid: domain-warp tile edges in the fragment shader so grass, dirt and sand bleed into each other.
+2. Macro noise: a low-frequency world-space noise pass that shifts grass hue and lightness into big sunlit and shaded patches, ignoring tile boundaries.
+3. Shorelines and rivers: marching squares edges, continuous connected rivers, a gentle sine undulation at the water's edge, and a 2px white foam rim at 50% opacity. Scrolling Voronoi caustics in the water.
+4. Wind: a u_time vertex sway on the upper vertices of trees, grass and flowers only, bases rooted, driven by the existing wind field.
+5. Grounding: a soft dark-green blob shadow under the character, tiny fading dust particles from the feet while moving, and diagonal drop shadows (rgba(0,0,0,0.15)) from all upright objects, angled by the sun.
+6. No black outlines anywhere. Forms are colour blocks with a slight wet-edge blur and noise.
+
+## Palette (replace the current values)
+Grass #8DB255 / #A6C96C, water #6B9CB5 / shallows #92C1D9, deep canopy #3A5F40, autumn accent #E89D5E, stone #8A8E91 / #D0D3D4, character cloak #F4E3C5. Keep pollen yellow and apricot accents for flowers and dawn.
+
+## Scale and camera
+Character about 48px tall on desktop and 64px on a 412x915 phone. Show roughly 12 by 24 tiles on mobile.
+
+## Lighting overlays
+Dawn: peach #FFDAB9 at 20% with long soft shadows. Noon: clear light with short shadows. Dusk: orange-to-purple gradient with long shadows. Night: teal #1A2436 at 60% with firefly lights. Never pitch black.
+
+## First 60 seconds
+Fade in from black, the character sitting in swaying grass with no UI and only wind. First input: the character stands and a single soft piano note plays. First keepsake: a warm chime, the item dissolves into glowing dust, and the counter fades in briefly. After 3s idle, the character sits down automatically.
+
+## UI
+Top left: keepsake counter (leaf icon + number, serif, white at 60%, soft shadow). Top right: a small hollow circle that opens the journal. Seed, sound and pause stay in a small menu. Touch: an invisible joystick anywhere in the bottom half. After 3s of continuous walking, fade all UI to 0 and bring it back when the character stops.
+
+## Journal
+Make the journal the main long-term reason to wander: watercolour stamps of each keepsake with the date found.
+
+## Verify
+Screenshots at 1280x800, 412x915 and 393x852 at dawn, noon, dusk and night. Critique them in NOTES.md and fix anything that still looks tiled. Zero TS and console errors, 60fps on mobile. Commit and push to main.
