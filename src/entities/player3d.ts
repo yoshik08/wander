@@ -73,8 +73,7 @@ export class Player3D {
     }
   }
 
-  update(dt: number, input: InputManager, chunkManager: ChunkManager, camera: THREE.PerspectiveCamera) {
-    const inputState = input.poll();
+  update(dt: number, inputState: import('../core/input').InputState, chunkManager: ChunkManager, camera: THREE.PerspectiveCamera) {
     
     // Mouse fallback for camera? We could use pointer lock.
     // For now, let's auto-recentre if moving, or just keep it simple.

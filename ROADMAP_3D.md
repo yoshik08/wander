@@ -13,7 +13,7 @@ Goal: Turn MEADOW into a fully 3D cozy creature-adventure keeping all game syste
 - [x] **3D-7**: All 26 biomes with smooth blending; seasons and weather.
 - [x] **3D-8**: Port save system, audio, journal, UI overlay, minimap.
 - [x] **3D-9**: Procedural 3D creatures for all 150 species; wild AI; party follower.
-- [ ] **3D-10**: 3D sparring scene with Resolve rules and VFX.
+- [x] **3D-10**: 3D sparring scene with Resolve rules and VFX.
 - [ ] **3D-11**: Villages, paths and NPCs with schedules and dialogue.
 - [ ] **3D-12**: Structures 1-50 as procedural 3D.
 - [ ] **3D-13**: Structures 51-100, caves, legendary places, gliding.

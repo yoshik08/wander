@@ -13,6 +13,7 @@ import { JournalUI } from './ui/journal';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { lerp } from './core/math';
 
 // -------------------------------------------------------------
 // 1. Initialization
@@ -38,6 +39,9 @@ const player3d = new Player3D(renderer3d.scene, renderer3d.camera);
 import { WildCreatureManager } from './entities/wild-creature';
 import { WildlifeManager3D } from './world/wildlife3d';
 import { PartyLeader } from './entities/party-leader';
+import { SparringSystem, Combatant } from './systems/sparring';
+import { SparringHUD } from './ui/sparring-hud';
+import { generateCreatureGenome } from './entities/creature';
 
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
@@ -47,6 +51,33 @@ const journalUI = new JournalUI(saveManager);
 const wildCreatureManager = new WildCreatureManager();
 const wildlifeManager3D = new WildlifeManager3D(wildCreatureManager);
 renderer3d.scene.add(wildlifeManager3D.group);
+
+const sparring = new SparringSystem();
+const sparringHud = new SparringHUD(sparring);
+
+function getPlayerCombatant(): Combatant {
+  if (saveManager.state.party && saveManager.state.party.length > 0) {
+    const p = saveManager.state.party[0];
+    const genome = generateCreatureGenome(chunkManager.seedRaw, p.speciesId);
+    return {
+      genome: genome,
+      level: p.level,
+      currentResolve: p.currentResolve,
+      maxResolve: p.maxResolve ?? genome.stats.vigor,
+      status: 'None',
+      statusTurns: 0
+    };
+  }
+  const defaultGenome = generateCreatureGenome(chunkManager.seedRaw, 1);
+  return {
+    genome: defaultGenome,
+    level: 1,
+    currentResolve: 25,
+    maxResolve: 25,
+    status: 'None',
+    statusTurns: 0
+  };
+}
 
 let partyLeader: PartyLeader | null = null;
 if (saveManager.state.party && saveManager.state.party.length > 0) {
@@ -252,13 +283,98 @@ handleResize();
 // -------------------------------------------------------------
 let globalTime = 0;
 
+let currentSparTarget3D: import('./entities/wild-creature').WildCreature | null = null;
+let currentSparTargetRival: any = null; // if we do rivals later
+
+// VFX system for sparring
+const hitFlashes: { mesh: THREE.Mesh; timer: number; maxTimer: number }[] = [];
+function spawnHitFlash(pos: THREE.Vector3, color: number) {
+  const geo = new THREE.SphereGeometry(12, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(pos);
+  mesh.position.y += 15;
+  renderer3d.scene.add(mesh);
+  hitFlashes.push({ mesh, timer: 0.3, maxTimer: 0.3 });
+}
+
+// Hook into SparringSystem for VFX
+const originalUseMove = sparring.useMove.bind(sparring);
+sparring.useMove = (attacker: Combatant, defender: Combatant, move: import('./systems/sparring').Move) => {
+  const defenderResolveBefore = defender.currentResolve;
+  originalUseMove(attacker, defender, move);
+  const defenderResolveAfter = defender.currentResolve;
+  
+  if (defenderResolveAfter < defenderResolveBefore) {
+    // Hit!
+    const isPlayerAttacking = attacker.id === undefined || attacker.id === 'player';
+    const targetPos = isPlayerAttacking ? (currentSparTarget3D ? new THREE.Vector3(currentSparTarget3D.pos.x, 0, currentSparTarget3D.pos.y) : player3d.pos) : player3d.pos;
+    
+    // Choose color based on type
+    let color = 0xffffff;
+    if (move.type === 'Ignis') color = 0xe74c3c;
+    else if (move.type === 'Aqua') color = 0x3498db;
+    else if (move.type === 'Flora') color = 0x2ecc71;
+    else if (move.type === 'Terra') color = 0xe67e22;
+    else if (move.type === 'Aero') color = 0x9b59b6;
+    
+    spawnHitFlash(targetPos, color);
+  }
+};
+
 const loop = new GameLoop({
   update: (dt: number) => {
     globalTime += dt;
     timeSystem.update(dt);
     
-    // Update player and camera
-    player3d.update(dt, inputManager, chunkManager, renderer3d.camera);
+    const inputState = inputManager.poll();
+    
+    // Sparring Interaction
+    if (inputState.interactPressed && !sparring.isActive) {
+      const nearC = wildCreatureManager.getCreatureNear(player3d.pos.x, player3d.pos.z, 30);
+      if (nearC) {
+        currentSparTarget3D = nearC;
+        // Start sparring!
+        const playerC = getPlayerCombatant();
+        const wildC: Combatant = {
+          id: nearC.id,
+          genome: nearC.genome,
+          level: nearC.level,
+          currentResolve: nearC.resolve,
+          maxResolve: nearC.maxResolve,
+          status: 'None',
+          statusTurns: 0
+        };
+        sparring.startSpar(playerC, wildC);
+        sparringHud.update();
+        
+        player3d.targetZoom = 150; // zoom in for combat
+      }
+    }
+    
+    if (sparring.isActive) {
+      // Rotate camera to view both combatants
+      if (currentSparTarget3D) {
+        const dx = currentSparTarget3D.pos.x - player3d.pos.x;
+        const dz = currentSparTarget3D.pos.y - player3d.pos.z;
+        const targetAngle = Math.atan2(dx, dz);
+        player3d.yaw = lerp(player3d.yaw, targetAngle + Math.PI/4, dt * 2.0); // Offset angle for nice view
+        player3d.pitch = lerp(player3d.pitch, 0.2, dt * 2.0);
+        player3d.currentZoom = lerp(player3d.currentZoom, player3d.targetZoom, dt * 5.0);
+        
+        player3d.cameraPivot.position.copy(player3d.pos);
+        player3d.cameraPivot.position.y += 20;
+        player3d.cameraPivot.rotation.y = player3d.yaw;
+        player3d.cameraPivot.rotation.x = -player3d.pitch;
+      }
+      
+      // We still update chunk based on current pos
+    } else {
+      player3d.targetZoom = 300;
+      // Update player and camera
+      player3d.update(dt, inputState, chunkManager, renderer3d.camera);
+      if (currentSparTarget3D) currentSparTarget3D = null;
+    }
     terrain3d.updateTime(globalTime);
     
     // Chunk loading based on player position
@@ -285,6 +401,22 @@ const loop = new GameLoop({
     
     if (partyLeader) {
       partyLeader.update(dt, globalTime, { x: player3d.pos.x, y: player3d.pos.z }, false);
+    }
+    
+    // Update hit flashes
+    for (let i = hitFlashes.length - 1; i >= 0; i--) {
+      const hf = hitFlashes[i];
+      hf.timer -= dt;
+      if (hf.timer <= 0) {
+        renderer3d.scene.remove(hf.mesh);
+        hf.mesh.geometry.dispose();
+        (hf.mesh.material as THREE.Material).dispose();
+        hitFlashes.splice(i, 1);
+      } else {
+        const scale = 1.0 + (1.0 - hf.timer / hf.maxTimer) * 2.0;
+        hf.mesh.scale.set(scale, scale, scale);
+        (hf.mesh.material as THREE.MeshBasicMaterial).opacity = (hf.timer / hf.maxTimer) * 0.8;
+      }
     }
     
     // Weather logic
