@@ -7,6 +7,9 @@ import { ChunkManager } from './world/chunk-manager';
 import { TimeSystem } from './systems/time';
 import { InputManager } from './core/input';
 import { Player3D } from './entities/player3d';
+import { SaveManager } from './systems/save';
+import { AudioSystem } from './audio/engine';
+import { JournalUI } from './ui/journal';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
@@ -32,9 +35,65 @@ const timeSystem = new TimeSystem(8.0); // Start at 8 AM
 const inputManager = new InputManager();
 const player3d = new Player3D(renderer3d.scene, renderer3d.camera);
 
+const saveManager = new SaveManager();
+saveManager.loadFromLocalStorage();
+
+const audioManager = new AudioSystem();
+const journalUI = new JournalUI(saveManager);
+
+// Journal overlay logic
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyJ') {
+    if (journalUI.isOpen) {
+      journalUI.close();
+    } else {
+      journalUI.open();
+    }
+  }
+});
+
+// Apply save data
+if (saveManager.state.player) {
+  player3d.pos.x = saveManager.state.player.x;
+  player3d.pos.z = saveManager.state.player.y; // 2D y is 3D z
+}
+
 chunkManager.onChunkUnloaded = (chunk) => {
   terrain3d.unloadChunk(chunk.layer, chunk.chunkX, chunk.chunkY);
 };
+
+// -------------------------------------------------------------
+// 1.5 UI Canvas (for Minimap)
+// -------------------------------------------------------------
+import { createRenderer } from './render/index';
+import { ArtToolkit } from './render/art';
+import { DiegeticMap } from './ui/map';
+
+const uiCanvas = document.createElement('canvas');
+uiCanvas.id = 'ui-canvas';
+uiCanvas.style.position = 'absolute';
+uiCanvas.style.top = '0';
+uiCanvas.style.left = '0';
+uiCanvas.style.width = '100%';
+uiCanvas.style.height = '100%';
+uiCanvas.style.pointerEvents = 'none'; // Only enable when map is open
+document.body.appendChild(uiCanvas);
+
+const uiRenderer = createRenderer(uiCanvas);
+const artToolkit = new ArtToolkit(uiRenderer);
+const diegeticMap = new DiegeticMap();
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyM') {
+    if (diegeticMap.isOpen) {
+      diegeticMap.close();
+      uiCanvas.style.pointerEvents = 'none';
+    } else {
+      diegeticMap.open();
+      uiCanvas.style.pointerEvents = 'auto';
+    }
+  }
+});
 
 // -------------------------------------------------------------
 // 2. Scene Setup & Lighting
@@ -170,6 +229,7 @@ function handleResize() {
   const dpr = Math.min(window.devicePixelRatio, 2) * qualityScaler.config.resolutionScale;
   renderer3d.resize(w, h, dpr);
   composer.setSize(w, h);
+  uiRenderer.resize(w, h, Math.min(window.devicePixelRatio, 2));
 }
 window.addEventListener('resize', handleResize);
 handleResize();
@@ -256,6 +316,33 @@ const loop = new GameLoop({
     
     qualityScaler.recordFrame(loop.frameTimeMs / 1000);
     updateDebugHUD(loop.fps, loop.frameTimeMs, tInfo);
+    
+    // UI Rendering
+    uiRenderer.beginFrame();
+    if (diegeticMap.isOpen || diegeticMap.openProgress > 0) {
+      const dtMap = loop.frameTimeMs / 1000;
+      diegeticMap.update(dtMap);
+      // DiegeticMap expects player pos in x,y format, which maps to x,z in 3D
+      const mapPos = { x: player3d.pos.x, y: player3d.pos.z };
+      
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      
+      // we don't have cat yet, just use player pos for now
+      diegeticMap.render(
+        uiRenderer, 
+        artToolkit, 
+        mapPos as any, 
+        0, 
+        mapPos as any, 
+        chunkManager, 
+        saveManager, 
+        w, h, 
+        1, // zoom
+        mapPos.x, mapPos.y, 
+        globalTime
+      );
+    }
   }
 });
 
