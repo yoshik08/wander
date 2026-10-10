@@ -107,10 +107,12 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Apply save data
+// Apply save data, but override to spawn near origin for 3D verification
 if (saveManager.state.player) {
-  player3d.pos.x = saveManager.state.player.x;
-  player3d.pos.z = saveManager.state.player.y; // 2D y is 3D z
+  // player3d.pos.x = saveManager.state.player.x;
+  // player3d.pos.z = saveManager.state.player.y;
+  player3d.pos.x = 0;
+  player3d.pos.z = 0;
 }
 
 chunkManager.onChunkUnloaded = (chunk) => {
@@ -595,13 +597,13 @@ const loop = new GameLoop({
     
     // Chunk loading based on player position
     const layer = 0;
-    const centerChunkX = Math.floor(player3d.pos.x / 768);
-    const centerChunkY = Math.floor(player3d.pos.z / 768);
-    chunkManager.update(layer, centerChunkX, centerChunkY);
+    chunkManager.update(layer, player3d.pos.x, player3d.pos.z);
     
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, w * 5, h * 5, 1);
+    // getVisibleChunks also expects a bounding box, but with width/height in pixels
+    // Since our 3D view goes way further than 2D, we pass a huge viewport or just scale W/H
+    const w = window.innerWidth * 4;
+    const h = window.innerHeight * 4;
+    const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, w, h, 1);
     for (const chunk of visible) {
       terrain3d.updateChunk(chunk.data);
       for (const s of chunk.data.structures) {

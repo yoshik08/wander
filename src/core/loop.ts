@@ -60,8 +60,9 @@ export class GameLoop {
       return;
     }
 
-    const elapsed = Math.min((now - this.lastTime) / 1000, this.maxAccumulator);
-    this.frameTimeMs = (now - this.lastTime);
+    const delta = Math.max(0, now - this.lastTime);
+    const elapsed = Math.min(delta / 1000, this.maxAccumulator);
+    this.frameTimeMs = delta;
     this.lastTime = now;
     this.accumulator += elapsed;
 
