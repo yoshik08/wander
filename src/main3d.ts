@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { Renderer3D } from './render/renderer3d';
+import { Terrain3D } from './render/terrain3d';
 import { GameLoop } from './core/loop';
 import { QualityScaler } from './systems/quality';
+import { ChunkManager } from './world/chunk-manager';
 
 // -------------------------------------------------------------
 // 1. Initialization
@@ -18,35 +20,41 @@ qualityScaler.onQualityChange = (tier, config) => {
   handleResize();
 };
 
+const chunkManager = new ChunkManager();
+const terrain3d = new Terrain3D(renderer3d.scene);
+
+chunkManager.onChunkUnloaded = (chunk) => {
+  terrain3d.unloadChunk(chunk.layer, chunk.chunkX, chunk.chunkY);
+};
+
 // -------------------------------------------------------------
 // 2. Scene Setup (Basic test)
 // -------------------------------------------------------------
-const geometry = new THREE.BoxGeometry(2, 2, 2);
-const material = new THREE.MeshStandardMaterial({ 
-  color: 0x27AE60, 
-  roughness: 0.8,
-  metalness: 0.1
-});
-const cube = new THREE.Mesh(geometry, material);
-cube.castShadow = true;
-cube.receiveShadow = true;
-renderer3d.scene.add(cube);
-
-const planeGeo = new THREE.PlaneGeometry(20, 20);
-const planeMat = new THREE.MeshStandardMaterial({ color: 0x7F8C8D });
-const plane = new THREE.Mesh(planeGeo, planeMat);
-plane.rotation.x = -Math.PI / 2;
-plane.position.y = -1;
-plane.receiveShadow = true;
-renderer3d.scene.add(plane);
-
 // Lighting
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(10, 15, 10);
+dirLight.position.set(100, 150, 100);
 dirLight.castShadow = true;
+// Increase shadow map resolution and size for terrain
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.left = -2000;
+dirLight.shadow.camera.right = 2000;
+dirLight.shadow.camera.top = 2000;
+dirLight.shadow.camera.bottom = -2000;
+dirLight.shadow.camera.near = 0.5;
+dirLight.shadow.camera.far = 1000;
 renderer3d.scene.add(dirLight);
-const ambient = new THREE.AmbientLight(0x404040, 0.6);
+
+const ambient = new THREE.AmbientLight(0x606080, 0.6); // slight blueish ambient
 renderer3d.scene.add(ambient);
+
+renderer3d.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0005);
+
+// Let's set a starting camera position
+let camX = 0;
+let camZ = 0;
+renderer3d.camera.position.set(camX, 200, camZ + 300);
+renderer3d.camera.lookAt(camX, 0, camZ);
 
 // -------------------------------------------------------------
 // 3. UI and Overlay
@@ -85,7 +93,8 @@ function updateDebugHUD(fps: number, frameTime: number) {
     `Draw Calls: ${drawCalls}\n` +
     `Triangles: ${triangles}\n` +
     `Res: ${renderer3d.width}x${renderer3d.height}\n` +
-    `PixelRatio: ${renderer3d.renderer.getPixelRatio().toFixed(1)}`;
+    `PixelRatio: ${renderer3d.renderer.getPixelRatio().toFixed(1)}\n` +
+    `Chunks Loaded: ${terrain3d.chunkMeshes.size}`;
 }
 
 // -------------------------------------------------------------
@@ -110,17 +119,29 @@ const loop = new GameLoop({
   update: (dt: number) => {
     globalTime += dt;
     
-    // Rotate cube
-    cube.rotation.x += 1.0 * dt;
-    cube.rotation.y += 0.5 * dt;
+    // Very basic camera movement to see chunks generating
+    camX += 50 * dt; 
+    renderer3d.camera.position.x = camX;
+    renderer3d.camera.position.z = camZ + 400;
+    renderer3d.camera.lookAt(camX, 0, camZ);
+    
+    const layer = 0;
+    const centerChunkX = Math.floor(camX / 768);
+    const centerChunkY = Math.floor(camZ / 768);
+    
+    chunkManager.update(layer, centerChunkX, centerChunkY);
+    
+    // Get visible chunks and add to terrain
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const visible = chunkManager.getVisibleChunks(layer, camX, camZ, w * 5, h * 5, 1);
+    for (const chunk of visible) {
+      terrain3d.updateChunk(chunk.data);
+    }
   },
   render: (alpha: number) => {
-    // We could apply alpha interpolation to mesh transforms here if needed
     renderer3d.render();
-    
-    // Feed dt to quality scaler
     qualityScaler.recordFrame(loop.frameTimeMs / 1000);
-    
     updateDebugHUD(loop.fps, loop.frameTimeMs);
   }
 });
