@@ -127,18 +127,32 @@ export class Player3D {
     this.pos.addScaledVector(this.velocity, dt);
     
     // Collision with terrain
-    // We sample elevation at pos.x, pos.z
-    // Wait, terrain in chunks is worldX, worldZ but our function uses worldY for Z.
-    // In 2D, Y is "up/down" on the screen. In 3D, Z is "depth" on screen, Y is height.
-    // So chunkManager expects (layer, worldX, worldZ).
-    const terrainHeight = Math.max(0, chunkManager.getElevationAt(0, this.pos.x, this.pos.z));
+    const terrainHeight = Math.max(-50, chunkManager.getElevationAt(0, this.pos.x, this.pos.z));
+    const isWater = chunkManager.isWaterAt(0, this.pos.x, this.pos.z);
     
-    if (this.pos.y <= terrainHeight) {
-      this.pos.y = terrainHeight;
-      this.velocity.y = 0;
-      this.isGrounded = true;
+    if (isWater && terrainHeight < -5) {
+      // Swimming
+      if (this.pos.y <= -2) {
+        this.pos.y = -2;
+        this.velocity.y = 0;
+        this.isGrounded = true; // Can jump out of water
+      } else {
+        this.isGrounded = false;
+      }
+      this.speed = 60.0; // Slower swimming
+      this.runSpeed = 100.0;
     } else {
-      this.isGrounded = false;
+      // Walking on land
+      this.speed = 120.0;
+      this.runSpeed = 220.0;
+      
+      if (this.pos.y <= Math.max(0, terrainHeight)) {
+        this.pos.y = Math.max(0, terrainHeight);
+        this.velocity.y = 0;
+        this.isGrounded = true;
+      } else {
+        this.isGrounded = false;
+      }
     }
     
     this.mesh.position.copy(this.pos);

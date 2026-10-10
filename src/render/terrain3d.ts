@@ -177,18 +177,38 @@ export class Terrain3D {
     geometry.computeVertexNormals();
 
     const mesh = new THREE.Mesh(geometry, this.material);
-    
-    // Rotate to lie on XZ plane
     mesh.rotation.x = -Math.PI / 2;
-    
-    // Position the chunk
-    mesh.position.x = data.chunkX * CHUNK_PIXEL_SIZE + (CHUNK_PIXEL_SIZE / 2);
-    mesh.position.z = data.chunkY * CHUNK_PIXEL_SIZE + (CHUNK_PIXEL_SIZE / 2);
-    
     mesh.receiveShadow = true;
     
-    this.scene.add(mesh);
-    this.chunkMeshes.set(key, mesh);
+    const group = new THREE.Group();
+    group.position.x = data.chunkX * CHUNK_PIXEL_SIZE + (CHUNK_PIXEL_SIZE / 2);
+    group.position.z = data.chunkY * CHUNK_PIXEL_SIZE + (CHUNK_PIXEL_SIZE / 2);
+    group.add(mesh);
+    
+    // Check if chunk has any water
+    let hasWater = false;
+    for (const e of data.elevation) {
+      if (e < 0.0) { hasWater = true; break; }
+    }
+    
+    if (hasWater) {
+      const waterGeo = new THREE.PlaneGeometry(CHUNK_PIXEL_SIZE, CHUNK_PIXEL_SIZE);
+      const waterMat = new THREE.MeshStandardMaterial({ 
+        color: 0x3498db, 
+        transparent: true, 
+        opacity: 0.8,
+        roughness: 0.1,
+        metalness: 0.1
+      });
+      const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+      waterMesh.rotation.x = -Math.PI / 2;
+      waterMesh.position.y = -2; // Slightly below 0
+      waterMesh.receiveShadow = true;
+      group.add(waterMesh);
+    }
+    
+    this.scene.add(group);
+    this.chunkMeshes.set(key, group as any);
 
     const foliage = new ChunkFoliage(data, getElevation);
     foliage.group.position.x = data.chunkX * CHUNK_PIXEL_SIZE;

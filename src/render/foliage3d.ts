@@ -117,10 +117,21 @@ export class ChunkFoliage {
     
     for (const p of data.props) {
       if (types.includes(p.type)) {
-        const h = getElevation(p.x, p.y);
+        let h = getElevation(p.x, p.y);
+        if (p.type === 'lilypad') {
+          h = -1.9; // float slightly above water
+        } else {
+          h = Math.max(0, h);
+        }
+        
         dummy.position.set(p.x, h, p.y);
         // Random rotation and slight scale var
         dummy.rotation.y = (p.variant * 1.618) * Math.PI * 2;
+        
+        if (p.type === 'lilypad') {
+          dummy.rotation.x = -Math.PI / 2; // flatten
+        }
+        
         const scale = 0.8 + (p.variant % 3) * 0.2;
         dummy.scale.set(scale, scale, scale);
         dummy.updateMatrix();
