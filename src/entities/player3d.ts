@@ -3,6 +3,18 @@ import { ChunkManager } from '../world/chunk-manager';
 import { InputManager } from '../core/input';
 import { clamp, lerp } from '../core/math';
 
+function makeWonkyGeometry(geo: THREE.BufferGeometry, intensity: number = 1.0) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const px = pos.getX(i);
+    const py = pos.getY(i);
+    const pz = pos.getZ(i);
+    pos.setXYZ(i, px + (Math.random() - 0.5) * intensity, py + (Math.random() - 0.5) * intensity, pz + (Math.random() - 0.5) * intensity);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
 export class Player3D {
   mesh: THREE.Group;
   body: THREE.Mesh;
@@ -32,17 +44,17 @@ export class Player3D {
     
     this.mesh = new THREE.Group();
     
-    // Procedural character mesh
-    const bodyGeo = new THREE.CapsuleGeometry(8, 16, 4, 8);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.7 });
+    // Procedural character mesh in Ghibli style
+    const bodyGeo = makeWonkyGeometry(new THREE.CapsuleGeometry(8, 16, 4, 8), 0.8);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xF4E3C5, roughness: 1.0, flatShading: true }); // Cloak color
     this.body = new THREE.Mesh(bodyGeo, bodyMat);
     this.body.position.y = 16;
     this.body.castShadow = true;
     this.mesh.add(this.body);
     
     // Scarf
-    const scarfGeo = new THREE.BoxGeometry(10, 4, 4);
-    const scarfMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, roughness: 0.9 });
+    const scarfGeo = makeWonkyGeometry(new THREE.BoxGeometry(10, 4, 6, 2, 1, 1), 0.5);
+    const scarfMat = new THREE.MeshStandardMaterial({ color: 0xE89D5E, roughness: 1.0, flatShading: true }); // Autumn accent
     this.scarf = new THREE.Mesh(scarfGeo, scarfMat);
     this.scarf.position.set(0, 24, -4);
     this.scarf.castShadow = true;

@@ -1,6 +1,18 @@
 import * as THREE from 'three';
 import { ApexMythManager, ApexCreature, RoamingMyth } from '../entities/apex-myths';
 
+function makeWonkyGeometry(geo: THREE.BufferGeometry, intensity: number = 1.0) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const px = pos.getX(i);
+    const py = pos.getY(i);
+    const pz = pos.getZ(i);
+    pos.setXYZ(i, px + (Math.random() - 0.5) * intensity, py + (Math.random() - 0.5) * intensity, pz + (Math.random() - 0.5) * intensity);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
 export class ApexMythManager3D {
   private meshes: Map<string, THREE.Group> = new Map();
   public group = new THREE.Group();
@@ -22,7 +34,7 @@ export class ApexMythManager3D {
     if (!mesh) {
       mesh = new THREE.Group();
       
-      const geo = new THREE.TorusKnotGeometry(20, 6, 64, 16);
+      const geo = makeWonkyGeometry(new THREE.TorusKnotGeometry(20, 6, 64, 16), 1.5);
       let color = 0xffffff;
       if (apex.element === 'Ignis') color = 0xe74c3c;
       else if (apex.element === 'Aqua') color = 0x3498db;
@@ -32,10 +44,11 @@ export class ApexMythManager3D {
       
       const mat = new THREE.MeshStandardMaterial({ 
         color: color, 
-        roughness: 0.2, 
-        metalness: 0.8,
+        roughness: 1.0, 
+        metalness: 0.1,
         emissive: color,
-        emissiveIntensity: 0.2
+        emissiveIntensity: 0.3,
+        flatShading: true
       });
       
       const body = new THREE.Mesh(geo, mat);
@@ -57,13 +70,14 @@ export class ApexMythManager3D {
     if (!mesh) {
       mesh = new THREE.Group();
       
-      const geo = new THREE.DodecahedronGeometry(25, 0);
+      const geo = makeWonkyGeometry(new THREE.DodecahedronGeometry(25, 1), 2.0);
       const mat = new THREE.MeshStandardMaterial({ 
         color: 0xFAD02C, 
-        roughness: 0.1, 
-        metalness: 0.9,
+        roughness: 1.0, 
+        metalness: 0.2,
         emissive: 0xFAD02C,
-        emissiveIntensity: 0.5
+        emissiveIntensity: 0.4,
+        flatShading: true
       });
       
       const body = new THREE.Mesh(geo, mat);
