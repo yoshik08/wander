@@ -4,6 +4,10 @@ import { Terrain3D } from './render/terrain3d';
 import { GameLoop } from './core/loop';
 import { QualityScaler } from './systems/quality';
 import { ChunkManager } from './world/chunk-manager';
+import { TimeSystem } from './systems/time';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 // -------------------------------------------------------------
 // 1. Initialization
@@ -22,19 +26,18 @@ qualityScaler.onQualityChange = (tier, config) => {
 
 const chunkManager = new ChunkManager();
 const terrain3d = new Terrain3D(renderer3d.scene);
+const timeSystem = new TimeSystem(8.0); // Start at 8 AM
 
 chunkManager.onChunkUnloaded = (chunk) => {
   terrain3d.unloadChunk(chunk.layer, chunk.chunkX, chunk.chunkY);
 };
 
 // -------------------------------------------------------------
-// 2. Scene Setup (Basic test)
+// 2. Scene Setup & Lighting
 // -------------------------------------------------------------
-// Lighting
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(100, 150, 100);
 dirLight.castShadow = true;
-// Increase shadow map resolution and size for terrain
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
 dirLight.shadow.camera.left = -2000;
@@ -45,10 +48,11 @@ dirLight.shadow.camera.near = 0.5;
 dirLight.shadow.camera.far = 1000;
 renderer3d.scene.add(dirLight);
 
-const ambient = new THREE.AmbientLight(0x606080, 0.6); // slight blueish ambient
+const ambient = new THREE.AmbientLight(0x606080, 0.6);
 renderer3d.scene.add(ambient);
 
 renderer3d.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0005);
+renderer3d.scene.background = new THREE.Color(0x87CEEB);
 
 // Let's set a starting camera position
 let camX = 0;
@@ -57,9 +61,45 @@ renderer3d.camera.position.set(camX, 200, camZ + 300);
 renderer3d.camera.lookAt(camX, 0, camZ);
 
 // -------------------------------------------------------------
+// 2.5 Post-Processing (Grain / Painterly effect)
+// -------------------------------------------------------------
+const composer = new EffectComposer(renderer3d.renderer);
+const renderPass = new RenderPass(renderer3d.scene, renderer3d.camera);
+composer.addPass(renderPass);
+
+const GrainShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    time: { value: 0.0 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float time;
+    varying vec2 vUv;
+    float rand(vec2 n) { 
+      return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+    }
+    void main() {
+      vec4 texel = texture2D(tDiffuse, vUv);
+      float noise = (rand(vUv * time) - 0.5) * 0.05;
+      gl_FragColor = vec4(texel.rgb + noise, texel.a);
+    }
+  `
+};
+const grainPass = new ShaderPass(GrainShader);
+composer.addPass(grainPass);
+
+// -------------------------------------------------------------
 // 3. UI and Overlay
 // -------------------------------------------------------------
-let debugMode = true; // F3 Overlay
+let debugMode = true;
 const debugHUD = document.createElement('div');
 debugHUD.style.position = 'absolute';
 debugHUD.style.top = '12px';
@@ -80,7 +120,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-function updateDebugHUD(fps: number, frameTime: number) {
+function updateDebugHUD(fps: number, frameTime: number, timeInfo: any) {
   if (!debugMode) return;
   const info = renderer3d.renderer.info;
   const drawCalls = info.render.calls;
@@ -89,6 +129,7 @@ function updateDebugHUD(fps: number, frameTime: number) {
   debugHUD.textContent = 
     `MEADOW 3D\n` +
     `FPS: ${fps} | ${frameTime.toFixed(1)}ms\n` +
+    `Time: ${timeInfo.timeString} | Phase: ${timeInfo.phase}\n` +
     `Tier: ${qualityScaler.currentTier}\n` +
     `Draw Calls: ${drawCalls}\n` +
     `Triangles: ${triangles}\n` +
@@ -103,12 +144,12 @@ function updateDebugHUD(fps: number, frameTime: number) {
 function handleResize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  // Apply resolution scale from QualityScaler
   const dpr = Math.min(window.devicePixelRatio, 2) * qualityScaler.config.resolutionScale;
   renderer3d.resize(w, h, dpr);
+  composer.setSize(w, h);
 }
 window.addEventListener('resize', handleResize);
-handleResize(); // Initial call
+handleResize();
 
 // -------------------------------------------------------------
 // 5. Game Loop
@@ -118,20 +159,20 @@ let globalTime = 0;
 const loop = new GameLoop({
   update: (dt: number) => {
     globalTime += dt;
+    timeSystem.update(dt);
     
-    // Very basic camera movement to see chunks generating
+    // Camera movement
     camX += 50 * dt; 
     renderer3d.camera.position.x = camX;
     renderer3d.camera.position.z = camZ + 400;
     renderer3d.camera.lookAt(camX, 0, camZ);
     
+    // Chunk loading
     const layer = 0;
     const centerChunkX = Math.floor(camX / 768);
     const centerChunkY = Math.floor(camZ / 768);
-    
     chunkManager.update(layer, centerChunkX, centerChunkY);
     
-    // Get visible chunks and add to terrain
     const w = window.innerWidth;
     const h = window.innerHeight;
     const visible = chunkManager.getVisibleChunks(layer, camX, camZ, w * 5, h * 5, 1);
@@ -140,9 +181,31 @@ const loop = new GameLoop({
     }
   },
   render: (alpha: number) => {
-    renderer3d.render();
+    // Dynamic Sky and Lighting
+    const tInfo = timeSystem.getInfo();
+    const c = tInfo.ambientColor;
+    const threeColor = new THREE.Color(c.r, c.g, c.b);
+    
+    // Base ambient and fog on time of day
+    ambient.color.copy(threeColor).multiplyScalar(0.7);
+    (renderer3d.scene.fog as THREE.FogExp2).color.copy(threeColor).lerp(new THREE.Color(0x87CEEB), Math.max(0, tInfo.sunElevation));
+    (renderer3d.scene.background as THREE.Color).copy((renderer3d.scene.fog as THREE.FogExp2).color);
+    
+    // Move sun based on time
+    const sunAngle = (timeSystem.currentHour / 24) * Math.PI * 2;
+    dirLight.position.set(Math.sin(sunAngle) * 500 + camX, Math.cos(sunAngle) * 500, 100 + camZ);
+    dirLight.intensity = Math.max(0, Math.cos(sunAngle)) * 1.5;
+    
+    // Update materials sun dir
+    terrain3d.material.uniforms.uSunLightDir.value.copy(dirLight.position).normalize();
+    terrain3d.material.uniforms.uSunLightColor.value.copy(threeColor);
+
+    // Render with composer
+    grainPass.uniforms.time.value = globalTime;
+    composer.render();
+    
     qualityScaler.recordFrame(loop.frameTimeMs / 1000);
-    updateDebugHUD(loop.fps, loop.frameTimeMs);
+    updateDebugHUD(loop.fps, loop.frameTimeMs, tInfo);
   }
 });
 
