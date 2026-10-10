@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ChunkBufferData, CHUNK_PIXEL_SIZE, CHUNK_TILES } from '../world/chunk';
 import { BIOMES } from '../world/biomes';
+import { ChunkFoliage } from './foliage3d';
 
 const terrainVertexShader = `
   varying vec2 vUv;
@@ -72,6 +73,7 @@ const terrainFragmentShader = `
 export class Terrain3D {
   scene: THREE.Scene;
   chunkMeshes: Map<string, THREE.Mesh> = new Map();
+  chunkFoliage: Map<string, ChunkFoliage> = new Map();
   material: THREE.ShaderMaterial;
 
   constructor(scene: THREE.Scene) {
@@ -85,6 +87,12 @@ export class Terrain3D {
         uSunLightDir: { value: new THREE.Vector3(0.5, 1.0, 0.5).normalize() }
       }
     });
+  }
+
+  public updateTime(time: number) {
+    for (const foliage of this.chunkFoliage.values()) {
+      foliage.updateTime(time);
+    }
   }
 
   public updateChunk(data: ChunkBufferData) {
@@ -123,6 +131,24 @@ export class Terrain3D {
     const reorderedTemp = new Float32Array(1024);
     const reorderedBiome = new Float32Array(1024);
     
+    const getElevation = (localX: number, localY: number) => {
+      const tx = localX / (CHUNK_PIXEL_SIZE / CHUNK_TILES);
+      const ty = localY / (CHUNK_PIXEL_SIZE / CHUNK_TILES);
+      const x1 = Math.floor(tx);
+      const y1 = Math.floor(ty);
+      const x2 = Math.min(CHUNK_TILES - 1, x1 + 1);
+      const y2 = Math.min(CHUNK_TILES - 1, y1 + 1);
+      const fx = tx - x1;
+      const fy = ty - y1;
+      const e11 = data.elevation[y1 * CHUNK_TILES + x1];
+      const e21 = data.elevation[y1 * CHUNK_TILES + x2];
+      const e12 = data.elevation[y2 * CHUNK_TILES + x1];
+      const e22 = data.elevation[y2 * CHUNK_TILES + x2];
+      const top = e11 * (1 - fx) + e21 * fx;
+      const bottom = e12 * (1 - fx) + e22 * fx;
+      return (top * (1 - fy) + bottom * fy) * 100.0;
+    };
+
     for (let y = 0; y < CHUNK_TILES; y++) {
       for (let x = 0; x < CHUNK_TILES; x++) {
         // PlaneGeometry: top to bottom, left to right
@@ -149,10 +175,6 @@ export class Terrain3D {
       pos.setZ(i, z);
     }
     geometry.computeVertexNormals();
-    // Revert Z so vertex shader can do it (or leave it in geometry, simpler for normals!)
-    // If we leave it in geometry, we don't need to displace in VS.
-    // Let's modify the VS to just use standard position!
-    // But then we need to update the VS string above. Let's just do it in JS.
 
     const mesh = new THREE.Mesh(geometry, this.material);
     
@@ -167,6 +189,12 @@ export class Terrain3D {
     
     this.scene.add(mesh);
     this.chunkMeshes.set(key, mesh);
+
+    const foliage = new ChunkFoliage(data, getElevation);
+    foliage.group.position.x = data.chunkX * CHUNK_PIXEL_SIZE;
+    foliage.group.position.z = data.chunkY * CHUNK_PIXEL_SIZE;
+    this.scene.add(foliage.group);
+    this.chunkFoliage.set(key, foliage);
   }
 
   public unloadChunk(layer: number, chunkX: number, chunkY: number) {
@@ -176,6 +204,13 @@ export class Terrain3D {
       this.scene.remove(mesh);
       mesh.geometry.dispose();
       this.chunkMeshes.delete(key);
+    }
+
+    const foliage = this.chunkFoliage.get(key);
+    if (foliage) {
+      this.scene.remove(foliage.group);
+      foliage.dispose();
+      this.chunkFoliage.delete(key);
     }
   }
 }

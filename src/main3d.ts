@@ -162,6 +162,7 @@ const loop = new GameLoop({
     
     // Update player and camera
     player3d.update(dt, inputManager, chunkManager, renderer3d.camera);
+    terrain3d.updateTime(globalTime);
     
     // Chunk loading based on player position
     const layer = 0;
