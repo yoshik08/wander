@@ -3,7 +3,7 @@ import { ArtToolkit } from '../render/art';
 import { ColorRGBA, hexToRgba, vec2, Vec2 } from '../core/math';
 import { PRNG } from '../core/prng';
 import { BiomeType } from './biomes';
-import { CHUNK_TILES, TILE_SIZE, CHUNK_PIXEL_SIZE } from './chunk';
+import { CHUNK_TILES, TILE_SIZE, CHUNK_PIXEL_SIZE, TILE_FLAG_PATH } from './chunk';
 
 export type StructureType =
   | 'windmill'
@@ -25,7 +25,12 @@ export type StructureType =
   | 'gap'
   | 'cave_entrance'
   | 'garden_plot'
-  | 'wind_chime';
+  | 'wind_chime'
+  | 'village_well'
+  | 'village_house'
+  | 'notice_board'
+  | 'lamp_post'
+  | 'fence';
 
 export enum StructureRarity {
   Common = 0,
@@ -69,7 +74,12 @@ export const STRUCTURE_REGISTRY: Record<StructureType, StructureDef> = {
   gap: { type: 'gap', rarity: StructureRarity.Common, allowedBiomes: [BiomeType.Meadow, BiomeType.WildflowerFields, BiomeType.IceSpikes], minElev: 0.1, maxElev: 0.8, allowWater: false, spawnWeight: 1.5, width: 36, height: 36, yOffset: 16, variants: 3, solidFootprint: [{ dx: 0, dy: 0 }] },
   cave_entrance: { type: 'cave_entrance', rarity: StructureRarity.Rare, allowedBiomes: [BiomeType.RockyCliffs, BiomeType.MistyHighlands, BiomeType.LushCave, BiomeType.DripstoneCave], minElev: 0.2, maxElev: 0.9, allowWater: false, spawnWeight: 2, width: 48, height: 48, yOffset: 12, variants: 2, solidFootprint: [{ dx: 0, dy: 0 }] },
   garden_plot: { type: 'garden_plot', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 72, height: 52, yOffset: 24, variants: 1, solidFootprint: [] },
-  wind_chime: { type: 'wind_chime', rarity: StructureRarity.Uncommon, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1.5, width: 16, height: 32, yOffset: 12, variants: 1, solidFootprint: [] }
+  wind_chime: { type: 'wind_chime', rarity: StructureRarity.Uncommon, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1.5, width: 16, height: 32, yOffset: 12, variants: 1, solidFootprint: [] },
+  village_well: { type: 'village_well', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 28, height: 28, yOffset: 12, variants: 1, solidFootprint: [{ dx: 0, dy: 0 }] },
+  village_house: { type: 'village_house', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 48, height: 48, yOffset: 16, variants: 2, solidFootprint: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }] },
+  notice_board: { type: 'notice_board', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 24, height: 32, yOffset: 16, variants: 1, solidFootprint: [{ dx: -1, dy: 0 }] },
+  lamp_post: { type: 'lamp_post', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 12, height: 36, yOffset: 24, variants: 1, solidFootprint: [{ dx: 1, dy: 1 }] },
+  fence: { type: 'fence', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 24, height: 16, yOffset: 8, variants: 1, solidFootprint: [] }
 };
 
 export interface StructureInstance {
@@ -212,6 +222,14 @@ export function generateChunkStructures(
   const bType = biome[midIdx] as BiomeType;
   const isWater = elev < -0.35;
 
+  // 1.5. Village Generation Check
+  if (!isWater && (bType === BiomeType.Meadow || bType === BiomeType.BirchGrove || bType === BiomeType.AutumnMaple || bType === BiomeType.PineForest || bType === BiomeType.SunflowerPlains)) {
+    if (chunkRng.next() < 0.015) { // 1.5% chance per chunk
+      generateVillage(structures, chunkX, chunkY, baseWorldX, baseWorldY, chunkRng, collision, tileFlags, elevation, biome);
+      return structures;
+    }
+  }
+
   // Filter registry for valid structures
   const validDefs: StructureDef[] = [];
   let totalWeight = 0;
@@ -260,6 +278,117 @@ export function generateChunkStructures(
   }
 
   return structures;
+}
+
+function generateVillage(
+  structures: StructureInstance[],
+  chunkX: number,
+  chunkY: number,
+  baseWorldX: number,
+  baseWorldY: number,
+  rng: PRNG,
+  collision: Uint8Array,
+  tileFlags: Uint8Array,
+  elevation: Float32Array,
+  biome: Uint8Array
+) {
+  const midTile = Math.floor(CHUNK_TILES / 2);
+  const wellX = baseWorldX + midTile * TILE_SIZE + 12;
+  const wellY = baseWorldY + midTile * TILE_SIZE + 12;
+
+  // 1. Central Well
+  structures.push({
+    id: `well-${chunkX}-${chunkY}`,
+    type: 'village_well',
+    x: wellX,
+    y: wellY,
+    baseY: wellY + 12,
+    width: 28,
+    height: 28,
+    variant: 0,
+    solidTiles: [{ dx: 0, dy: 0 }]
+  });
+  applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
+
+  const numHouses = rng.rangeInt(3, 6);
+  for (let i = 0; i < numHouses; i++) {
+    const angle = rng.next() * Math.PI * 2;
+    const dist = rng.rangeInt(5, 12); // tiles away
+    const tx = Math.floor(midTile + Math.cos(angle) * dist);
+    const ty = Math.floor(midTile + Math.sin(angle) * dist);
+
+    if (tx > 2 && tx < CHUNK_TILES - 2 && ty > 2 && ty < CHUNK_TILES - 2) {
+      const idx = ty * CHUNK_TILES + tx;
+      const isWater = elevation[idx] < -0.35;
+      if (!isWater && collision[idx] === 0) {
+        // Place house
+        const hX = baseWorldX + tx * TILE_SIZE + 12;
+        const hY = baseWorldY + ty * TILE_SIZE + 12;
+        structures.push({
+          id: `house-${chunkX}-${chunkY}-${i}`,
+          type: 'village_house',
+          x: hX,
+          y: hY,
+          baseY: hY + 16,
+          width: 48,
+          height: 48,
+          variant: rng.rangeInt(0, 2),
+          solidTiles: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }]
+        });
+        applySolidFootprint(tx, ty, [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }], collision);
+
+        // Path to well
+        drawPath(tx, ty, midTile, midTile, tileFlags);
+
+        // Optional props near house
+        if (rng.next() < 0.5) {
+          structures.push({
+            id: `lamp-${chunkX}-${chunkY}-${i}`,
+            type: 'lamp_post',
+            x: hX + 32,
+            y: hY + 16,
+            baseY: hY + 24,
+            width: 12,
+            height: 36,
+            variant: 0,
+            solidTiles: [{ dx: 1, dy: 1 }]
+          });
+          applySolidFootprint(tx, ty, [{ dx: 1, dy: 1 }], collision);
+        }
+      }
+    }
+  }
+
+  // Notice board near well
+  structures.push({
+    id: `board-${chunkX}-${chunkY}`,
+    type: 'notice_board',
+    x: wellX - 32,
+    y: wellY + 8,
+    baseY: wellY + 16,
+    width: 24,
+    height: 32,
+    variant: 0,
+    solidTiles: [{ dx: -1, dy: 0 }]
+  });
+  applySolidFootprint(midTile, midTile, [{ dx: -1, dy: 0 }], collision);
+}
+
+function drawPath(x0: number, y0: number, x1: number, y1: number, tileFlags: Uint8Array) {
+  let dx = Math.abs(x1 - x0);
+  let dy = -Math.abs(y1 - y0);
+  let sx = x0 < x1 ? 1 : -1;
+  let sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    if (x0 >= 0 && x0 < CHUNK_TILES && y0 >= 0 && y0 < CHUNK_TILES) {
+      tileFlags[y0 * CHUNK_TILES + x0] |= TILE_FLAG_PATH;
+    }
+    if (x0 === x1 && y0 === y1) break;
+    let e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
 }
 
 function applySolidFootprint(
@@ -779,6 +908,92 @@ export function renderStructure(
       renderer.drawCircle(clapperX, clapperY, 2.5, hexToRgba('#784212')); // Clapper disk
       // Dangling amber leaf catching the sun
       renderer.drawCircle(clapperX + sway * 0.5, clapperY + 8, 3, hexToRgba('#F39C12', 0.9));
+      break;
+    }
+
+    case 'village_well': {
+      renderer.drawCircle(x, baseY, 14, hexToRgba('#1B2631', 0.25)); // shadow
+      // Stone base
+      renderer.drawCircle(x, y + 4, 12, hexToRgba('#7F8C8D'));
+      renderer.drawCircle(x, y + 4, 10, hexToRgba('#1B2631')); // dark water pit
+      renderer.drawCircle(x, y + 4, 9, hexToRgba('#3498DB', 0.8)); // water
+      // Wooden roof
+      renderer.drawRect(x - 12, y - 16, 4, 20, hexToRgba('#5C381E'));
+      renderer.drawRect(x + 8, y - 16, 4, 20, hexToRgba('#5C381E'));
+      renderer.drawPolygonRaw([
+        x - 16, y - 16,
+        x, y - 24,
+        x + 16, y - 16,
+        x + 16, y - 12,
+        x - 16, y - 12
+      ], hexToRgba('#8B4513'));
+      break;
+    }
+
+    case 'village_house': {
+      renderer.drawCircle(x, baseY, 24, hexToRgba('#1B2631', 0.2));
+      const isVariant2 = variant === 1;
+      const wallColor = isVariant2 ? '#E5E7E9' : '#F5CBA7'; // plaster or stucco
+      const roofColor = isVariant2 ? '#A04000' : '#E67E22'; // clay tiles
+      
+      renderer.drawRect(x - 20, y - 10, 40, 24, hexToRgba(wallColor));
+      renderer.drawRect(x - 20, y + 10, 40, 4, hexToRgba('#D5DBDB')); // foundation
+      
+      // Door
+      renderer.drawRect(x - 6, y + 2, 12, 12, hexToRgba('#6E2C00'));
+      renderer.drawCircle(x + 3, y + 8, 1.5, hexToRgba('#F4D03F'));
+      
+      // Windows
+      renderer.drawRect(x - 16, y - 2, 8, 8, hexToRgba('#87CEEB', 0.8));
+      renderer.drawRect(x + 8, y - 2, 8, 8, hexToRgba('#87CEEB', 0.8));
+      // Window panes
+      renderer.drawLine(x - 12, y - 2, x - 12, y + 6, 1, hexToRgba('#3E2723'));
+      renderer.drawLine(x - 16, y + 2, x - 8, y + 2, 1, hexToRgba('#3E2723'));
+      renderer.drawLine(x + 12, y - 2, x + 12, y + 6, 1, hexToRgba('#3E2723'));
+      renderer.drawLine(x + 8, y + 2, x + 16, y + 2, 1, hexToRgba('#3E2723'));
+      
+      // Roof
+      renderer.drawPolygonRaw([
+        x - 24, y - 10,
+        x, y - 26,
+        x + 24, y - 10
+      ], hexToRgba(roofColor));
+      
+      // Chimney
+      if (isVariant2) {
+         renderer.drawRect(x + 12, y - 32, 6, 18, hexToRgba('#7B7D7D'));
+         const smProgress = (time % 3) / 3;
+         renderer.drawCircle(x + 15, y - 34 - smProgress * 12, 3 + smProgress * 4, hexToRgba('#BDC3C7', 1 - smProgress));
+      }
+      break;
+    }
+
+    case 'lamp_post': {
+      renderer.drawCircle(x, baseY, 6, hexToRgba('#1B2631', 0.2));
+      renderer.drawRect(x - 2, y - 24, 4, 26, hexToRgba('#2E4053'));
+      // lantern
+      renderer.drawRect(x - 4, y - 28, 8, 6, hexToRgba('#F4D03F', 0.9));
+      renderer.drawRect(x - 5, y - 30, 10, 2, hexToRgba('#2E4053'));
+      
+      renderer.drawCircle(x, y - 26, 32, hexToRgba('#F5B041', 0.15));
+      break;
+    }
+
+    case 'notice_board': {
+      renderer.drawCircle(x, baseY, 8, hexToRgba('#1B2631', 0.2));
+      renderer.drawRect(x - 8, y - 2, 2, 12, hexToRgba('#5C381E'));
+      renderer.drawRect(x + 6, y - 2, 2, 12, hexToRgba('#5C381E'));
+      renderer.drawRect(x - 10, y - 16, 20, 14, hexToRgba('#8B4513'));
+      // papers
+      renderer.drawRect(x - 8, y - 14, 6, 6, hexToRgba('#FDFEFE'));
+      renderer.drawRect(x + 2, y - 12, 5, 7, hexToRgba('#F5EEF8'));
+      renderer.drawRect(x - 4, y - 8, 8, 4, hexToRgba('#FCF3CF'));
+      // little roof
+      renderer.drawPolygonRaw([
+         x - 12, y - 16,
+         x, y - 20,
+         x + 12, y - 16
+      ], hexToRgba('#3E2723'));
       break;
     }
 

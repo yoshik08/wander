@@ -45,9 +45,36 @@ export interface RivalWanderer {
   };
 }
 
+export type VillagerRole = 
+  | 'Elder' | 'Farmer' | 'Baker' | 'Blacksmith' | 'Scholar'
+  | 'Child' | 'Lumberjack' | 'Weaver' | 'Fisher' | 'Herbalist'
+  | 'Miner' | 'Carpenter' | 'Tailor' | 'Guard' | 'Merchant'
+  | 'Musician' | 'Potter' | 'Tanner' | 'Mason' | 'Beekeeper'
+  | 'Tavernkeep' | 'Alchemist' | 'Shepherd';
+
+export interface Villager {
+  id: string;
+  name: string;
+  role: VillagerRole;
+  x: number;
+  y: number;
+  homeX: number;
+  homeY: number;
+  colorway: { coat: string; hair: string; hat: string };
+  friendship: number;
+  dialogue: {
+    greeting: string;
+    work: string;
+  };
+  scheduleState: 'sleeping' | 'working' | 'socializing' | 'wandering';
+}
+import { PRNG } from '../core/prng';
+
 export class NPCManager {
   wardens: Warden[] = [];
   rival: RivalWanderer;
+  villagers: Villager[] = [];
+  knownVillages: Set<string> = new Set();
   private time: number = 0;
 
   constructor(seed: string | number = 'meadow-seed') {
@@ -231,6 +258,51 @@ export class NPCManager {
     };
   }
 
+  registerVillage(chunkX: number, chunkY: number, wellX: number, wellY: number, globalSeed: number) {
+    const vId = `${chunkX},${chunkY}`;
+    if (this.knownVillages.has(vId)) return;
+    this.knownVillages.add(vId);
+
+    const rng = new PRNG(globalSeed ^ (chunkX * 73856093) ^ (chunkY * 19349663));
+    const numVillagers = rng.rangeInt(5, 12);
+
+    const roles = ['Elder', 'Farmer', 'Baker', 'Blacksmith', 'Scholar', 'Child', 'Lumberjack', 'Weaver', 'Fisher', 'Herbalist', 'Miner', 'Carpenter', 'Tailor', 'Guard', 'Merchant', 'Musician', 'Potter', 'Tanner', 'Mason', 'Beekeeper', 'Tavernkeep', 'Alchemist', 'Shepherd'];
+    const names = ['Aerin', 'Bram', 'Cora', 'Dax', 'Elara', 'Fenn', 'Gael', 'Hollis', 'Iris', 'Jace', 'Kael', 'Lira', 'Milo', 'Nia', 'Orin', 'Pia', 'Quinn', 'Rowan', 'Silas', 'Tess', 'Uri', 'Vera', 'Wynn', 'Xael', 'Yara', 'Zane'];
+    const coats = ['#E74C3C', '#3498DB', '#2ECC71', '#9B59B6', '#F1C40F', '#E67E22', '#1ABC9C', '#34495E', '#95A5A6', '#D35400', '#27AE60', '#2980B9'];
+    const hairs = ['#F1C40F', '#D35400', '#A04000', '#1B2631', '#7F8C8D', '#BDC3C7'];
+    const hats = ['none', 'straw', 'beret', 'beanie'];
+
+    for (let i = 0; i < numVillagers; i++) {
+      const role = rng.pick(roles) as VillagerRole;
+      const name = rng.pick(names);
+      const coat = rng.pick(coats);
+      const hair = rng.pick(hairs);
+      const hat = rng.chance(0.3) ? rng.pick(hats) : 'none';
+
+      const angle = rng.next() * Math.PI * 2;
+      const dist = rng.rangeInt(20, 100);
+      const vx = wellX + Math.cos(angle) * dist;
+      const vy = wellY + Math.sin(angle) * dist;
+
+      this.villagers.push({
+        id: `villager-${chunkX}-${chunkY}-${i}`,
+        name,
+        role,
+        x: vx,
+        y: vy,
+        homeX: wellX + Math.cos(angle) * (dist * 0.5),
+        homeY: wellY + Math.sin(angle) * (dist * 0.5),
+        colorway: { coat, hair, hat },
+        friendship: 0,
+        scheduleState: 'wandering',
+        dialogue: {
+          greeting: `Hello Wanderer! I am ${name}, the local ${role}.`,
+          work: `Busy day today. The winds are fair.`
+        }
+      });
+    }
+  }
+
   syncDefeatedBadges(badges: string[]) {
     for (const warden of this.wardens) {
       if (badges.includes(warden.badgeName)) {
@@ -241,6 +313,27 @@ export class NPCManager {
 
   update(dt: number) {
     this.time += dt;
+
+    // Villager wander AI (non-jitter crowd steering)
+    for (const v of this.villagers) {
+      if (v.scheduleState === 'wandering') {
+        const dx = v.homeX - v.x;
+        const dy = v.homeY - v.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Pseudo-random smooth wander using time and id
+        const idNum = parseInt(v.id.split('-')[3] || '0');
+        const driftX = Math.cos(this.time * 0.4 + idNum * 2.1);
+        const driftY = Math.sin(this.time * 0.5 + idNum * 1.3);
+
+        // Gentle pull back to home radius
+        const homePullX = dist > 60 ? (dx / dist) * 0.5 : 0;
+        const homePullY = dist > 60 ? (dy / dist) * 0.5 : 0;
+
+        v.x += (driftX * 0.4 + homePullX) * dt * 20;
+        v.y += (driftY * 0.4 + homePullY) * dt * 20;
+      }
+    }
   }
 
   renderMonuments(renderer: IRenderer, art: ArtToolkit, layer: number, camPos: Vec2) {
@@ -314,6 +407,50 @@ export class NPCManager {
           } else {
             // Calm star indicator
             renderer.drawCircle(npc.x, npc.y - 30, 2.5, hexToRgba('#2ECC71', 0.7));
+          }
+        }
+      });
+    }
+
+    for (const v of this.villagers) {
+      const dx = camPos.x - v.x;
+      const dy = camPos.y - v.y;
+      if (dx * dx + dy * dy > 900 * 900) continue;
+
+      list.push({
+        y: v.y,
+        draw: (renderer: IRenderer) => {
+          // Shadow
+          renderer.drawCircle(v.x, v.y, 6, hexToRgba('#1B2631', 0.3));
+
+          // Gentle bob
+          const idNum = parseInt(v.id.split('-')[3] || '0');
+          const bob = Math.sin(this.time * 4 + idNum) * 1.0;
+
+          // Body Coat
+          renderer.drawRect(v.x - 5, v.y - 12 + bob, 10, 12, hexToRgba(v.colorway.coat));
+          
+          // Head
+          renderer.drawCircle(v.x, v.y - 16 + bob, 5, hexToRgba('#FFDAB9'));
+          
+          // Hair
+          renderer.drawRect(v.x - 5, v.y - 21 + bob, 10, 4, hexToRgba(v.colorway.hair));
+          renderer.drawRect(v.x - 6, v.y - 19 + bob, 2, 6, hexToRgba(v.colorway.hair)); // sideburns
+          renderer.drawRect(v.x + 4, v.y - 19 + bob, 2, 6, hexToRgba(v.colorway.hair));
+
+          // Hat
+          if (v.colorway.hat === 'straw') {
+             renderer.drawPolygonRaw([
+               v.x - 10, v.y - 18 + bob, 
+               v.x + 10, v.y - 18 + bob, 
+               v.x, v.y - 23 + bob
+             ], hexToRgba('#F4D03F'));
+          } else if (v.colorway.hat === 'beret') {
+             renderer.drawCircle(v.x + 2, v.y - 20 + bob, 4, hexToRgba('#E74C3C'));
+             renderer.drawCircle(v.x - 2, v.y - 21 + bob, 4, hexToRgba('#E74C3C'));
+          } else if (v.colorway.hat === 'beanie') {
+             renderer.drawCircle(v.x, v.y - 20 + bob, 5, hexToRgba('#2C3E50'));
+             renderer.drawCircle(v.x, v.y - 26 + bob, 2, hexToRgba('#F1C40F')); // pompom
           }
         }
       });

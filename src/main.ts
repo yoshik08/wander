@@ -1171,6 +1171,10 @@ const loop = new GameLoop({
 
     for (const chunk of chunksNearPlayer) {
       for (const s of chunk.data.structures) {
+        if (s.type === 'village_well') {
+          npcManager.registerVillage(chunk.data.chunkX, chunk.data.chunkY, s.x, s.y, Number(chunkManager.seedRaw));
+        }
+
         if (s.type === 'wind_chime') {
           const d = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
           if (d < 36) canRingChime = { x: s.x, y: s.y };
