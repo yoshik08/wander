@@ -44,6 +44,8 @@ import { SparringHUD } from './ui/sparring-hud';
 import { generateCreatureGenome } from './entities/creature';
 import { NPCManager } from './entities/npc';
 import { NPCManager3D } from './world/npc3d';
+import { ApexMythManager } from './entities/apex-myths';
+import { ApexMythManager3D } from './world/apex3d';
 
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
@@ -57,6 +59,10 @@ renderer3d.scene.add(wildlifeManager3D.group);
 const npcManager = new NPCManager(chunkManager.seedRaw);
 const npcManager3D = new NPCManager3D(npcManager);
 renderer3d.scene.add(npcManager3D.group);
+
+const apexMythManager = new ApexMythManager(chunkManager.seedRaw);
+const apexMythManager3D = new ApexMythManager3D(apexMythManager);
+renderer3d.scene.add(apexMythManager3D.group);
 
 const sparring = new SparringSystem();
 const sparringHud = new SparringHUD(sparring);
@@ -377,8 +383,18 @@ const loop = new GameLoop({
         if (dx * dx + dy * dy < 1600) { nearRival = npcManager.rival; }
       }
       
+      // 2.7 Check Apex Creatures
+      let nearApex = null;
+      if (!nearWarden && !nearVillager && !nearRival) {
+        for (const apex of apexMythManager.apexCreatures) {
+          const dx = player3d.pos.x - apex.x;
+          const dy = player3d.pos.z - apex.y;
+          if (dx * dx + dy * dy < 3600) { nearApex = apex; break; }
+        }
+      }
+      
       // 3. Check Wild Creatures
-      const nearC = !nearWarden && !nearVillager && !nearRival ? wildCreatureManager.getCreatureNear(player3d.pos.x, player3d.pos.z, 40) : null;
+      const nearC = !nearWarden && !nearVillager && !nearRival && !nearApex ? wildCreatureManager.getCreatureNear(player3d.pos.x, player3d.pos.z, 40) : null;
       
       if (nearWarden) {
         if (interactPrompt && interactLabel && interactIcon) {
@@ -500,6 +516,30 @@ const loop = new GameLoop({
             }
           }
         }
+      } else if (nearApex) {
+        if (interactPrompt && interactLabel && interactIcon) {
+          interactPrompt.style.display = 'flex';
+          interactIcon.textContent = '⚔️';
+          interactLabel.textContent = `Challenge ${nearApex.name} [E]`;
+        }
+        if (inputState.interactPressed) {
+          interactHandled = true;
+          const playerC = getPlayerCombatant();
+          const apexC: Combatant = {
+            id: nearApex.id,
+            trainerName: nearApex.name,
+            genome: nearApex.genome,
+            level: nearApex.level,
+            currentResolve: nearApex.currentResolve,
+            maxResolve: nearApex.maxResolve,
+            status: 'None',
+            statusTurns: 0
+          };
+          sparring.startSpar(playerC, apexC);
+          sparringHud.update();
+          player3d.targetZoom = 150;
+          // No currentSparTargetRival/3D since they use separate tracking for now
+        }
       } else if (nearC) {
         if (interactPrompt && interactLabel && interactIcon) {
           interactPrompt.style.display = 'flex';
@@ -586,6 +626,7 @@ const loop = new GameLoop({
     
     npcManager.update(dt);
     npcManager3D.update(dt, globalTime);
+    apexMythManager3D.update(dt, globalTime);
     
     // Update hit flashes
     for (let i = hitFlashes.length - 1; i >= 0; i--) {
