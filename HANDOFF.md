@@ -48,10 +48,11 @@
   - Milestone 14 (Step 14.1): Shared Moment Links (Portable URL generator and boot parser capturing seed, coordinates x & y, time of day, and season with 1-click clipboard copy).
   - Milestone 15 (Step 15.1): Final Review, Endurance Memory Leak Tests & Production Release (1,500-frame traversal test confirming strict Chebyshev chunk capping <=121 chunks, bounded particle pooling, zero NaN drift across 4-season cycles, 22 test files with 112 passing tests, and lean 79.8 kB production bundle).
 - **Completed in this step**:
-  - Milestone W (Step W1): Biome Expansion & Smooth Blending (26 biomes with bespoke palettes, flora, ground shader blend, ambient audio beds, creature encounter tables).
-- **Current Milestone**: Milestone W (World Expansion - Step W2: Structure Placement System & Spacing).
+  - Milestone W (Step W3): Villages and Paths (Procedural clustered village generation anchored around central wells, dirt path carving connecting structures, cozy house layouts with dynamic rendering, chimney smoke, notice boards, and lamp posts).
+  - Milestone W (Step W4): NPC Roles & Schedules (Procedural generation of 20+ villager roles, names, colorways, and outfits [hats/hair] based on village chunk seed, integrated into NPCManager with non-jitter crowd-steering wander AI bounded to their home structures).
+- **Current Milestone**: Milestone W (World Expansion - Step W5: Structures 1–35).
 - **Next Item in ROADMAP.md**:
-  - **Step W2**: Structure Placement System & Spacing (Rarity tiers, biome affinity, minimum spatial clearance, geometry caching, and zero per-frame allocations).
+  - **Step W5**: Structures 1–35 (Settlements, ruins, and cozy non-hostile fortresses with Ghibli styling and interactive lore/treasures).
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
