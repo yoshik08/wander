@@ -242,6 +242,6 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] **W6: Structures 36–60**: Ocean POIs and cave/underground landmarks with water-respecting generation.
 - [x] **W7: Structures 61–90**: Natural wonders and cozy small POIs across all biomes.
 - [x] **W8: Legendary Structures 91–100**: Legendary celestial/mythic structures with special mechanics (gliding, night appearances, celestial phenomena).
-- [ ] **W9: Journal, Minimap & Discovery Logging**: Painted structure thumbnails in the Journal folio, map icons, and discovery notifications.
-- [ ] **W10: Mobile Performance Pass**: Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks.
+- [x] **W9: Journal, Minimap & Discovery Logging**: Painted structure thumbnails in the Journal folio, map icons, and discovery notifications.
+- [x] **W10: Mobile Performance Pass**: Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks.
 

@@ -52,9 +52,11 @@
   - Milestone W (Step W6): Structures 36–60 (Ocean POIs and cave/underground landmarks with water-respecting generation).
   - Milestone W (Step W7): Structures 61–90 (Natural wonders and cozy small POIs across all biomes).
   - Milestone W (Step W8): Legendary Structures 91–100 (Legendary celestial/mythic structures with special mechanics).
-- **Current Milestone**: Milestone W (World Expansion - Step W9: Journal, Minimap & Discovery Logging).
+  - Milestone W (Step W9): Journal, Minimap & Discovery Logging (Painted structure thumbnails in the Journal folio, map icons, and discovery notifications).
+  - Milestone W (Step W10): Mobile Performance Pass (Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks).
+- **Current Milestone**: Milestone W Completed.
 - **Next Item in ROADMAP.md**:
-  - **Step W9**: Journal, Minimap & Discovery Logging (Painted structure thumbnails in the Journal folio, map icons, and discovery notifications).
+  - All Milestones up to W10 are complete! Wait for next instructions.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
