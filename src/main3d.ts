@@ -35,11 +35,23 @@ const timeSystem = new TimeSystem(8.0); // Start at 8 AM
 const inputManager = new InputManager();
 const player3d = new Player3D(renderer3d.scene, renderer3d.camera);
 
+import { WildCreatureManager } from './entities/wild-creature';
+import { WildlifeManager3D } from './world/wildlife3d';
+import { PartyLeader } from './entities/party-leader';
+
 const saveManager = new SaveManager();
 saveManager.loadFromLocalStorage();
 
 const audioManager = new AudioSystem();
 const journalUI = new JournalUI(saveManager);
+const wildCreatureManager = new WildCreatureManager();
+const wildlifeManager3D = new WildlifeManager3D(wildCreatureManager);
+renderer3d.scene.add(wildlifeManager3D.group);
+
+let partyLeader: PartyLeader | null = null;
+if (saveManager.state.party && saveManager.state.party.length > 0) {
+  partyLeader = new PartyLeader(player3d.pos.x - 20, player3d.pos.z - 10, saveManager.state.party[0], chunkManager.seedRaw);
+}
 
 // Journal overlay logic
 window.addEventListener('keydown', (e) => {
@@ -60,6 +72,7 @@ if (saveManager.state.player) {
 
 chunkManager.onChunkUnloaded = (chunk) => {
   terrain3d.unloadChunk(chunk.layer, chunk.chunkX, chunk.chunkY);
+  wildCreatureManager.onChunkUnloaded(chunk);
 };
 
 // -------------------------------------------------------------
@@ -261,6 +274,19 @@ const loop = new GameLoop({
       terrain3d.updateChunk(chunk.data);
     }
     
+    // Sync and update wildlife
+    wildCreatureManager.syncWithChunks(visible, chunkManager.seedRaw);
+    wildCreatureManager.update(
+      dt,
+      globalTime,
+      (x, y) => !chunkManager.isWaterAt(0, x, y), // basic collision logic for animals
+      { x: player3d.pos.x, y: player3d.pos.z }
+    );
+    
+    if (partyLeader) {
+      partyLeader.update(dt, globalTime, { x: player3d.pos.x, y: player3d.pos.z }, false);
+    }
+    
     // Weather logic
     const tInfo = timeSystem.getInfo();
     // Deterministic weather based on day
@@ -270,6 +296,9 @@ const loop = new GameLoop({
     isSnowing = tInfo.season.season === 'winter' && wNoise > 0.5;
     isRaining = tInfo.season.season !== 'winter' && wNoise > 0.7;
     weatherIntensity = isSnowing || isRaining ? 1.0 : 0.0;
+    
+    wildlifeManager3D.update(dt, globalTime, { wetness: isRaining ? 1 : 0, isSnowing, phase: tInfo.phase });
+    wildlifeManager3D.updatePartyLeader(partyLeader, globalTime);
     
     if (weatherIntensity > 0) {
       weatherSystem.visible = true;
