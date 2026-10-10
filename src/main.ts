@@ -1171,6 +1171,36 @@ const loop = new GameLoop({
 
     for (const chunk of chunksNearPlayer) {
       for (const s of chunk.data.structures) {
+        // W9 Structure Discovery
+        const dist = Math.hypot(player.pos.x - s.x, player.pos.y - s.y);
+        if (dist < 150) {
+           const structId = `${s.type}`;
+           if (!saveManager.state.discoveredStructures.includes(structId)) {
+             saveManager.state.discoveredStructures.push(structId);
+             if (toastBanner && toastTitle && toastDesc && toastCount) {
+               toastTitle.textContent = `🖼️ New Location Discovered`;
+               toastDesc.textContent = s.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+               toastCount.textContent = `Structure logged in Journal`;
+               toastBanner.style.display = 'block';
+               requestAnimationFrame(() => {
+                 if (toastBanner) {
+                   toastBanner.style.opacity = '1';
+                   toastBanner.style.transform = 'translate(-50%, 0)';
+                 }
+               });
+               setTimeout(() => {
+                 if (toastBanner) {
+                   toastBanner.style.opacity = '0';
+                   toastBanner.style.transform = 'translate(-50%, 12px)';
+                 }
+               }, 4000);
+               setTimeout(() => {
+                 if (toastBanner) toastBanner.style.display = 'none';
+               }, 4300);
+             }
+           }
+        }
+
         if (s.type === 'village_well') {
           npcManager.registerVillage(chunk.data.chunkX, chunk.data.chunkY, s.x, s.y, Number(chunkManager.seedRaw));
         }
@@ -2397,6 +2427,7 @@ const loop = new GameLoop({
       player.facingAngle,
       cat.pos,
       chunkManager,
+      saveManager,
       renderer.width,
       renderer.height,
       camera.zoom,

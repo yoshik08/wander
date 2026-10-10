@@ -238,10 +238,10 @@ Checklist of all tasks grouped by milestone. Check off items as they are complet
 - [x] **W2: Structure Placement System & Spacing**: Rarity tiers (common, uncommon, rare, legendary), biome affinity, minimum spatial clearance, geometry caching, and zero per-frame allocations.
 - [x] **W3: Villages and Paths**: Procedural village layouts with biome architecture styles, central wells/plazas, path generation, houses, gardens, fences, lamp posts, notice boards, chimney smoke, and night lighting.
 - [x] **W4: NPC Roles, Schedules & Dialogue**: 20+ procedural villager roles, schedules, path walking, dialogue grammar, friendship hearts, gifts, non-combat trading, and non-jitter crowd steering.
-- [ ] **W5: Structures 1–35**: Settlements, ruins, and cozy non-hostile fortresses with Ghibli styling and interactive lore/treasures.
-- [ ] **W6: Structures 36–60**: Ocean POIs and cave/underground landmarks with water-respecting generation.
-- [ ] **W7: Structures 61–90**: Natural wonders and cozy small POIs across all biomes.
-- [ ] **W8: Legendary Structures 91–100**: Legendary celestial/mythic structures with special mechanics (gliding, night appearances, celestial phenomena).
+- [x] **W5: Structures 1–35**: Settlements, ruins, and cozy non-hostile fortresses with Ghibli styling and interactive lore/treasures.
+- [x] **W6: Structures 36–60**: Ocean POIs and cave/underground landmarks with water-respecting generation.
+- [x] **W7: Structures 61–90**: Natural wonders and cozy small POIs across all biomes.
+- [x] **W8: Legendary Structures 91–100**: Legendary celestial/mythic structures with special mechanics (gliding, night appearances, celestial phenomena).
 - [ ] **W9: Journal, Minimap & Discovery Logging**: Painted structure thumbnails in the Journal folio, map icons, and discovery notifications.
 - [ ] **W10: Mobile Performance Pass**: Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks.
 

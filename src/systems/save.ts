@@ -52,6 +52,7 @@ export interface SaveState {
   clearedObstacles: string[];
   settings: GameSettings;
   landmarks: string[];
+  discoveredStructures: string[];
   season?: 'spring' | 'summer' | 'autumn' | 'winter';
   garden: SavedGardenPlot[];
   catches: string[];
@@ -93,6 +94,7 @@ export class SaveManager {
       waystones: [],
       clearedObstacles: [],
       landmarks: [],
+      discoveredStructures: [],
       garden: [],
       catches: [],
       stonesSkipped: 0,

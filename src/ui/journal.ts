@@ -161,7 +161,7 @@ export class JournalUI {
   isOpen: boolean = false;
   currentPage: number = 0;
   readonly pageSize: number = 6;
-  activeTab: 'keepsakes' | 'logbook' = 'keepsakes';
+  activeTab: 'keepsakes' | 'logbook' | 'discoveries' = 'keepsakes';
 
   private container: HTMLElement | null = null;
   private saveManager: SaveManager;
@@ -242,7 +242,7 @@ export class JournalUI {
     }
   }
 
-  setTab(tab: 'keepsakes' | 'logbook'): void {
+  setTab(tab: 'keepsakes' | 'logbook' | 'discoveries'): void {
     this.activeTab = tab;
     this.currentPage = 0;
     this.render();
@@ -325,6 +325,16 @@ export class JournalUI {
               font-weight: 700;
               cursor: pointer;
             ">🧭 Expedition Log</button>
+            <button id="tab-discoveries" style="
+              background: ${this.activeTab === 'discoveries' ? '#FDFBF4' : 'rgba(255,255,255,0.15)'};
+              color: ${this.activeTab === 'discoveries' ? '#4A2E1B' : '#FFF8E7'};
+              border: none;
+              padding: 5px 14px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 700;
+              cursor: pointer;
+            ">🏰 Landmarks</button>
           </div>
 
           <button id="journal-close-btn" style="
@@ -458,7 +468,7 @@ export class JournalUI {
                 `;
               }).join('')}
             </div>
-          ` : `
+          ` : this.activeTab === 'logbook' ? `
             <!-- Expedition Logbook Tab -->
             <div style="display: flex; flex-direction: column; gap: 16px;">
               <div style="background: #FFFDF8; border: 1px solid #E2D7C2; border-radius: 10px; padding: 16px;">
@@ -504,6 +514,43 @@ export class JournalUI {
                 <p style="font-size: 13px; line-height: 1.6; color: #4A5568;">
                   Every leaf, pebble, and feather tells a quiet story of the seasons. Rare creatures roam far from spawn, and mythical spirits awaken under shooting stars or during ancient rainfall. Wander gently, listen to the wind, and let the wilderness guide your footsteps.
                 </p>
+              </div>
+              </div>
+            </div>
+          ` : `
+            <!-- Discoveries Tab -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <h3 style="font-size: 15px; color: #4A2E1B; margin-bottom: 8px;">🎨 Discovered Landmarks (${this.saveManager.state.discoveredStructures.length})</h3>
+              <div style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 12px;
+              ">
+                ${this.saveManager.state.discoveredStructures.length > 0 ?
+                  this.saveManager.state.discoveredStructures.map(type => `
+                    <div style="
+                      background: #FFFDF8;
+                      border: 1px solid #E2D7C2;
+                      border-radius: 8px;
+                      padding: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                    ">
+                      <div style="
+                        width: 40px; height: 40px;
+                        border-radius: 6px;
+                        background: #F4EEDC;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 20px;
+                      ">🖼️</div>
+                      <div style="font-size: 12px; font-weight: 700; color: #4A2E1B;">
+                        ${type.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}
+                      </div>
+                    </div>
+                  `).join('')
+                  : '<div style="color: #7F8C8D; font-style: italic; font-size: 13px;">No landmarks discovered yet. Explore the world!</div>'
+                }
               </div>
             </div>
           `}
@@ -564,5 +611,8 @@ export class JournalUI {
 
     const tabLogbook = document.getElementById('tab-logbook');
     if (tabLogbook) tabLogbook.onclick = () => this.setTab('logbook');
+
+    const tabDiscoveries = document.getElementById('tab-discoveries');
+    if (tabDiscoveries) tabDiscoveries.onclick = () => this.setTab('discoveries');
   }
 }

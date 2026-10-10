@@ -4,6 +4,7 @@ import { ArtToolkit } from '../render/art';
 import { ChunkManager } from '../world/chunk-manager';
 import { CHUNK_PIXEL_SIZE, CHUNK_TILES, TILE_FLAG_WATER, TILE_FLAG_PATH, TILE_FLAG_BRIDGE } from '../world/chunk';
 import { BiomeType } from '../world/biomes';
+import { SaveManager } from '../systems/save';
 
 export class DiegeticMap {
   isOpen: boolean = false;
@@ -20,6 +21,7 @@ export class DiegeticMap {
   private scratchPointerColor: ColorRGBA = { r: 0.95, g: 0.98, b: 1.0, a: 0 };
   private scratchCatColor: ColorRGBA = { r: 0.9, g: 0.5, b: 0.1, a: 0 };
   private scratchStarColor: ColorRGBA = { r: 0.98, g: 0.82, b: 0.2, a: 0 };
+  private scratchStructureColor: ColorRGBA = { r: 0.5, g: 0.3, b: 0.7, a: 0 };
 
   toggle(): boolean {
     this.isOpen = !this.isOpen;
@@ -49,6 +51,7 @@ export class DiegeticMap {
     playerAngle: number,
     catPos: Vec2,
     chunkManager: ChunkManager,
+    saveManager: SaveManager,
     viewWidth: number,
     viewHeight: number,
     zoom: number,
@@ -159,11 +162,27 @@ export class DiegeticMap {
 
           // Keepsakes indicator: draw small golden glint if uncollected keepsake exists in chunk
           const chunk = chunkManager.getChunk(0, cx, cy);
-          if (chunk && chunk.data.keepsakes) {
-            for (const k of chunk.data.keepsakes) {
-              if (!chunkManager.isKeepsakeCollected(k.id)) {
-                this.scratchStarColor.a = 0.85 * p;
-                renderer.drawCircle(cellX + (k.x / CHUNK_PIXEL_SIZE) * cellSize, cellY + (k.y / CHUNK_PIXEL_SIZE) * cellSize, 1.8, this.scratchStarColor);
+          if (chunk) {
+            if (chunk.data.keepsakes) {
+              for (const k of chunk.data.keepsakes) {
+                if (!chunkManager.isKeepsakeCollected(k.id)) {
+                  this.scratchStarColor.a = 0.85 * p;
+                  renderer.drawCircle(cellX + (k.x / CHUNK_PIXEL_SIZE) * cellSize, cellY + (k.y / CHUNK_PIXEL_SIZE) * cellSize, 1.8, this.scratchStarColor);
+                }
+              }
+            }
+
+            // Discovered Structures (W9)
+            if (chunk.data.structures) {
+              for (const s of chunk.data.structures) {
+                 if (saveManager.state.discoveredStructures.includes(s.type)) {
+                   this.scratchStructureColor.a = 0.8 * p;
+                   renderer.drawRect(
+                     cellX + (s.x / CHUNK_PIXEL_SIZE) * cellSize - 1.5,
+                     cellY + (s.y / CHUNK_PIXEL_SIZE) * cellSize - 1.5,
+                     3, 3, this.scratchStructureColor
+                   );
+                 }
               }
             }
           }
