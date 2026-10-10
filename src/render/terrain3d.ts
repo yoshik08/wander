@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { ChunkBufferData, CHUNK_PIXEL_SIZE, CHUNK_TILES } from '../world/chunk';
 import { BIOMES, BiomeType } from '../world/biomes';
 import { ChunkFoliage } from './foliage3d';
+import { ChunkStructures3D } from './structures3d';
 
 const terrainVertexShader = `
   varying vec2 vUv;
@@ -101,6 +102,7 @@ export class Terrain3D {
   scene: THREE.Scene;
   chunkMeshes: Map<string, THREE.Mesh> = new Map();
   chunkFoliage: Map<string, ChunkFoliage> = new Map();
+  chunkStructures: Map<string, ChunkStructures3D> = new Map();
   material: THREE.ShaderMaterial;
   biomeTex: THREE.DataTexture;
 
@@ -246,6 +248,12 @@ export class Terrain3D {
     foliage.group.position.z = data.chunkY * CHUNK_PIXEL_SIZE;
     this.scene.add(foliage.group);
     this.chunkFoliage.set(key, foliage);
+    
+    const structures = new ChunkStructures3D(data, getElevation);
+    structures.group.position.x = data.chunkX * CHUNK_PIXEL_SIZE;
+    structures.group.position.z = data.chunkY * CHUNK_PIXEL_SIZE;
+    this.scene.add(structures.group);
+    this.chunkStructures.set(key, structures);
   }
 
   public unloadChunk(layer: number, chunkX: number, chunkY: number) {
@@ -262,6 +270,13 @@ export class Terrain3D {
       this.scene.remove(foliage.group);
       foliage.dispose();
       this.chunkFoliage.delete(key);
+    }
+    
+    const structures = this.chunkStructures.get(key);
+    if (structures) {
+      this.scene.remove(structures.group);
+      structures.dispose();
+      this.chunkStructures.delete(key);
     }
   }
 }
