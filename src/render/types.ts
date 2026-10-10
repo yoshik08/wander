@@ -30,6 +30,7 @@ export interface IRenderer {
   drawCircle(x: number, y: number, radius: number, color: ColorRGBA): void;
   drawLine(x1: number, y1: number, x2: number, y2: number, width: number, color: ColorRGBA): void;
   drawPolygon(points: Vec2[], color: ColorRGBA): void;
+  drawPolygonRaw(coords: number[], color: ColorRGBA): void;
 
   // Textured & Batched Quads
   drawQuad(

@@ -38,18 +38,25 @@ export function rgba(r: number, g: number, b: number, a: number = 1.0): ColorRGB
   return { r, g, b, a };
 }
 
+const _hexCache = new Map<string, ColorRGBA>();
 export function hexToRgba(hex: string, alpha: number = 1.0): ColorRGBA {
+  const key = hex + '_' + alpha;
+  const cached = _hexCache.get(key);
+  if (cached) return cached;
+
   let clean = hex.replace('#', '');
   if (clean.length === 3) {
     clean = clean.split('').map(c => c + c).join('');
   }
   const intVal = parseInt(clean, 16);
-  return {
+  const color = {
     r: ((intVal >> 16) & 255) / 255,
     g: ((intVal >> 8) & 255) / 255,
     b: (intVal & 255) / 255,
     a: alpha
   };
+  _hexCache.set(key, color);
+  return color;
 }
 
 export function rgbaToCss(c: ColorRGBA): string {

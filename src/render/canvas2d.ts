@@ -290,6 +290,19 @@ export class Canvas2DRenderer implements IRenderer {
     this.drawCalls++;
   }
 
+  drawPolygonRaw(coords: number[], color: ColorRGBA): void {
+    if (coords.length < 6) return;
+    this.ctx.fillStyle = rgbaToCss(color);
+    this.ctx.beginPath();
+    this.ctx.moveTo(coords[0], coords[1]);
+    for (let i = 2; i < coords.length; i += 2) {
+      this.ctx.lineTo(coords[i], coords[i + 1]);
+    }
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.drawCalls++;
+  }
+
   drawWaterBatch(tiles: WaterTileRenderData[], time: number): void {
     const ctx = this.ctx;
     for (const tile of tiles) {

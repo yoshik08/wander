@@ -994,6 +994,15 @@ export class WebGL2Renderer implements IRenderer {
     }
   }
 
+  drawPolygonRaw(coords: number[], color: ColorRGBA): void {
+    if (coords.length < 6) return;
+    const x0 = coords[0];
+    const y0 = coords[1];
+    for (let i = 2; i < coords.length - 3; i += 2) {
+      this.drawTriangle(x0, y0, coords[i], coords[i + 1], coords[i + 2], coords[i + 3], color);
+    }
+  }
+
   endFrame(): void {
     this.flush();
   }

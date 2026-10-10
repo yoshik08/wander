@@ -27,6 +27,51 @@ export type StructureType =
   | 'garden_plot'
   | 'wind_chime';
 
+export enum StructureRarity {
+  Common = 0,
+  Uncommon = 1,
+  Rare = 2,
+  Legendary = 3
+}
+
+export interface StructureDef {
+  type: StructureType;
+  rarity: StructureRarity;
+  allowedBiomes?: BiomeType[]; // empty means all biomes
+  minElev: number;
+  maxElev: number;
+  allowWater: boolean;
+  spawnWeight: number;
+  width: number;
+  height: number;
+  yOffset: number;
+  variants: number;
+  solidFootprint: { dx: number; dy: number }[];
+}
+
+export const STRUCTURE_REGISTRY: Record<StructureType, StructureDef> = {
+  windmill: { type: 'windmill', rarity: StructureRarity.Rare, allowedBiomes: [BiomeType.Meadow, BiomeType.MistyHighlands, BiomeType.SunflowerPlains], minElev: 0.18, maxElev: 0.6, allowWater: false, spawnWeight: 1, width: 44, height: 72, yOffset: 28, variants: 2, solidFootprint: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }] },
+  lighthouse: { type: 'lighthouse', rarity: StructureRarity.Legendary, allowedBiomes: [BiomeType.SandyCoast], minElev: -0.32, maxElev: 0.15, allowWater: false, spawnWeight: 1, width: 36, height: 90, yOffset: 36, variants: 1, solidFootprint: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }] },
+  cottage: { type: 'cottage', rarity: StructureRarity.Uncommon, allowedBiomes: [BiomeType.BirchGrove, BiomeType.Meadow, BiomeType.AutumnMaple, BiomeType.OldGrowthForest], minElev: -0.2, maxElev: 0.7, allowWater: false, spawnWeight: 3, width: 52, height: 46, yOffset: 22, variants: 2, solidFootprint: [{ dx: -1, dy: 0 }, { dx: 0, dy: 0 }, { dx: 1, dy: 0 }] },
+  ruins: { type: 'ruins', rarity: StructureRarity.Rare, allowedBiomes: [BiomeType.PineForest, BiomeType.RockyCliffs, BiomeType.AutumnMaple, BiomeType.MushroomFields], minElev: -0.2, maxElev: 0.8, allowWater: false, spawnWeight: 2, width: 48, height: 42, yOffset: 20, variants: 3, solidFootprint: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }] },
+  stone_circle: { type: 'stone_circle', rarity: StructureRarity.Rare, allowedBiomes: [BiomeType.WildflowerFields, BiomeType.MistyHighlands, BiomeType.GlowingHollow], minElev: -0.1, maxElev: 0.7, allowWater: false, spawnWeight: 1.5, width: 60, height: 60, yOffset: 26, variants: 1, solidFootprint: [] },
+  campfire: { type: 'campfire', rarity: StructureRarity.Common, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1, width: 28, height: 28, yOffset: 12, variants: 1, solidFootprint: [] },
+  bench: { type: 'bench', rarity: StructureRarity.Common, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1, width: 24, height: 14, yOffset: 8, variants: 1, solidFootprint: [] },
+  sitting_log: { type: 'sitting_log', rarity: StructureRarity.Common, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1.5, width: 26, height: 14, yOffset: 8, variants: 1, solidFootprint: [] },
+  bridge: { type: 'bridge', rarity: StructureRarity.Common, allowedBiomes: undefined, minElev: -1.0, maxElev: 1.0, allowWater: true, spawnWeight: 0, width: 32, height: 32, yOffset: 0, variants: 1, solidFootprint: [] },
+  stepping_stones: { type: 'stepping_stones', rarity: StructureRarity.Common, allowedBiomes: undefined, minElev: -1.0, maxElev: 1.0, allowWater: true, spawnWeight: 0, width: 32, height: 32, yOffset: 0, variants: 1, solidFootprint: [] },
+  sanctuary_crystal: { type: 'sanctuary_crystal', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1.0, allowWater: false, spawnWeight: 0.5, width: 32, height: 48, yOffset: 16, variants: 1, solidFootprint: [] },
+  resting_crystal: { type: 'resting_crystal', rarity: StructureRarity.Uncommon, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 2, width: 48, height: 48, yOffset: 16, variants: 1, solidFootprint: [{ dx: 0, dy: 0 }] },
+  nomad_camp: { type: 'nomad_camp', rarity: StructureRarity.Uncommon, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.8, allowWater: false, spawnWeight: 2, width: 48, height: 48, yOffset: 16, variants: 1, solidFootprint: [{ dx: 0, dy: 0 }] },
+  waystone: { type: 'waystone', rarity: StructureRarity.Uncommon, allowedBiomes: [BiomeType.Meadow, BiomeType.WildflowerFields, BiomeType.Savanna, BiomeType.SnowyTundra], minElev: -0.1, maxElev: 0.8, allowWater: false, spawnWeight: 2.5, width: 32, height: 48, yOffset: 16, variants: 1, solidFootprint: [{ dx: 0, dy: 0 }] },
+  brambles: { type: 'brambles', rarity: StructureRarity.Common, allowedBiomes: [BiomeType.PineForest, BiomeType.AutumnMaple, BiomeType.BirchGrove, BiomeType.OldGrowthForest], minElev: -0.1, maxElev: 0.7, allowWater: false, spawnWeight: 3, width: 32, height: 32, yOffset: 12, variants: 3, solidFootprint: [{ dx: 0, dy: 0 }] },
+  boulder: { type: 'boulder', rarity: StructureRarity.Common, allowedBiomes: [BiomeType.RockyCliffs, BiomeType.MistyHighlands, BiomeType.BadlandsMesa, BiomeType.DesertDunes, BiomeType.VolcanicAsh], minElev: 0.0, maxElev: 0.9, allowWater: false, spawnWeight: 4, width: 36, height: 36, yOffset: 16, variants: 3, solidFootprint: [{ dx: 0, dy: 0 }] },
+  gap: { type: 'gap', rarity: StructureRarity.Common, allowedBiomes: [BiomeType.Meadow, BiomeType.WildflowerFields, BiomeType.IceSpikes], minElev: 0.1, maxElev: 0.8, allowWater: false, spawnWeight: 1.5, width: 36, height: 36, yOffset: 16, variants: 3, solidFootprint: [{ dx: 0, dy: 0 }] },
+  cave_entrance: { type: 'cave_entrance', rarity: StructureRarity.Rare, allowedBiomes: [BiomeType.RockyCliffs, BiomeType.MistyHighlands, BiomeType.LushCave, BiomeType.DripstoneCave], minElev: 0.2, maxElev: 0.9, allowWater: false, spawnWeight: 2, width: 48, height: 48, yOffset: 12, variants: 2, solidFootprint: [{ dx: 0, dy: 0 }] },
+  garden_plot: { type: 'garden_plot', rarity: StructureRarity.Legendary, allowedBiomes: undefined, minElev: 0, maxElev: 1, allowWater: false, spawnWeight: 0, width: 72, height: 52, yOffset: 24, variants: 1, solidFootprint: [] },
+  wind_chime: { type: 'wind_chime', rarity: StructureRarity.Uncommon, allowedBiomes: undefined, minElev: -0.2, maxElev: 0.9, allowWater: false, spawnWeight: 1.5, width: 16, height: 32, yOffset: 12, variants: 1, solidFootprint: [] }
+};
+
 export interface StructureInstance {
   id: string;
   type: StructureType;
@@ -145,10 +190,19 @@ export function generateChunkStructures(
     return structures;
   }
 
-  // 2. Sparse Macro Landmarks (roughly 1 major landmark every 4-6 chunks)
-  const landmarkChance = chunkRng.next();
-  if (landmarkChance > 0.28) {
-    return structures; // Most chunks remain pure untouched serene nature
+  // 2. Dynamic Structure Placement System
+  // Roll for rarity tier to spawn in this chunk
+  let targetRarity = StructureRarity.Common;
+  const rarityRoll = chunkRng.next();
+  if (rarityRoll < 0.05) targetRarity = StructureRarity.Legendary;
+  else if (rarityRoll < 0.15) targetRarity = StructureRarity.Rare;
+  else if (rarityRoll < 0.35) targetRarity = StructureRarity.Uncommon;
+
+  // Decide if we spawn any structure at all this chunk
+  // Most chunks (60%) remain pristine wilderness
+  const hasStructure = chunkRng.chance(0.40);
+  if (!hasStructure) {
+    return structures;
   }
 
   // Sample center tile of chunk
@@ -158,245 +212,51 @@ export function generateChunkStructures(
   const bType = biome[midIdx] as BiomeType;
   const isWater = elev < -0.35;
 
-  const structWorldX = baseWorldX + midTile * TILE_SIZE + 12;
-  const structWorldY = baseWorldY + midTile * TILE_SIZE + 12;
+  // Filter registry for valid structures
+  const validDefs: StructureDef[] = [];
+  let totalWeight = 0;
 
-  // Lighthouse on Sandy Coast near the sea
-  if (bType === BiomeType.SandyCoast && elev >= -0.32 && elev <= 0.15) {
-    const sId = `lighthouse-${chunkX}-${chunkY}`;
-    structures.push({
-      id: sId,
-      type: 'lighthouse',
-      x: structWorldX,
-      y: structWorldY,
-      baseY: structWorldY + 36,
-      width: 36,
-      height: 90,
-      variant: 0,
-      solidTiles: [
-        { dx: 0, dy: 0 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: 1, dy: 1 }
-      ]
-    });
-    // Mark collision
-    applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }], collision);
-    return structures;
+  for (const key in STRUCTURE_REGISTRY) {
+    const def = STRUCTURE_REGISTRY[key as StructureType];
+    if (def.rarity !== targetRarity) continue;
+    if (def.allowedBiomes && !def.allowedBiomes.includes(bType)) continue;
+    if (elev < def.minElev || elev > def.maxElev) continue;
+    if (isWater && !def.allowWater) continue;
+    if (!isWater && def.allowWater && def.minElev < -0.35) continue; // If requires water but isn't water
+
+    validDefs.push(def);
+    totalWeight += def.spawnWeight;
   }
 
-  // Old Windmill on elevated grassy meadow or breezy highlands
-  if ((bType === BiomeType.Meadow || bType === BiomeType.MistyHighlands) && elev > 0.18 && elev < 0.6) {
-    if (chunkRng.next() < 0.35) {
-      const sId = `windmill-${chunkX}-${chunkY}`;
-      structures.push({
-        id: sId,
-        type: 'windmill',
-        x: structWorldX,
-        y: structWorldY,
-        baseY: structWorldY + 28,
-        width: 44,
-        height: 72,
-        variant: chunkRng.rangeInt(0, 1),
-        solidTiles: [
-          { dx: 0, dy: 0 },
-          { dx: 1, dy: 0 },
-          { dx: 0, dy: 1 },
-          { dx: 1, dy: 1 }
-        ]
-      });
-      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }], collision);
-      return structures;
-    }
-  }
-
-  // Ancient Mossy Ruins in forests or rocky areas
-  if ((bType === BiomeType.PineForest || bType === BiomeType.RockyCliffs || bType === BiomeType.AutumnMaple) && !isWater) {
-    if (chunkRng.next() < 0.30) {
-      const sId = `ruins-${chunkX}-${chunkY}`;
-      structures.push({
-        id: sId,
-        type: 'ruins',
-        x: structWorldX,
-        y: structWorldY,
-        baseY: structWorldY + 20,
-        width: 48,
-        height: 42,
-        variant: chunkRng.rangeInt(0, 2),
-        solidTiles: [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }]
-      });
-      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }, { dx: 1, dy: 0 }], collision);
-      return structures;
-    }
-  }
-
-  // Obstacles (Brambles, Boulders)
-  if (!isWater) {
-    if (bType === BiomeType.PineForest || bType === BiomeType.AutumnMaple || bType === BiomeType.BirchGrove) {
-      if (chunkRng.next() < 0.2) {
-        structures.push({
-          id: `brambles-${chunkX}-${chunkY}`,
-          type: 'brambles',
-          x: structWorldX,
-          y: structWorldY,
-          baseY: structWorldY + 12,
-          width: 32,
-          height: 32,
-          variant: chunkRng.rangeInt(0, 2),
-          solidTiles: [{ dx: 0, dy: 0 }]
-        });
-        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-        return structures;
-      }
-    } else if (bType === BiomeType.RockyCliffs || bType === BiomeType.MistyHighlands) {
-      if (chunkRng.next() < 0.2) {
-        structures.push({
-          id: `boulder-${chunkX}-${chunkY}`,
-          type: 'boulder',
-          x: structWorldX,
-          y: structWorldY,
-          baseY: structWorldY + 16,
-          width: 36,
-          height: 36,
-          variant: chunkRng.rangeInt(0, 2),
-          solidTiles: [{ dx: 0, dy: 0 }]
-        });
-        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-        return structures;
-      }
-    } else if (bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) {
-      if (chunkRng.next() < 0.2) {
-        structures.push({
-          id: `gap-${chunkX}-${chunkY}`,
-          type: 'gap',
-          x: structWorldX,
-          y: structWorldY,
-          baseY: structWorldY + 16,
-          width: 36,
-          height: 36,
-          variant: chunkRng.rangeInt(0, 2),
-          solidTiles: [{ dx: 0, dy: 0 }]
-        });
-        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-        return structures;
-      }
-    }
-  }
-
-  if ((bType === BiomeType.RockyCliffs || bType === BiomeType.MistyHighlands) && !isWater) {
-    if (chunkRng.next() < 0.2) {
-      structures.push({
-        id: `cave-${chunkX}-${chunkY}`,
-        type: 'cave_entrance',
-        x: structWorldX,
-          y: structWorldY,
-          baseY: structWorldY + 12,
-          width: 48,
-          height: 48,
-          variant: chunkRng.rangeInt(0, 1),
-          solidTiles: [{ dx: 0, dy: 0 }]
-        });
-        applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-        return structures;
+  if (validDefs.length > 0 && totalWeight > 0) {
+    let roll = chunkRng.next() * totalWeight;
+    let selectedDef: StructureDef | null = null;
+    for (const def of validDefs) {
+      roll -= def.spawnWeight;
+      if (roll <= 0) {
+        selectedDef = def;
+        break;
       }
     }
 
-  // Tiny Abandoned Cottage in Birch Grove, Meadow, or Autumn Woods
-  if ((bType === BiomeType.BirchGrove || bType === BiomeType.Meadow || bType === BiomeType.AutumnMaple) && !isWater) {
-    if (chunkRng.next() < 0.30) {
-      const sId = `cottage-${chunkX}-${chunkY}`;
-      structures.push({
-        id: sId,
-        type: 'cottage',
-        x: structWorldX,
-        y: structWorldY,
-        baseY: structWorldY + 22,
-        width: 52,
-        height: 46,
-        variant: chunkRng.rangeInt(0, 1),
-        solidTiles: [
-          { dx: -1, dy: 0 },
-          { dx: 0, dy: 0 },
-          { dx: 1, dy: 0 }
-        ]
-      });
-      applySolidFootprint(midTile, midTile, [{ dx: -1, dy: 0 }, { dx: 0, dy: 0 }, { dx: 1, dy: 0 }], collision);
-      return structures;
-    }
-  }
+    if (selectedDef) {
+      const structWorldX = baseWorldX + midTile * TILE_SIZE + 12;
+      const structWorldY = baseWorldY + midTile * TILE_SIZE + 12;
 
-  // Stone Circle in Wildflower fields, Highlands, or glowing mushroom hollow
-  if ((bType === BiomeType.WildflowerFields || bType === BiomeType.MistyHighlands || bType === BiomeType.GlowingHollow) && !isWater) {
-    if (chunkRng.next() < 0.25) {
-      const sId = `stone-circle-${chunkX}-${chunkY}`;
       structures.push({
-        id: sId,
-        type: 'stone_circle',
+        id: `${selectedDef.type}-${chunkX}-${chunkY}`,
+        type: selectedDef.type,
         x: structWorldX,
         y: structWorldY,
-        baseY: structWorldY + 26,
-        width: 60,
-        height: 60,
-        variant: 0,
-        solidTiles: [] // Stones themselves are props around perimeter; center remains walkable!
+        baseY: structWorldY + selectedDef.yOffset,
+        width: selectedDef.width,
+        height: selectedDef.height,
+        variant: selectedDef.variants > 1 ? chunkRng.rangeInt(0, selectedDef.variants - 1) : 0,
+        solidTiles: selectedDef.solidFootprint
       });
-      return structures;
-    }
-  }
 
-  // Waystone in open biomes
-  if ((bType === BiomeType.Meadow || bType === BiomeType.WildflowerFields) && !isWater) {
-    if (chunkRng.next() < 0.20) {
-      structures.push({
-        id: `waystone-${chunkX}-${chunkY}`,
-        type: 'waystone',
-        x: structWorldX,
-        y: structWorldY,
-        baseY: structWorldY + 16,
-        width: 32,
-        height: 48,
-        variant: 0,
-        solidTiles: [{ dx: 0, dy: 0 }]
-      });
-      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-      return structures;
+      applySolidFootprint(midTile, midTile, selectedDef.solidFootprint, collision);
     }
-  }
-
-  // Resting Crystal or Nomad Camp in various non-water biomes
-  if (!isWater) {
-    if (chunkRng.next() < 0.20) {
-      const sType: StructureType = chunkRng.next() < 0.5 ? 'resting_crystal' : 'nomad_camp';
-      structures.push({
-        id: `${sType}-${chunkX}-${chunkY}`,
-        type: sType,
-        x: structWorldX,
-        y: structWorldY,
-        baseY: structWorldY + 16,
-        width: 48,
-        height: 48,
-        variant: 0,
-        solidTiles: [{ dx: 0, dy: 0 }]
-      });
-      applySolidFootprint(midTile, midTile, [{ dx: 0, dy: 0 }], collision);
-      return structures;
-    }
-  }
-  // Scenic Bench, Sitting Log, Campfire, or Wind Chime at trailside
-  if (!isWater) {
-    const roll = chunkRng.next();
-    const sType: StructureType = roll < 0.35 ? 'bench' : (roll < 0.60 ? 'sitting_log' : (roll < 0.85 ? 'campfire' : 'wind_chime'));
-    structures.push({
-      id: `${sType}-${chunkX}-${chunkY}`,
-      type: sType,
-      x: structWorldX,
-      y: structWorldY,
-      baseY: structWorldY + 8,
-      width: sType === 'campfire' ? 28 : (sType === 'wind_chime' ? 16 : 26),
-      height: sType === 'campfire' ? 28 : (sType === 'wind_chime' ? 32 : 14),
-      variant: 0,
-      solidTiles: []
-    });
   }
 
   return structures;
