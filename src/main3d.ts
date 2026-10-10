@@ -5,6 +5,8 @@ import { GameLoop } from './core/loop';
 import { QualityScaler } from './systems/quality';
 import { ChunkManager } from './world/chunk-manager';
 import { TimeSystem } from './systems/time';
+import { InputManager } from './core/input';
+import { Player3D } from './entities/player3d';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
@@ -27,6 +29,8 @@ qualityScaler.onQualityChange = (tier, config) => {
 const chunkManager = new ChunkManager();
 const terrain3d = new Terrain3D(renderer3d.scene);
 const timeSystem = new TimeSystem(8.0); // Start at 8 AM
+const inputManager = new InputManager();
+const player3d = new Player3D(renderer3d.scene, renderer3d.camera);
 
 chunkManager.onChunkUnloaded = (chunk) => {
   terrain3d.unloadChunk(chunk.layer, chunk.chunkX, chunk.chunkY);
@@ -53,12 +57,6 @@ renderer3d.scene.add(ambient);
 
 renderer3d.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0005);
 renderer3d.scene.background = new THREE.Color(0x87CEEB);
-
-// Let's set a starting camera position
-let camX = 0;
-let camZ = 0;
-renderer3d.camera.position.set(camX, 200, camZ + 300);
-renderer3d.camera.lookAt(camX, 0, camZ);
 
 // -------------------------------------------------------------
 // 2.5 Post-Processing (Grain / Painterly effect)
@@ -130,6 +128,7 @@ function updateDebugHUD(fps: number, frameTime: number, timeInfo: any) {
     `MEADOW 3D\n` +
     `FPS: ${fps} | ${frameTime.toFixed(1)}ms\n` +
     `Time: ${timeInfo.timeString} | Phase: ${timeInfo.phase}\n` +
+    `Pos: ${player3d.pos.x.toFixed(0)}, ${player3d.pos.z.toFixed(0)}\n` +
     `Tier: ${qualityScaler.currentTier}\n` +
     `Draw Calls: ${drawCalls}\n` +
     `Triangles: ${triangles}\n` +
@@ -161,21 +160,18 @@ const loop = new GameLoop({
     globalTime += dt;
     timeSystem.update(dt);
     
-    // Camera movement
-    camX += 50 * dt; 
-    renderer3d.camera.position.x = camX;
-    renderer3d.camera.position.z = camZ + 400;
-    renderer3d.camera.lookAt(camX, 0, camZ);
+    // Update player and camera
+    player3d.update(dt, inputManager, chunkManager, renderer3d.camera);
     
-    // Chunk loading
+    // Chunk loading based on player position
     const layer = 0;
-    const centerChunkX = Math.floor(camX / 768);
-    const centerChunkY = Math.floor(camZ / 768);
+    const centerChunkX = Math.floor(player3d.pos.x / 768);
+    const centerChunkY = Math.floor(player3d.pos.z / 768);
     chunkManager.update(layer, centerChunkX, centerChunkY);
     
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const visible = chunkManager.getVisibleChunks(layer, camX, camZ, w * 5, h * 5, 1);
+    const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, w * 5, h * 5, 1);
     for (const chunk of visible) {
       terrain3d.updateChunk(chunk.data);
     }
@@ -193,7 +189,7 @@ const loop = new GameLoop({
     
     // Move sun based on time
     const sunAngle = (timeSystem.currentHour / 24) * Math.PI * 2;
-    dirLight.position.set(Math.sin(sunAngle) * 500 + camX, Math.cos(sunAngle) * 500, 100 + camZ);
+    dirLight.position.set(Math.sin(sunAngle) * 500 + player3d.pos.x, Math.cos(sunAngle) * 500, 100 + player3d.pos.z);
     dirLight.intensity = Math.max(0, Math.cos(sunAngle)) * 1.5;
     
     // Update materials sun dir

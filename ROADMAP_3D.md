@@ -7,7 +7,7 @@ Goal: Turn MEADOW into a fully 3D cozy creature-adventure keeping all game syste
 - [x] **3D-1**: Three.js setup, renderer, quality scaler, F3 overlay, fixed-step loop.
 - [x] **3D-2**: Seeded chunked heightmap terrain in worker with LOD and painterly ground shader.
 - [x] **3D-3**: Sky, sun, day/night, fog, clouds and cloud shadows, post-process grain.
-- [ ] **3D-4**: Character, procedural animation, third-person camera, desktop + mobile + gamepad controls, collision.
+- [x] **3D-4**: Character, procedural animation, third-person camera, desktop + mobile + gamepad controls, collision.
 - [ ] **3D-5**: Instanced wind grass, trees, rocks, flowers per biome.
 - [ ] **3D-6**: Water, rivers, lakes, ocean, waterfalls, swimming.
 - [ ] **3D-7**: All 26 biomes with smooth blending; seasons and weather.
