@@ -18,6 +18,7 @@ export class Player3D {
   gravity: number = -600.0;
   
   isGrounded: boolean = false;
+  isGliding: boolean = false;
   yaw: number = 0; // Camera rotation
   pitch: number = Math.PI / 6; // Camera pitch
   targetZoom: number = 300;
@@ -113,14 +114,24 @@ export class Player3D {
       this.scarf.rotation.x = lerp(this.scarf.rotation.x, 0, 10.0 * dt);
     }
     
-    // Jump
+    // Jump & Gliding
     if (inputState.actionPressed && this.isGrounded) {
       this.velocity.y = this.jumpVelocity;
       this.isGrounded = false;
+      this.isGliding = false;
+    } else if (!this.isGrounded && inputState.actionPressed && this.velocity.y < 0) {
+      this.isGliding = true; // Start gliding mid-air
+    } else if (this.isGrounded) {
+      this.isGliding = false;
     }
     
     // Gravity
-    this.velocity.y += this.gravity * dt;
+    if (this.isGliding) {
+      this.velocity.y += this.gravity * 0.15 * dt; // Slow fall
+      this.velocity.y = Math.max(this.velocity.y, -30); // Terminal velocity when gliding
+    } else {
+      this.velocity.y += this.gravity * dt;
+    }
     
     // Apply velocity
     this.pos.addScaledVector(this.velocity, dt);

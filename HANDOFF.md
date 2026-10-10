@@ -54,9 +54,9 @@
   - Milestone W (Step W8): Legendary Structures 91–100 (Legendary celestial/mythic structures with special mechanics).
   - Milestone W (Step W9): Journal, Minimap & Discovery Logging (Painted structure thumbnails in the Journal folio, map icons, and discovery notifications).
   - Milestone W (Step W10): Mobile Performance Pass (Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks).
-- **Current Milestone**: Milestone 3D-12 (Structures 1-50 as procedural 3D) - Completed.
+- **Current Milestone**: Milestone 3D-13 (Structures 51-100, caves, legendary places, gliding) - Completed.
 - **Next Item in ROADMAP_3D.md**:
-  - **3D-13**: Structures 51-100, caves, legendary places, gliding.
+  - **3D-14**: Wardens, apex creatures, easter eggs, quests ported.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

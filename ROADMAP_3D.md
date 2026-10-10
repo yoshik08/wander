@@ -16,6 +16,6 @@ Goal: Turn MEADOW into a fully 3D cozy creature-adventure keeping all game syste
 - [x] **3D-10**: 3D sparring scene with Resolve rules and VFX.
 - [x] **3D-11**: Villages, paths and NPCs with schedules and dialogue.
 - [x] **3D-12**: Structures 1-50 as procedural 3D.
-- [ ] **3D-13**: Structures 51-100, caves, legendary places, gliding.
+- [x] **3D-13**: Structures 51-100, caves, legendary places, gliding.
 - [ ] **3D-14**: Wardens, apex creatures, easter eggs, quests ported.
 - [ ] **3D-15**: Full perf pass on 412x915 and 393x852, accessibility, PWA/offline, final polish, then merge-ready report comparing 2D vs 3D.
