@@ -2161,6 +2161,28 @@ const loop = new GameLoop({
             baseY: prop.baseY,
             draw: () => art.drawBirchTree(px, prop.baseY, time, globalWind)
           });
+        } else if (prop.type === 'acacia_tree') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawAcaciaTree(px, prop.baseY, time, globalWind) });
+        } else if (prop.type === 'maple_tree_red') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawMapleTree(px, prop.baseY, time, globalWind, false) });
+        } else if (prop.type === 'maple_tree_orange') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawMapleTree(px, prop.baseY, time, globalWind, true) });
+        } else if (prop.type === 'bamboo') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawBamboo(px, prop.baseY, time, globalWind) });
+        } else if (prop.type === 'cactus') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawCactus(px, prop.baseY) });
+        } else if (prop.type === 'palm_tree') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawPalmTree(px, prop.baseY, time, globalWind) });
+        } else if (prop.type === 'ice_spike') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawIceSpike(px, prop.baseY) });
+        } else if (prop.type === 'stalagmite') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawStalagmite(px, prop.baseY, prop.variant) });
+        } else if (prop.type === 'coral') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawCoral(px, prop.baseY, time, prop.variant) });
+        } else if (prop.type === 'volcanic_vent') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawVolcanicVent(px, prop.baseY, time) });
+        } else if (prop.type === 'giant_mushroom') {
+          depthItems.push({ baseY: prop.baseY, draw: () => art.drawMushroom(px, prop.baseY, prop.variant, true) });
         }
       }
 

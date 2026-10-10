@@ -2,6 +2,7 @@
 
 ## Project Overview
 - **Project**: MEADOW — an ambitious cozy 2D top-down nature exploration world.
+- **Current Phase**: Milestone W — World Expansion: Villages, NPCs, 26 Biomes, and 100 Cozy Structures.
 - **Base Path**: `/wander/` everywhere (Vite config, asset URLs, worker scripts, service worker scope, fetches).
 - **Target URL**: Served at `yoshik.xyz/wander`.
 

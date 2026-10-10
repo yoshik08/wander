@@ -41,7 +41,23 @@ const BIOME_SUBTITLES: Record<BiomeType, string> = {
   [BiomeType.WildflowerFields]: 'Endless blossoms humming with meadow life',
   [BiomeType.MistyHighlands]: 'Cloud-shrouded crags above the valley',
   [BiomeType.RockyCliffs]: 'Towering ancient granite carved by time',
-  [BiomeType.MarshPonds]: 'Rippling reeds and gentle marsh frog song'
+  [BiomeType.MarshPonds]: 'Rippling reeds and gentle marsh frog song',
+  [BiomeType.OldGrowthForest]: 'Primordial canopies shrouded in emerald calm',
+  [BiomeType.BambooGrove]: 'Swaying jade culms whispering in mountain airs',
+  [BiomeType.MushroomFields]: 'Spreading fungal velvet and floating spore light',
+  [BiomeType.SunflowerPlains]: 'Golden sunlit expanse facing the summer warmth',
+  [BiomeType.Savanna]: 'Amber grassy plains and distant flat-topped trees',
+  [BiomeType.BadlandsMesa]: 'Striated terracotta bluffs and sun-baked stone',
+  [BiomeType.DesertDunes]: 'Silent wind-sculpted sands and rippling horizons',
+  [BiomeType.Oasis]: 'Verdant palm springs cradled by golden dunes',
+  [BiomeType.SnowyTundra]: 'Endless frost-rimed expanse beneath quiet skies',
+  [BiomeType.FrozenLake]: 'Mirrored turquoise sheets of ancient mountain ice',
+  [BiomeType.IceSpikes]: 'Towering crystalline spires piercing the winter mist',
+  [BiomeType.VolcanicAsh]: 'Dormant obsidian slopes veiled in quiet ash',
+  [BiomeType.CoralShallows]: 'Sun-dappled lagoons brimming with living colour',
+  [BiomeType.DeepOcean]: 'Abyssal azure depths humming with ancient tides',
+  [BiomeType.LushCave]: 'Subterranean paradise of hanging vines and dew',
+  [BiomeType.DripstoneCave]: 'Echoing halls of weeping stone and ancient lime'
 };
 
 const LANDMARK_TEMPLATES = [

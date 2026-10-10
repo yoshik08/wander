@@ -1,4 +1,4 @@
-import { BiomeType, classifyBiome } from './biomes';
+import { BiomeType, classifyBiome, BIOMES } from './biomes';
 import { SimplexNoise } from './noise';
 import { PRNG, hashSeed } from '../core/prng';
 import { generateChunkStructures, StructureInstance } from './structures';
@@ -526,6 +526,58 @@ export function generateChunkData(layer: number, chunkX: number, chunkY: number,
             baseY: worldY + 6,
             variant: 1 // Autumn amber shrub
           });
+        }
+      } else {
+        // Data-driven fallback for all 26 expanded biomes
+        const bDef = BIOMES[bType];
+        if (bDef && bDef.props && bDef.props.length > 0) {
+          // Adjust overall vegetation density per biome type
+          let spawnRate = 0.25;
+          if (bType === BiomeType.DesertDunes || bType === BiomeType.DeepOcean || bType === BiomeType.SnowyTundra || bType === BiomeType.VolcanicAsh) {
+            spawnRate = 0.08;
+          } else if (bType === BiomeType.OldGrowthForest || bType === BiomeType.BambooGrove || bType === BiomeType.LushCave) {
+            spawnRate = 0.38;
+          }
+
+          if (chance < spawnRate) {
+            const pType = propRng.pick(bDef.props);
+            
+            let isSolid = false;
+            let yOffset = 6;
+            let numVariants = 1;
+
+            if (pType.includes('tree') || pType === 'bamboo' || pType === 'cactus' || pType === 'ice_spike' || pType === 'stalagmite' || pType === 'boulder' || pType === 'rock_cliff' || pType === 'volcanic_vent' || pType === 'giant_mushroom') {
+              isSolid = true;
+              yOffset = 16;
+            }
+            if (pType === 'grass' || pType === 'shrub' || pType === 'fern' || pType === 'flower') {
+              numVariants = 3;
+              yOffset = 6;
+            }
+            if (pType.includes('mushroom')) {
+              numVariants = 3;
+              yOffset = 4;
+            }
+            if (pType === 'coral') {
+              numVariants = 2;
+              yOffset = 6;
+            }
+
+            // Don't spawn solid objects right on spawn
+            if (isSolid && distFromSpawn < 70) continue;
+
+            props.push({
+              type: pType,
+              x: tx * TILE_SIZE + 12,
+              y: ty * TILE_SIZE + 12,
+              baseY: worldY + yOffset,
+              variant: propRng.rangeInt(0, numVariants)
+            });
+
+            if (isSolid) {
+              collision[idx] = 1;
+            }
+          }
         }
       }
     }

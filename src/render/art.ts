@@ -162,6 +162,140 @@ export class ArtToolkit {
     }
   }
 
+  drawAcaciaTree(x: number, baseY: number, time: number, wind: Vec2) {
+    this.drawDropShadow(x, baseY, 20, 18);
+    // Crooked thin trunk
+    this.renderer.drawLine(x, baseY, x - 2, baseY - 12, 4, hexToRgba('#6A4B3A'));
+    this.renderer.drawLine(x - 2, baseY - 12, x + 3, baseY - 20, 3, hexToRgba('#6A4B3A'));
+    this.renderer.drawLine(x - 2, baseY - 12, x - 6, baseY - 18, 2.5, hexToRgba('#6A4B3A'));
+    const sway = Math.sin(time * 2.5 + x * 0.03) * 2.0 + wind.x * 2.0;
+    // Flat wide canopy
+    this.renderer.drawCircle(x + 3 + sway * 0.4, baseY - 22, 10, hexToRgba('#5C752B'));
+    this.renderer.drawCircle(x - 6 + sway * 0.3, baseY - 20, 9, hexToRgba('#6B8E23'));
+    this.renderer.drawCircle(x - 1 + sway * 0.5, baseY - 24, 12, hexToRgba('#739534'));
+  }
+
+  drawMapleTree(x: number, baseY: number, time: number, wind: Vec2, isOrange: boolean) {
+    this.drawDropShadow(x, baseY, 14, 28);
+    this.renderer.drawRect(x - 3.5, baseY - 16, 7, 18, hexToRgba('#3E2723'));
+    const sway = Math.sin(time * 2.5 + x * 0.03) * 3.0 + wind.x * 3.0;
+    
+    let c1, c2, c3;
+    if (this.season === 'winter') {
+      c1 = hexToRgba('#A9CCE3', 0.6); c2 = hexToRgba('#D4E6F1', 0.7); c3 = hexToRgba('#F7F9F9', 0.85);
+      this.renderer.drawRect(x - 2, baseY - 28, 4, 14, hexToRgba('#3E2723'));
+    } else if (this.season === 'spring') {
+      c1 = hexToRgba('#4CAF50'); c2 = hexToRgba('#66BB6A'); c3 = hexToRgba('#81C784');
+    } else { // summer/autumn
+      if (isOrange) {
+        c1 = hexToRgba('#D35400'); c2 = hexToRgba('#E67E22'); c3 = hexToRgba('#F39C12');
+      } else {
+        c1 = hexToRgba('#922B21'); c2 = hexToRgba('#C0392B'); c3 = hexToRgba('#E74C3C');
+      }
+    }
+    this.renderer.drawCircle(x - 7 + sway * 0.3, baseY - 22, 14, c1);
+    this.renderer.drawCircle(x + 7 + sway * 0.4, baseY - 22, 14, c2);
+    this.renderer.drawCircle(x + sway * 0.5, baseY - 32, 16, c3);
+  }
+
+  drawBamboo(x: number, baseY: number, time: number, wind: Vec2) {
+    this.drawDropShadow(x, baseY, 4, 30);
+    const sway = Math.sin(time * 2.8 + x * 0.05) * 4.0 + wind.x * 4.0;
+    this.renderer.drawLine(x, baseY, x + sway, baseY - 35, 3.5, hexToRgba('#2E7D32'));
+    // leaves
+    this.renderer.drawLine(x + sway * 0.5, baseY - 15, x + 5 + sway * 0.6, baseY - 12, 1.5, hexToRgba('#4CAF50'));
+    this.renderer.drawLine(x + sway * 0.7, baseY - 25, x - 6 + sway * 0.8, baseY - 22, 1.5, hexToRgba('#66BB6A'));
+    this.renderer.drawLine(x + sway, baseY - 35, x + 6 + sway * 1.1, baseY - 30, 1.5, hexToRgba('#81C784'));
+  }
+  
+  drawCactus(x: number, baseY: number) {
+    this.drawDropShadow(x, baseY, 10, 18);
+    // Base trunk
+    this.renderer.drawRect(x - 3, baseY - 18, 6, 20, hexToRgba('#27AE60'));
+    // Left arm
+    this.renderer.drawRect(x - 8, baseY - 12, 5, 4, hexToRgba('#2ECC71'));
+    this.renderer.drawRect(x - 10, baseY - 16, 4, 8, hexToRgba('#2ECC71'));
+    // Right arm
+    this.renderer.drawRect(x + 3, baseY - 8, 5, 4, hexToRgba('#229954'));
+    this.renderer.drawRect(x + 6, baseY - 14, 4, 10, hexToRgba('#229954'));
+  }
+
+  drawPalmTree(x: number, baseY: number, time: number, wind: Vec2) {
+    this.drawDropShadow(x, baseY, 14, 35);
+    const sway = Math.sin(time * 2.2 + x * 0.04) * 5.0 + wind.x * 5.0;
+    // Curved trunk
+    this.renderer.drawLine(x, baseY, x + sway * 0.3, baseY - 15, 6, hexToRgba('#8D6E63'));
+    this.renderer.drawLine(x + sway * 0.3, baseY - 15, x + sway, baseY - 35, 4.5, hexToRgba('#795548'));
+    
+    // Fronds
+    const topX = x + sway;
+    const topY = baseY - 35;
+    const fSway = sway * 0.2;
+    this.renderer.drawLine(topX, topY, topX - 16 + fSway, topY + 6, 2, hexToRgba('#43A047'));
+    this.renderer.drawLine(topX, topY, topX + 16 + fSway, topY + 8, 2, hexToRgba('#2E7D32'));
+    this.renderer.drawLine(topX, topY, topX - 8 + fSway, topY - 12, 2, hexToRgba('#4CAF50'));
+    this.renderer.drawLine(topX, topY, topX + 10 + fSway, topY - 10, 2, hexToRgba('#66BB6A'));
+    // coconuts
+    this.renderer.drawCircle(topX - 2, topY + 2, 2.5, hexToRgba('#4E342E'));
+    this.renderer.drawCircle(topX + 2, topY + 3, 2.5, hexToRgba('#3E2723'));
+  }
+
+  drawIceSpike(x: number, baseY: number) {
+    this.drawDropShadow(x, baseY, 12, 20);
+    this.renderer.drawPolygon([
+      vec2(x - 8, baseY),
+      vec2(x + 8, baseY),
+      vec2(x, baseY - 30)
+    ], hexToRgba('#A9CCE3', 0.85));
+    this.renderer.drawPolygon([
+      vec2(x - 4, baseY),
+      vec2(x + 2, baseY),
+      vec2(x, baseY - 28)
+    ], hexToRgba('#EBF5FB', 0.9));
+  }
+  
+  drawStalagmite(x: number, baseY: number, variant: number) {
+    this.drawDropShadow(x, baseY, 12, 16);
+    const color = variant === 1 ? hexToRgba('#424949') : hexToRgba('#566573');
+    const highlight = variant === 1 ? hexToRgba('#5D6D7E') : hexToRgba('#7F8C8D');
+    this.renderer.drawPolygon([
+      vec2(x - 7, baseY),
+      vec2(x + 7, baseY),
+      vec2(x, baseY - 20)
+    ], color);
+    this.renderer.drawPolygon([
+      vec2(x - 3, baseY),
+      vec2(x + 1, baseY),
+      vec2(x, baseY - 18)
+    ], highlight);
+  }
+
+  drawCoral(x: number, baseY: number, time: number, variant: number) {
+    this.drawDropShadow(x, baseY, 10, 6);
+    const sway = Math.sin(time * 1.5 + x * 0.1) * 1.5;
+    if (variant === 0) { // Brain coral
+      this.renderer.drawCircle(x, baseY - 6, 8, hexToRgba('#9B59B6'));
+      this.renderer.drawCircle(x - 2, baseY - 8, 4, hexToRgba('#8E44AD'));
+    } else { // Tube coral
+      this.renderer.drawRect(x - 5 + sway*0.5, baseY - 12, 3, 14, hexToRgba('#E74C3C'));
+      this.renderer.drawRect(x + 2 + sway*0.7, baseY - 16, 3, 18, hexToRgba('#F1948A'));
+      this.renderer.drawRect(x - 1 + sway*0.3, baseY - 10, 3, 12, hexToRgba('#C0392B'));
+    }
+  }
+
+  drawVolcanicVent(x: number, baseY: number, time: number) {
+    this.drawDropShadow(x, baseY, 16, 8);
+    this.renderer.drawPolygon([
+      vec2(x - 10, baseY),
+      vec2(x + 10, baseY),
+      vec2(x + 4, baseY - 12),
+      vec2(x - 4, baseY - 12)
+    ], hexToRgba('#2C3E50'));
+    // Magma glow
+    const glow = 0.5 + 0.5 * Math.sin(time * 4);
+    this.renderer.drawLine(x - 3, baseY - 12, x + 3, baseY - 12, 2, hexToRgba('#E67E22', 0.8 + glow*0.2));
+  }
+
   drawPaintedRock(x: number, baseY: number, variant: number) {
     this.drawDropShadow(x, baseY, 12, 6);
     this.renderer.drawCircle(x, baseY, 5, hexToRgba('#8A8E91')); // base stone colour
