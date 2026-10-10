@@ -59,6 +59,30 @@ renderer3d.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0005);
 renderer3d.scene.background = new THREE.Color(0x87CEEB);
 
 // -------------------------------------------------------------
+// 2.2 Weather System (Rain / Snow Particles)
+// -------------------------------------------------------------
+const weatherGeo = new THREE.BufferGeometry();
+const weatherCount = 5000;
+const weatherPos = new Float32Array(weatherCount * 3);
+for (let i = 0; i < weatherCount * 3; i++) {
+  weatherPos[i] = (Math.random() - 0.5) * 1000;
+}
+weatherGeo.setAttribute('position', new THREE.BufferAttribute(weatherPos, 3));
+const weatherMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 2.0,
+  transparent: true,
+  opacity: 0.6,
+  blending: THREE.AdditiveBlending
+});
+const weatherSystem = new THREE.Points(weatherGeo, weatherMat);
+renderer3d.scene.add(weatherSystem);
+
+let isRaining = false;
+let isSnowing = false;
+let weatherIntensity = 0.0;
+
+// -------------------------------------------------------------
 // 2.5 Post-Processing (Grain / Painterly effect)
 // -------------------------------------------------------------
 const composer = new EffectComposer(renderer3d.renderer);
@@ -175,6 +199,35 @@ const loop = new GameLoop({
     const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, w * 5, h * 5, 1);
     for (const chunk of visible) {
       terrain3d.updateChunk(chunk.data);
+    }
+    
+    // Weather logic
+    const tInfo = timeSystem.getInfo();
+    // Deterministic weather based on day
+    const noiseDay = Math.sin(tInfo.season.dayTotal * 12.9898) * 43758.5453;
+    const wNoise = noiseDay - Math.floor(noiseDay);
+    
+    isSnowing = tInfo.season.season === 'winter' && wNoise > 0.5;
+    isRaining = tInfo.season.season !== 'winter' && wNoise > 0.7;
+    weatherIntensity = isSnowing || isRaining ? 1.0 : 0.0;
+    
+    if (weatherIntensity > 0) {
+      weatherSystem.visible = true;
+      const positions = weatherGeo.attributes.position.array as Float32Array;
+      for (let i = 0; i < weatherCount; i++) {
+        const fallSpeed = isSnowing ? 100 : 800;
+        positions[i * 3 + 1] -= dt * fallSpeed;
+        if (positions[i * 3 + 1] < -100) {
+          positions[i * 3 + 1] = player3d.pos.y + 400 + Math.random() * 200;
+          positions[i * 3] = player3d.pos.x + (Math.random() - 0.5) * 1000;
+          positions[i * 3 + 2] = player3d.pos.z + (Math.random() - 0.5) * 1000;
+        }
+      }
+      weatherGeo.attributes.position.needsUpdate = true;
+      weatherMat.color.setHex(isSnowing ? 0xffffff : 0x88bbff);
+      weatherMat.size = isSnowing ? 4.0 : 1.5;
+    } else {
+      weatherSystem.visible = false;
     }
   },
   render: (alpha: number) => {

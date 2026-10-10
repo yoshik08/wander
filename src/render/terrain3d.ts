@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ChunkBufferData, CHUNK_PIXEL_SIZE, CHUNK_TILES } from '../world/chunk';
-import { BIOMES } from '../world/biomes';
+import { BIOMES, BiomeType } from '../world/biomes';
 import { ChunkFoliage } from './foliage3d';
 
 const terrainVertexShader = `
@@ -46,15 +46,20 @@ const terrainFragmentShader = `
 
   uniform vec3 uSunLightColor;
   uniform vec3 uSunLightDir;
+  uniform sampler2D uBiomeTex;
   
   void main() {
-    // Very basic color based on elevation and biome
-    vec3 baseColor = vec3(0.3, 0.6, 0.2); // Default Grass
+    // Sample biome color from 1D texture
+    float biomeIndex = (vBiome + 0.5) / 32.0; // Assume up to 32 biomes
+    vec4 biomeColor = texture2D(uBiomeTex, vec2(biomeIndex, 0.5));
+    
+    vec3 baseColor = biomeColor.rgb;
     
     if (vElevation < 0.0) {
-      baseColor = vec3(0.2, 0.4, 0.8); // Water/sand
+      // Underwater sand
+      baseColor = mix(baseColor, vec3(0.8, 0.7, 0.5), 0.7);
     } else if (vElevation > 0.6) {
-      baseColor = vec3(0.8, 0.8, 0.8); // Snow/rock
+      baseColor = mix(baseColor, vec3(0.8, 0.8, 0.8), (vElevation - 0.6) * 2.0); // Snow/rock
     }
     
     // Painterly shading (Toon style)
@@ -70,21 +75,47 @@ const terrainFragmentShader = `
   }
 `;
 
+function createBiomeTexture(): THREE.DataTexture {
+  const data = new Uint8Array(32 * 4); // 32 biomes max
+  for (let i = 0; i < 32; i++) {
+    const biomeDef = BIOMES[i as BiomeType];
+    if (biomeDef) {
+      const col = biomeDef.palette.groundPrimary;
+      data[i * 4] = col.r * 255;
+      data[i * 4 + 1] = col.g * 255;
+      data[i * 4 + 2] = col.b * 255;
+      data[i * 4 + 3] = 255;
+    } else {
+      data[i * 4] = 100;
+      data[i * 4 + 1] = 150;
+      data[i * 4 + 2] = 50;
+      data[i * 4 + 3] = 255;
+    }
+  }
+  const tex = new THREE.DataTexture(data, 32, 1, THREE.RGBAFormat);
+  tex.needsUpdate = true;
+  return tex;
+}
+
 export class Terrain3D {
   scene: THREE.Scene;
   chunkMeshes: Map<string, THREE.Mesh> = new Map();
   chunkFoliage: Map<string, ChunkFoliage> = new Map();
   material: THREE.ShaderMaterial;
+  biomeTex: THREE.DataTexture;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
+    
+    this.biomeTex = createBiomeTexture();
     
     this.material = new THREE.ShaderMaterial({
       vertexShader: terrainVertexShader,
       fragmentShader: terrainFragmentShader,
       uniforms: {
         uSunLightColor: { value: new THREE.Color(1.0, 0.95, 0.9) },
-        uSunLightDir: { value: new THREE.Vector3(0.5, 1.0, 0.5).normalize() }
+        uSunLightDir: { value: new THREE.Vector3(0.5, 1.0, 0.5).normalize() },
+        uBiomeTex: { value: this.biomeTex }
       }
     });
   }
