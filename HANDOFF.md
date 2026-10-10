@@ -54,9 +54,9 @@
   - Milestone W (Step W8): Legendary Structures 91–100 (Legendary celestial/mythic structures with special mechanics).
   - Milestone W (Step W9): Journal, Minimap & Discovery Logging (Painted structure thumbnails in the Journal folio, map icons, and discovery notifications).
   - Milestone W (Step W10): Mobile Performance Pass (Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks).
-- **Current Milestone**: Milestone 3D-10 (3D sparring scene with Resolve rules and VFX) - Completed.
+- **Current Milestone**: Milestone 3D-11 (Villages, paths and NPCs with schedules and dialogue) - Completed.
 - **Next Item in ROADMAP_3D.md**:
-  - **3D-11**: Villages, paths and NPCs with schedules and dialogue.
+  - **3D-12**: Structures 1-50 as procedural 3D.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)
