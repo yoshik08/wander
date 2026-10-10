@@ -49,6 +49,7 @@
   - Milestone 15 (Step 15.1): Final Review, Endurance Memory Leak Tests & Production Release (1,500-frame traversal test confirming strict Chebyshev chunk capping <=121 chunks, bounded particle pooling, zero NaN drift across 4-season cycles, 22 test files with 112 passing tests, and lean 79.8 kB production bundle).
 - **Completed in this step**:
   - Milestone 15 (Step 15.1): Final Review & Memory Leak Tests.
+  - Milestone 15: Final Documentation Cleanup (README.md, CREDITS.md).
   - Milestone 14 (Step 14.1): Shared Moments Deep-Links.
   - Milestone 9 (Step 9.1): Wind Chimes & Campfire Dawn Sleep.
 - **Next Item in ROADMAP.md**:
