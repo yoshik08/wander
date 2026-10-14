@@ -265,6 +265,36 @@ export class ChunkManager {
     return flag === TILE_FLAG_WATER || flag === TILE_FLAG_STEPPING_STONE;
   }
 
+  getElevationAt(layer: number, worldX: number, worldY: number): number {
+    const chunkX = Math.floor(worldX / CHUNK_PIXEL_SIZE);
+    const chunkY = Math.floor(worldY / CHUNK_PIXEL_SIZE);
+    const chunk = this.getChunk(layer, chunkX, chunkY);
+
+    const localPixelX = worldX - chunkX * CHUNK_PIXEL_SIZE;
+    const localPixelY = worldY - chunkY * CHUNK_PIXEL_SIZE;
+    
+    // Bilinear interpolation for smooth collision
+    const tx = localPixelX / TILE_SIZE;
+    const ty = localPixelY / TILE_SIZE;
+    
+    const x1 = Math.floor(tx);
+    const y1 = Math.floor(ty);
+    const x2 = Math.min(CHUNK_TILES - 1, x1 + 1);
+    const y2 = Math.min(CHUNK_TILES - 1, y1 + 1);
+    
+    const fx = tx - x1;
+    const fy = ty - y1;
+    
+    const e11 = chunk.data.elevation[y1 * CHUNK_TILES + x1];
+    const e21 = chunk.data.elevation[y1 * CHUNK_TILES + x2];
+    const e12 = chunk.data.elevation[y2 * CHUNK_TILES + x1];
+    const e22 = chunk.data.elevation[y2 * CHUNK_TILES + x2];
+    
+    const top = e11 * (1 - fx) + e21 * fx;
+    const bottom = e12 * (1 - fx) + e22 * fx;
+    return (top * (1 - fy) + bottom * fy) * 100.0; // scale matches terrain3d.ts
+  }
+
   getActiveChunkCount(): number {
     return this.chunks.size;
   }

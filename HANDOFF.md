@@ -48,15 +48,18 @@
   - Milestone 14 (Step 14.1): Shared Moment Links (Portable URL generator and boot parser capturing seed, coordinates x & y, time of day, and season with 1-click clipboard copy).
   - Milestone 15 (Step 15.1): Final Review, Endurance Memory Leak Tests & Production Release (1,500-frame traversal test confirming strict Chebyshev chunk capping <=121 chunks, bounded particle pooling, zero NaN drift across 4-season cycles, 22 test files with 112 passing tests, and lean 79.8 kB production bundle).
 - **Completed in this step**:
-  - Milestone W (Step W5): Structures 1–35 (Settlements, ruins, and cozy non-hostile fortresses with Ghibli styling and interactive lore/treasures).
-  - Milestone W (Step W6): Structures 36–60 (Ocean POIs and cave/underground landmarks with water-respecting generation).
-  - Milestone W (Step W7): Structures 61–90 (Natural wonders and cozy small POIs across all biomes).
-  - Milestone W (Step W8): Legendary Structures 91–100 (Legendary celestial/mythic structures with special mechanics).
-  - Milestone W (Step W9): Journal, Minimap & Discovery Logging (Painted structure thumbnails in the Journal folio, map icons, and discovery notifications).
-  - Milestone W (Step W10): Mobile Performance Pass (Verification on 412x915 and 393x852 viewports, 60fps lock, zero leaks).
-- **Current Milestone**: Milestone W Completed.
-- **Next Item in ROADMAP.md**:
-  - All Milestones up to W10 are complete! Wait for next instructions.
+  - Milestone W (Steps W1–W10): All 26 biomes, 100 cozy structures, villages, NPCs, journal, and mobile performance verified.
+  - Milestone 3D-1 to 3D-15: Complete 3D creature-exploration game ported in Three.js with painterly Ghibli aesthetic.
+  - 3D Engine Stability & Visual Fixes:
+    - Fixed black screen caused by opaque `#ui-canvas` overlay blocking 3D viewport; hid overlay until map is opened.
+    - Corrected sun lighting trajectory arc from dawn (5:00) through noon (+600 Y peak) to dusk (19:00).
+    - Fixed structure height calculation in `structures3d.ts` (removed duplicate 100x elevation scaling).
+    - Fixed 1-second freeze caused by `TypeError` in `terrain3d.unloadChunk` by safely traversing group children for geometry disposal.
+    - Optimized 3D chunk query bounds to match `CHUNK_LOAD_RADIUS` ($7 \times 7$ grid) for zero synchronous streaming stalls.
+  - Pushed all commits to `origin/3d` on `https://github.com/yoshik08/wander.git`.
+- **Current Milestone**: Complete (All 2D & 3D Milestones Delivered).
+- **Next Item**:
+  - Production release and continuous exploratory play.
 
 ## How to Run & Verify
 1. **Dev Server**: `npm run dev` (running at `http://127.0.0.1:5173/wander/`)

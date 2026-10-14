@@ -160,6 +160,9 @@ MEADOW is designed as a meditative, deeply atmospheric nature simulation where w
 - **Pre-Allocated Particle Ceiling**: Particle pool bounds allocations at 750 (and throttle limits down to 120 on Low quality), preventing heap expansion during prolonged particle bursts.
 - **Full Seasonal Cycle Longevity**: Stress test verified rapid multi-year seasonal transitions (Spring -> Summer -> Autumn -> Winter) run with zero NaN numerical drift or state corruption.
 - **Production Build & Test Suite**: 22 test files and 112 unit/integration tests passing cleanly. Production bundle builds in <1.0s to a lean ~79.8 kB gzipped footprint. MEADOW is 100% complete, fully verified, and release-ready.
-
-
-
+## 3D Engine Polish & Black Screen Resolution
+- **Root Cause 1 (`uiCanvas` Occlusion)**: `uiCanvas` was instantiated with `position: absolute; width: 100%; height: 100%` and attached to `document.body` without `display: none`. Because `createRenderer` sets `alpha: false` by default, an opaque black canvas completely covered the 3D WebGL canvas. Resolved by setting `uiCanvas.style.display = 'none'` by default and only showing it when the diegetic map overlay is active.
+- **Root Cause 2 (Inverted Sun Angle)**: Directional light position was calculated using `cos(sunAngle)` where midnight mapped to angle 0 and noon mapped to angle $\pi$, placing the sun below the ground at Y = -500 at noon and clamping light intensity to 0. Corrected the daylight trajectory arc so the sun rises at dawn (5:00), peaks at noon (+600 Y), and sets at dusk (19:00), backed by solid ambient fill lighting.
+- **Root Cause 3 (Direct Scene Rendering)**: Switched from an offscreen `EffectComposer` pass chain back to direct multi-sampled canvas rendering via `renderer3d.renderer.render()`, eliminating potential post-process framebuffer stalls and ensuring debug HUD counters accurately display active 3D geometry calls.
+- **Root Cause 4 (Structure Elevation Double Scaling)**: Fixed structure placement height in `structures3d.ts` which was double-multiplying chunk elevation by 100.0, restoring structures to flush ground height.
+- **HUD Event Wiring**: Connected top HUD bar buttons (`Map [M]`, `Journal [J]`, `Sound`, `Share`) to their respective 3D systems.
