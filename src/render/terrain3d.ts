@@ -258,10 +258,14 @@ export class Terrain3D {
 
   public unloadChunk(layer: number, chunkX: number, chunkY: number) {
     const key = `${layer}_${chunkX}_${chunkY}`;
-    const mesh = this.chunkMeshes.get(key);
-    if (mesh) {
-      this.scene.remove(mesh);
-      mesh.geometry.dispose();
+    const group = this.chunkMeshes.get(key) as unknown as THREE.Group | undefined;
+    if (group) {
+      this.scene.remove(group);
+      group.traverse(child => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+        }
+      });
       this.chunkMeshes.delete(key);
     }
 

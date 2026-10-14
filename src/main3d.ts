@@ -3,7 +3,8 @@ import { Renderer3D } from './render/renderer3d';
 import { Terrain3D } from './render/terrain3d';
 import { GameLoop } from './core/loop';
 import { QualityScaler } from './systems/quality';
-import { ChunkManager } from './world/chunk-manager';
+import { ChunkManager, CHUNK_LOAD_RADIUS } from './world/chunk-manager';
+import { CHUNK_PIXEL_SIZE } from './world/chunk';
 import { TimeSystem } from './systems/time';
 import { InputManager } from './core/input';
 import { Player3D } from './entities/player3d';
@@ -644,11 +645,9 @@ const loop = new GameLoop({
     const layer = 0;
     chunkManager.update(layer, player3d.pos.x, player3d.pos.z);
     
-    // getVisibleChunks also expects a bounding box, but with width/height in pixels
-    // Since our 3D view goes way further than 2D, we pass a huge viewport or just scale W/H
-    const w = window.innerWidth * 4;
-    const h = window.innerHeight * 4;
-    const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, w, h, 1);
+    // Query visible chunks matching CHUNK_LOAD_RADIUS to prevent synchronous generation spikes
+    const viewSize = CHUNK_PIXEL_SIZE * (CHUNK_LOAD_RADIUS * 2 + 1);
+    const visible = chunkManager.getVisibleChunks(layer, player3d.pos.x, player3d.pos.z, viewSize, viewSize, 1);
     for (const chunk of visible) {
       terrain3d.updateChunk(chunk.data);
       for (const s of chunk.data.structures) {
