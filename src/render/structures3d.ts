@@ -38,8 +38,7 @@ export class ChunkStructures3D {
     for (const struct of data.structures) {
       const localX = struct.x - data.chunkX * CHUNK_PIXEL_SIZE;
       const localY = struct.y - data.chunkY * CHUNK_PIXEL_SIZE;
-      const el = getElevation(struct.x, struct.y);
-      const height = Math.max(0.0, el) * 100.0;
+      const height = Math.max(0.0, getElevation(localX, localY));
       this.createStructureMesh(struct.type, localX, height, localY);
     }
   }

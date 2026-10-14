@@ -134,24 +134,69 @@ uiCanvas.style.top = '0';
 uiCanvas.style.left = '0';
 uiCanvas.style.width = '100%';
 uiCanvas.style.height = '100%';
-uiCanvas.style.pointerEvents = 'none'; // Only enable when map is open
+uiCanvas.style.pointerEvents = 'none';
+uiCanvas.style.display = 'none'; // Critical: hidden until map is opened
+uiCanvas.style.zIndex = '800';
 document.body.appendChild(uiCanvas);
 
 const uiRenderer = createRenderer(uiCanvas);
 const artToolkit = new ArtToolkit(uiRenderer);
 const diegeticMap = new DiegeticMap();
 
+function toggleMap() {
+  if (diegeticMap.isOpen) {
+    diegeticMap.close();
+    uiCanvas.style.pointerEvents = 'none';
+    uiCanvas.style.display = 'none';
+  } else {
+    diegeticMap.open();
+    uiCanvas.style.pointerEvents = 'auto';
+    uiCanvas.style.display = 'block';
+  }
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') {
-    if (diegeticMap.isOpen) {
-      diegeticMap.close();
-      uiCanvas.style.pointerEvents = 'none';
-    } else {
-      diegeticMap.open();
-      uiCanvas.style.pointerEvents = 'auto';
-    }
+    toggleMap();
   }
 });
+
+const mapBtn = document.getElementById('map-btn');
+if (mapBtn) {
+  mapBtn.addEventListener('click', toggleMap);
+}
+
+const journalBtn = document.getElementById('journal-btn');
+if (journalBtn) {
+  journalBtn.addEventListener('click', () => {
+    if (journalUI.isOpen) {
+      journalUI.close();
+    } else {
+      journalUI.open();
+    }
+  });
+}
+
+const soundBtn = document.getElementById('sound-toggle-btn');
+if (soundBtn) {
+  soundBtn.addEventListener('click', () => {
+    audioManager.unlock();
+    const isMuted = audioManager.toggleMute();
+    soundBtn.textContent = isMuted ? '🔇 Sound' : '🔊 Sound';
+  });
+}
+
+const shareBtn = document.getElementById('share-btn');
+if (shareBtn) {
+  shareBtn.addEventListener('click', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('seed', chunkManager.seedRaw);
+    url.searchParams.set('x', Math.round(player3d.pos.x).toString());
+    url.searchParams.set('y', Math.round(player3d.pos.z).toString());
+    navigator.clipboard?.writeText(url.toString());
+    alert(`Moment link copied to clipboard:\n${url.toString()}`);
+  });
+}
 
 // -------------------------------------------------------------
 // 2. Scene Setup & Lighting
@@ -689,34 +734,42 @@ const loop = new GameLoop({
     (renderer3d.scene.fog as THREE.FogExp2).color.copy(threeColor).lerp(new THREE.Color(0x87CEEB), Math.max(0, tInfo.sunElevation));
     (renderer3d.scene.background as THREE.Color).copy((renderer3d.scene.fog as THREE.FogExp2).color);
     
-    // Move sun based on time
-    const sunAngle = (timeSystem.currentHour / 24) * Math.PI * 2;
-    dirLight.position.set(Math.sin(sunAngle) * 500 + player3d.pos.x, Math.cos(sunAngle) * 500, 100 + player3d.pos.z);
-    dirLight.intensity = Math.max(0, Math.cos(sunAngle)) * 1.5;
+    // Move sun based on time of day: dawn at 5:00, noon peak at 12:00, dusk at 19:00
+    const hour = timeSystem.currentHour;
+    const isDay = hour >= 5.0 && hour <= 19.0;
+    const dayProgress = Math.max(0, Math.min(1, (hour - 5.0) / 14.0));
+    const sunRad = dayProgress * Math.PI;
+    const sunHeight = isDay ? Math.sin(sunRad) * 600 : -100;
+    const sunX = isDay ? -Math.cos(sunRad) * 600 + player3d.pos.x : player3d.pos.x;
+    const sunZ = player3d.pos.z + 150;
+
+    dirLight.position.set(sunX, Math.max(60, sunHeight), sunZ);
+    dirLight.intensity = isDay ? Math.max(0.4, Math.sin(sunRad) * 1.6) : 0.2;
+    ambient.intensity = isDay ? 0.75 : 0.45;
     
-    // Update materials sun dir
-    terrain3d.material.uniforms.uSunLightDir.value.copy(dirLight.position).normalize();
+    // Update materials sun dir (from surface pointing to light)
+    terrain3d.material.uniforms.uSunLightDir.value.set(
+      dirLight.position.x - player3d.pos.x,
+      dirLight.position.y,
+      dirLight.position.z - player3d.pos.z
+    ).normalize();
     terrain3d.material.uniforms.uSunLightColor.value.copy(threeColor);
 
-    // Render with composer
-    grainPass.uniforms.time.value = globalTime;
-    composer.render();
+    // Direct scene rendering
+    renderer3d.renderer.render(renderer3d.scene, renderer3d.camera);
     
     qualityScaler.recordFrame(loop.frameTimeMs / 1000);
     updateDebugHUD(loop.fps, loop.frameTimeMs, tInfo);
     
-    // UI Rendering
-    uiRenderer.beginFrame();
+    // UI Rendering (only when map is open)
     if (diegeticMap.isOpen || diegeticMap.openProgress > 0) {
+      uiRenderer.beginFrame();
       const dtMap = loop.frameTimeMs / 1000;
       diegeticMap.update(dtMap);
-      // DiegeticMap expects player pos in x,y format, which maps to x,z in 3D
       const mapPos = { x: player3d.pos.x, y: player3d.pos.z };
-      
       const w = window.innerWidth;
       const h = window.innerHeight;
       
-      // we don't have cat yet, just use player pos for now
       diegeticMap.render(
         uiRenderer, 
         artToolkit, 
@@ -730,6 +783,7 @@ const loop = new GameLoop({
         mapPos.x, mapPos.y, 
         globalTime
       );
+      uiRenderer.endFrame();
     }
   }
 });
