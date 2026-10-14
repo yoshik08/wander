@@ -160,53 +160,53 @@ This roadmap breaks down all remaining milestones into highly specific, ordered 
 ## Milestone W: World Expansion
 **Focus**: Villages, NPCs, 26 Biomes, and 100 Cozy Structures.
 
-### Step W1: Biome Expansion & Smooth Blending [ ]
+### Step W1: Biome Expansion & Smooth Blending [x]
 - **Action**: Expand to all 26 distinct biomes with individual palettes, flora/props, ground shader blend, ambient audio beds, and creature encounter tables. Implement domain-warped noise border blending between biomes.
 - **Biomes**: Flower Meadow, Birch Woods, Old-Growth Forest, Misty Pine Taiga, Bamboo Grove, Cherry Blossom Hills, Mushroom Fields, Swamp/Mangrove, Sunflower Plains, Savanna, Badlands Mesa, Desert Dunes, Oasis, Snowy Tundra, Frozen Lake, Ice Spikes, Alpine Peaks, Volcanic Ash Fields, Beach, Coral Shallows, Deep Ocean, River Delta, Lush Cave, Dripstone Cave, Crystal Geode Cave, Sky-Island Cliffs.
 - **Files**: `src/world/biomes.ts`, `src/world/chunk.ts`, `src/render/webgl2.ts`, `src/render/art.ts`, `src/audio/engine.ts`
 - **Done When**: All 26 biomes generate deterministically with organic warped borders, bespoke colorways, and proper flora.
 
-### Step W2: Structure Placement System & Spacing [ ]
+### Step W2: Structure Placement System & Spacing [x]
 - **Action**: Implement a chunk-based structure placement grid with rarity tiers (common, uncommon, rare, legendary), biome affinity filters, minimum spatial clearance, and geometry caching.
 - **Files**: `src/world/structures.ts`, `src/world/chunk.ts`
 - **Done When**: Structures spawn predictably without overlapping or crowding, respecting rivers and terrain.
 
-### Step W3: Villages and Paths [ ]
+### Step W3: Villages and Paths [x]
 - **Action**: Implement procedural village generator with biome-specific architectural styles (cottages, log cabins, adobe, thatch, igloo-cottages, stilt houses, tea houses, fishing shacks). Generate winding path networks from central plazas/wells, houses, gardens, fences, lamp posts, notice boards, chimney smoke, and night lighting.
 - **Files**: `src/world/structures.ts`, `src/world/chunk.ts`, `src/render/art.ts`, `src/main.ts`
 - **Done When**: Coherent villages generate across biomes with paths, lighting, and ambient smoke.
 
-### Step W4: NPC Roles, Schedules & Dialogue [ ]
+### Step W4: NPC Roles, Schedules & Dialogue [x]
 - **Action**: Implement 20+ procedural villager roles (farmer, baker, fisher, librarian, smith, healer, merchant, shepherd, beekeeper, cartographer, storyteller, child, elder, gardener, traveling bard, wandering trader, lighthouse keeper, monk, ranger, creature breeder). Add daily schedules (wake, work, eat, chat, sleep), path navigation, dialogue grammar, friendship hearts, gift-giving, and non-combat trading.
 - **Files**: `src/entities/npc.ts`, `src/world/structures.ts`, `src/main.ts`, `src/render/art.ts`
 - **Done When**: Villagers walk schedules, talk dynamically, accept gifts, and trade peacefully.
 
-### Step W5: Structures 1–35: Settlements, Ruins & Cozy Fortresses [ ]
+### Step W5: Structures 1–35: Settlements, Ruins & Cozy Fortresses [x]
 - **Action**: Implement structures 1–35: 10 settlements, 15 ruins/ancient sites, and 10 cozy non-hostile fortresses/sanctums with original cozy MEADOW lore, loot, and interactables.
 - **Files**: `src/world/structures.ts`, `src/render/art.ts`
 - **Done When**: Structures 1–35 generate deterministically with Ghibli-styled art and lore interactables.
 
-### Step W6: Structures 36–60: Ocean & Cave Structures [ ]
+### Step W6: Structures 36–60: Ocean & Cave Structures [x]
 - **Action**: Implement structures 36–60: 15 ocean/water POIs (shipwreck, coral reef arch, water mill, fishing hut, etc.) and 10 cave/underground formations (geode, lush cave garden, crystal grotto, creature den, etc.).
 - **Files**: `src/world/structures.ts`, `src/render/art.ts`
 - **Done When**: Structures 36–60 spawn in proper biomes/water/caves with visual polish.
 
-### Step W7: Structures 61–90: Nature Landmarks & Small Finds [ ]
+### Step W7: Structures 61–90: Nature Landmarks & Small Finds [x]
 - **Action**: Implement structures 61–90: 15 natural wonders (giant tree, fairy ring, hot spring, meteor crater, etc.) and 15 cozy POIs (herbalist hut, desert well, signpost crossroads, treehouse, toy graveyard, etc.).
 - **Files**: `src/world/structures.ts`, `src/render/art.ts`
 - **Done When**: Structures 61–90 appear across the world with atmospheric details.
 
-### Step W8: Legendary Structures 91–100 [ ]
+### Step W8: Legendary Structures 91–100 [x]
 - **Action**: Implement structures 91–100: End-style starlit floating isle, amber ember gate, wing shrine (gliding unlock), celestial observatory, moonlit night garden, rainbow bridge, creature sanctuary, and world-heart tree.
 - **Files**: `src/world/structures.ts`, `src/render/art.ts`, `src/entities/character.ts`
 - **Done When**: Legendary structures generate with unique mechanics and wonder.
 
-### Step W9: Journal, Minimap & Discovery Logging [ ]
+### Step W9: Journal, Minimap & Discovery Logging [x]
 - **Action**: Integrate painted thumbnails for all 100 structures into the interactive Journal folio and show discovered structure icons on the vellum Map with completion counters.
 - **Files**: `src/ui/journal.ts`, `src/world/chunk.ts`, `src/systems/save.ts`
 - **Done When**: Discovering structures logs a painted thumbnail in the Journal and reveals a map icon.
 
-### Step W10: Performance Pass on Phone Viewports [ ]
+### Step W10: Performance Pass on Phone Viewports [x]
 - **Action**: Verify and optimize performance on mobile resolutions (412x915, 393x852) with zero per-frame garbage, cached structure geometry, and steady 60fps.
 - **Files**: `src/render/webgl2.ts`, `src/world/chunk.ts`
 - **Done When**: Memory and frame time profiles confirm 60fps on mobile with zero leaks.
